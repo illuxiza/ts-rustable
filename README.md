@@ -1,229 +1,379 @@
-# rustable
+# Rustable
 
-A TypeScript library that brings Rust-inspired features to TypeScript, including traits, Option, Result, and more. This library aims to provide a more Rust-like development experience while maintaining TypeScript's type safety and ease of use.
+A TypeScript library that brings Rust's powerful features and patterns to TypeScript development. Rustable provides type-safe implementations of Rust's most valuable patterns while maintaining TypeScript's ease of use.
 
-## Features
+## Core Features
 
-- **Trait System**: A flexible trait implementation similar to Rust's trait system
-- **Option Type**: Safe handling of optional values with `Some` and `None`
-- **Result Type**: Elegant error handling with `Ok` and `Err` types
-- **Type-safe**: Fully typed with TypeScript for maximum safety and IDE support
-- **Zero Dependencies**: No runtime dependencies, keeping your project lean
-- **Rust-like Patterns**: Familiar patterns for developers with Rust experience
+### Trait-Based Programming
 
-## Installation
+- Type-safe trait implementation similar to Rust
+- Multiple trait inheritance support
+- Compile-time trait checking
+- Runtime trait querying
+
+### Safe Optional and Result Types
+
+- Safe handling of nullable values with `Option<T>`
+- Error handling with `Result<T, E>`
+- Rich set of combinators (`map`, `andThen`, `unwrapOr`)
+- Pattern matching support
+
+### Type Conversion System
+
+- `From` trait for type conversion
+- `Into` trait for reverse conversion
+- Type-safe conversion between compatible types
+- Zero runtime overhead conversions
+
+### Functional Collection Utilities
+
+- Lazy evaluation for better performance
+- Rich set of operations: `takeWhile`, `skipWhile`, `chunks`
+- Advanced operations: `permutations`, `combinations`, `product`
+- Memory-efficient implementations
+
+### Type-Safe Data Structures
+
+- `HashMap`: Efficient key-value storage
+- Type-safe implementations
+- Rust-inspired APIs
+- Option-based value retrieval
+
+### Pattern Matching System
+
+- Custom enum definitions with variants
+- Type-safe pattern matching
+- Exhaustive variant checking
+- Support for variant arguments
+
+### Core Utilities
+
+- Runtime type identification with `TypeId`
+- Consistent hash generation
+- Efficient string representation
+- Zero-cost abstractions
+
+## Getting Started
+
+### Package Installation
 
 ```bash
 npm install rustable
 ```
 
-## API Reference
+### Code Examples
 
-### Exported Modules
-
-#### Core Trait System
-
-- `trait(target, trait, implementation?)`: Main function to implement traits
-- `useTrait(target, trait)`: Use a trait's default implementation
-- `doesImplement(target, trait)`: Check if a target implements a trait
-
-#### Built-in Traits
-
-- `Into`: Trait for type conversion
-- `into(value, type)`: Helper function for type conversion
-
-#### Option Type
-
-- `Option<T>`: Type representing optional values
-- `Some(value)`: Constructor for present values
-- `None()`: Constructor for absent values
-- `isNone(value)`: Type guard for None values
-- `isSome(value)`: Type guard for Some values
-
-#### Result Type
-
-- `Result<T, E>`: Type for error handling
-- `Ok(value)`: Constructor for success values
-- `Err(error)`: Constructor for error values
-- `isErr(value)`: Type guard for Err values
-- `isOk(value)`: Type guard for Ok values
-
-#### Type System Utilities
-
-- `typeId`: Get unique type identifier
-- `TypeId`: Type identifier type
-- `TypeIdMap`: Map using type identifiers as keys
-
-## Usage Examples
-
-### Working with Traits
-
-Traits allow you to define shared behavior in an abstract way, similar to Rust's traits:
+#### Implementing Traits
 
 ```typescript
-import { trait, doesImplement } from 'rustable';
+import { trait, implTrait, hasTrait, useTrait } from 'rustable';
 
 // Define a trait
+@trait
 class Display {
-  display(this: any): string {
-    return String(this);
+  display(): string {
+    throw new Error('Not implemented');
   }
 }
 
-// Implement the trait for a class
-class Point {
-  constructor(public x: number, public y: number) {}
+// Implement the trait
+class Person {
+  constructor(public name: string) {}
 }
 
-trait(Point, Display, {
-  display(this: Point) {
-    return `Point(${this.x}, ${this.y})`;
-  }
-});
-
-const point = new Point(1, 2);
-console.log(point.display()); // Output: Point(1, 2)
-console.log(doesImplement(point, Display)); // true
-```
-
-### Type Conversion with Into
-
-```typescript
-import { Into, into } from 'rustable';
-
-class Meters {
-  constructor(public value: number) {}
-}
-
-class Centimeters {
-  constructor(public value: number) {}
-}
-
-// Implement conversion from Meters to Centimeters
-trait(Meters, Into, {
-  into(this: Meters, _type: typeof Centimeters) {
-    return new Centimeters(this.value * 100);
+implTrait(Person, Display, {
+  display() {
+    return `Person(${this.name})`;
   }
 });
 
-const meters = new Meters(1);
-const centimeters = into(meters, Centimeters);
-console.log(centimeters.value); // Output: 100
+// Check trait implementation
+const person = new Person("Alice");
+console.log(hasTrait(person, Display)); // true
 ```
 
-### Working with Options
-
-`Option` represents an optional value: every `Option` is either `Some` and contains a value, or `None`:
+#### Type Conversion System
 
 ```typescript
-import { Option, Some, None, isSome, isNone } from 'rustable';
+import { From, from, Into, into } from 'rustable';
 
-// Working with Some values
-const maybeNumber: Option<number> = Some(42);
-console.log(isSome(maybeNumber)); // true
-console.log(maybeNumber.unwrap()); // 42
+// Define types
+class Celsius {
+  constructor(public value: number) {}
+}
 
-// Safely handling None
-const noValue: Option<number> = None();
-console.log(isNone(noValue)); // true
-console.log(noValue.unwrapOr(0)); // 0
+class Fahrenheit {
+  constructor(public value: number) {}
+}
 
-// Chaining operations
-const result = maybeNumber
-  .map(x => x * 2)
-  .filter(x => x > 50)
-  .unwrapOr(0);
-```
-
-### Error Handling with Result
-
-`Result` is the type used for returning and propagating errors:
-
-```typescript
-import { Result, Ok, Err, isOk, isErr } from 'rustable';
-
-function divide(a: number, b: number): Result<number, string> {
-  if (b === 0) {
-    return Err("Division by zero");
+// Implement From trait for temperature conversion
+implTrait(Celsius, From, {
+  from(fahrenheit: Fahrenheit) {
+    return new Celsius((fahrenheit.value - 32) * 5/9);
   }
-  return Ok(a / b);
-}
+});
 
-// Successful case
-const success = divide(10, 2);
-if (isOk(success)) {
-  console.log(success.unwrap()); // 5
-}
+// Convert using From
+const fahrenheit = new Fahrenheit(212);
+const celsius = from(fahrenheit, Celsius);
+console.log(celsius.value); // 100
 
-// Error case
-const error = divide(10, 0);
-if (isErr(error)) {
-  console.log(error.unwrapErr()); // "Division by zero"
+// Implement Into trait for reverse conversion
+implTrait(Celsius, Into, {
+  into(this: Celsius, _type: typeof Fahrenheit) {
+    return new Fahrenheit(this.value * 9/5 + 32);
+  }
+});
+
+// Convert using Into
+const backToFahrenheit = into(celsius, Fahrenheit);
+console.log(backToFahrenheit.value); // 212
+```
+
+#### Optional Value Management
+
+```typescript
+import { Option, Some, None } from 'rustable';
+
+// Working with Option
+function findUser(id: number): Option<string> {
+  const users = new Map([[1, "Alice"], [2, "Bob"]]);
+  return users.has(id) ? Some(users.get(id)!) : None;
 }
 
 // Chain operations
-const result = divide(10, 2)
-  .map(x => x + 1)
-  .mapErr(e => `Error: ${e}`)
-  .unwrapOr(0);
+const userName = findUser(1)
+  .map(name => name.toUpperCase())
+  .filter(name => name.length > 3)
+  .unwrapOr("Unknown");
+
+// Pattern matching
+const greeting = findUser(2).match({
+  some: name => `Hello, ${name}!`,
+  none: () => "User not found"
+});
 ```
 
-### Using Type System Utilities
+#### Result-Based Error Handling
 
 ```typescript
-import { typeId, TypeId, TypeIdMap } from 'rustable';
+import { Result, Ok, Err } from 'rustable';
 
-class MyClass {}
+// Working with Result
+function divide(a: number, b: number): Result<number, Error> {
+  return b === 0 
+    ? Err(new Error("Division by zero"))
+    : Ok(a / b);
+}
 
-// Get type ID
-const id: TypeId = typeId(MyClass);
+// Chain operations with error handling
+const result = divide(10, 2)
+  .map(n => n * 2)
+  .mapErr(e => new Error(`Calculation error: ${e.message}`))
+  .andThen(n => n > 0 ? Ok(n) : Err(new Error("Negative result")))
+  .unwrapOr(0);
 
-// Use TypeIdMap
-const map = new TypeIdMap<string>();
-map.set(MyClass, "MyClass value");
-console.log(map.get(MyClass)); // "MyClass value"
+// Pattern matching with Result
+const message = divide(10, 0).match({
+  ok: value => `Result: ${value}`,
+  err: error => `Error: ${error.message}`
+});
 ```
 
-## Detailed API Documentation
+#### Advanced Collection Operations
 
-### Trait System API
+```typescript
+import { 
+  takeWhile, skipWhile, chunks, windows,
+  pairwise, enumerate, groupBy, product,
+  permutations, combinations
+} from 'rustable';
 
-- `trait(target, trait, implementation?)`: Implements a trait for a target class
-- `useTrait(target, trait)`: Uses default trait implementation
-- `doesImplement(target, trait)`: Checks trait implementation
-- Supports method overriding and default implementations
-- Type-safe with TypeScript support
+const numbers = [1, 2, 3, 4, 5];
 
-### Option API
+// Take and skip operations
+console.log([...takeWhile(numbers, n => n < 4)]); // [1, 2, 3]
+console.log([...skipWhile(numbers, n => n < 3)]); // [3, 4, 5]
 
-- `isSome()`: Returns true if the option is `Some`
-- `isNone()`: Returns true if the option is `None`
-- `unwrap()`: Returns the value if `Some`, throws if `None`
-- `unwrapOr(default)`: Returns the value or a default
-- `map(fn)`: Transforms the contained value
-- `flatMap(fn)`: Transforms with a function that returns an Option
-- `filter(predicate)`: Filters the value based on a predicate
+// Chunking and windowing
+console.log([...chunks(numbers, 2)]); // [[1, 2], [3, 4], [5]]
+console.log([...windows(numbers, 3)]); // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
-### Result API
+// Pairing and enumeration
+console.log([...pairwise(numbers)]); // [[1, 2], [2, 3], [3, 4], [4, 5]]
+console.log([...enumerate(numbers)]); // [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
 
-- `isOk()`: Returns true if the result is `Ok`
-- `isErr()`: Returns true if the result is `Err`
-- `unwrap()`: Returns the success value or throws
-- `unwrapOr(default)`: Returns the success value or a default
-- `unwrapErr()`: Returns the error value
-- `map(fn)`: Transforms the success value
-- `mapErr(fn)`: Transforms the error value
-- `flatMap(fn)`: Transforms with a function that returns a Result
+// Grouping
+const words = ['one', 'two', 'three'];
+console.log(groupBy(words, w => w.length));
+// Map { 3 => ['one', 'two'], 5 => ['three'] }
 
-### Type System API
+// Combinatorics
+console.log([...product([1, 2], ['a', 'b'])]); 
+// [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
 
-- `typeId(type)`: Returns a unique identifier for a type
-- `TypeIdMap`: A Map implementation using type identifiers as keys
-  - `set(type, value)`: Sets a value for a type
-  - `get(type)`: Gets a value for a type
-  - `has(type)`: Checks if a type has a value
-  - `delete(type)`: Removes a value for a type
+console.log([...combinations(['A', 'B', 'C'], 2)]);
+// [['A', 'B'], ['A', 'C'], ['B', 'C']]
 
-## License
+console.log([...permutations(['A', 'B'])]);
+// [['A', 'B'], ['B', 'A']]
+```
 
-MIT License - see the [LICENSE](LICENSE) file for details
+#### HashMap Implementation
+
+```typescript
+import { HashMap } from 'rustable';
+
+// Create a type-safe hash map
+const map = new HashMap<string, number>();
+
+// Basic operations
+map.set('one', 1);
+map.set('two', 2);
+
+console.log(map.get('one')); // 1
+console.log(map.has('three')); // false
+
+// Iterate over entries
+for (const [key, value] of map) {
+  console.log(`${key}: ${value}`);
+}
+
+// Delete and clear
+map.delete('one');
+console.log(map.size); // 1
+map.clear();
+```
+
+#### Enum Pattern Matching
+
+```typescript
+import { Enum, variant } from 'rustable';
+
+// Define a custom enum
+class HttpResponse extends Enum {
+  @variant
+  static OK(data: any) { return data; }
+
+  @variant
+  static NotFound(path: string) { return path; }
+
+  @variant
+  static Error(message: string) { return message; }
+}
+
+// Create and match on variants
+const response = HttpResponse.OK({ id: 1, name: "Item" });
+
+const result = response.match({
+  OK: data => `Success: ${JSON.stringify(data)}`,
+  NotFound: path => `404: ${path} not found`,
+  Error: msg => `Error: ${msg}`
+});
+```
+
+#### Core Utility Functions
+
+```typescript
+import { hash, stringify, typeId } from 'rustable';
+
+// Generate hash values
+console.log(hash("hello")); // Consistent hash value
+
+// Stringify complex objects
+const obj = { name: "test", values: [1, 2, 3] };
+console.log(stringify(obj)); // Pretty-printed string
+
+// Get unique type IDs
+class MyClass {}
+console.log(typeId(MyClass)); // Unique type identifier
+```
+
+## API Documentation
+
+### Trait System Interface
+
+The trait system allows you to define and implement interfaces in a type-safe way:
+
+- `@trait`: Decorator to define a trait
+- `implTrait`: Function to implement a trait for a class
+- `hasTrait`: Check if a type implements a trait
+- `useTrait`: Get trait implementation for a target
+
+### Type Conversion Interface
+
+Type-safe conversion between compatible types:
+
+- `From<T>`: Trait for converting from type T
+- `from<T>`: Function to convert from type T
+- `Into<T>`: Trait for converting into type T
+- `into<T>`: Function to convert into type T
+
+### Option Type Operations
+
+`Option<T>` represents an optional value that may or may not exist:
+
+- `Some(value)`: Create an Option containing a value
+- `None`: Represents absence of a value
+- Methods: `map`, `andThen`, `unwrapOr`, `match`, etc.
+
+### Result Type Operations
+
+`Result<T, E>` represents either success (`Ok`) or failure (`Err`):
+
+- `Ok(value)`: Successful result
+- `Err(error)`: Error result
+- Methods: `map`, `mapErr`, `andThen`, `match`, etc.
+
+### Iterator Type Operations
+
+Rich set of iterator operations:
+
+- `takeWhile`: Take elements while predicate is true
+- `skipWhile`: Skip elements while predicate is true
+- `chunks`: Split iterator into chunks
+- `windows`: Create sliding windows
+- `product`: Compute cartesian product
+- `permutations`: Generate all permutations
+- `combinations`: Generate all combinations
+
+### HashMap Operations
+
+Type-safe key-value storage:
+
+- `set(key, value)`: Insert or update a value
+- `get(key)`: Retrieve a value as Option
+- `delete(key)`: Remove a value
+- `has(key)`: Check key existence
+- `clear()`: Remove all entries
+
+### Pattern Matching Operations
+
+Enum-based pattern matching system:
+
+- `@variant`: Decorator for enum variants
+- `match`: Pattern matching on variants
+- Type-safe variant handling
+- Exhaustive matching checks
+
+### Utility Operations
+
+Core utility functions:
+
+- `typeId`: Get unique type identifier
+- `hash`: Generate consistent hash
+- `stringify`: Convert to string representation
+
+## Project Information
+
+### Contributing Guidelines
+
+We welcome contributions! Please feel free to submit a Pull Request.
+
+### License Terms
+
+MIT License - see the [LICENSE](LICENSE) file for details.
+
+### Project Credits
+
+Inspired by Rust's excellent standard library and its emphasis on safety and expressiveness.
