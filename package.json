@@ -1,6 +1,6 @@
 {
   "name": "rustable",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A TypeScript library that brings Rust-inspired features to TypeScript, including traits, Option, Result, and more. Zero dependencies, type-safe implementation.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
