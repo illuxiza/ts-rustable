@@ -126,27 +126,6 @@ describe('Trait Error Cases', () => {
     });
   });
 
-  describe('Method Conflicts', () => {
-    it('should throw on method name conflict in trait inheritance', () => {
-      @trait
-      class BaseTrait {
-        conflictMethod(): string {
-          return 'base';
-        }
-      }
-
-      expect(() => {
-        @trait
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        class ExtendedTrait extends BaseTrait {
-          conflictMethod(): string {
-            return 'extended';
-          }
-        }
-      }).toThrow('Method conflictMethod already defined in parent trait');
-    });
-  });
-
   describe('Runtime Errors', () => {
     it('should throw when accessing unimplemented trait method', () => {
       class TestClass extends BaseClass {}

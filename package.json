@@ -13,7 +13,7 @@
     }
   },
   "scripts": {
-    "build": "node scripts/build.mjs",
+    "build": "npm run clean && node scripts/build.mjs",
     "clean": "rimraf lib",
     "test": "jest",
     "test:watch": "jest --watch",

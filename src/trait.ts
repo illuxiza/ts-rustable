@@ -111,17 +111,6 @@ function collectParentTraits(
  * ```
  */
 export function trait(traitClass: TraitConstructor<any>) {
-  const parents = collectParentTraits(traitClass);
-
-  // Check for method conflicts
-  Object.getOwnPropertyNames(traitClass.prototype)
-    .filter((name) => name !== 'constructor')
-    .forEach((name) => {
-      if (parents.some((parent) => Object.prototype.hasOwnProperty.call(parent.prototype, name))) {
-        throw new Error(`Method ${name} already defined in parent trait`);
-      }
-    });
-
   Object.defineProperty(traitClass, traitSymbol, {
     value: typeId(traitClass),
     enumerable: false,
@@ -164,8 +153,22 @@ export function implTrait<Class, Trait>(
   const traitId = typeId(trait);
   const targetProto = target.prototype;
 
+  if (!traitRegistry.has(targetProto)) {
+    const implMap = new Map<TypeId, any>();
+    traitRegistry.set(targetProto, implMap);
+    // Create implementation that binds 'this' correctly
+    const boundImpl: Record<string, any> = {};
+    Object.getOwnPropertyNames(targetProto).forEach((name) => {
+      const method = targetProto[name];
+      if (typeof method === 'function') {
+        boundImpl[name] = method;
+      }
+    });
+    implMap.set(typeId(target), boundImpl);
+  }
+
   // Get or create implementation map for target
-  let implMap = traitRegistry.get(targetProto) ?? new Map();
+  let implMap = traitRegistry.get(targetProto)!;
 
   if (implMap.has(traitId)) {
     throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
@@ -217,6 +220,15 @@ export function implTrait<Class, Trait>(
           if (typeof boundImpl[name] === 'function') {
             return boundImpl[name].call(this, ...args);
           }
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    } else {
+      Object.defineProperty(targetProto, name, {
+        value: function (this: Class, ..._args: any[]) {
+          throw new Error(`Multiple implementations of method ${name} for ${target.name}, please use useTrait`);
         },
         enumerable: false,
         configurable: true,

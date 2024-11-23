@@ -92,10 +92,10 @@ const person = new Person("Alice");
 console.log(hasTrait(person, Display)); // true
 ```
 
-#### Type Conversion System
+#### Type Conversion
 
 ```typescript
-import { From, from, Into, into } from 'rustable';
+import { From, from, Into, into, implTrait } from 'rustable';
 
 // Define types
 class Celsius {
