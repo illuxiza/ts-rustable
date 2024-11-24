@@ -10,6 +10,7 @@ describe('Trait Type System', () => {
   }
 
   describe('Single Generic Parameter', () => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     interface Printable<T> {
       print(): string;
       format(prefix: string): string;
@@ -142,11 +143,11 @@ describe('Trait Type System', () => {
 
     @trait
     class Transform<T> implements Transformable<T> {
-      transform<U extends number | string>(value: U): T {
+      transform<U extends number | string>(_value: U): T {
         throw new Error('Not implemented');
       }
 
-      convertTo<U>(converter: (value: T) => U): U {
+      convertTo<U>(_converter: (value: T) => U): U {
         throw new Error('Not implemented');
       }
     }
@@ -192,6 +193,7 @@ describe('Trait Type System', () => {
 
     test('should use single generic type parameter', () => {
       @trait
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       class TestTrait<T> {
         test(): string {
           return 'default';

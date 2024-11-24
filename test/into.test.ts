@@ -18,8 +18,6 @@ class Kelvin {
   constructor(public value: number) {}
 }
 
-class NoImpl {}
-
 describe('Type Conversion', () => {
   beforeAll(() => {
     // Implement From<Celsius> for Fahrenheit

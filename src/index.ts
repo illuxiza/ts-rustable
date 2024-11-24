@@ -25,7 +25,7 @@ export { trait, implTrait, useTrait, hasTrait } from './trait';
  *
  * Provides From and Into traits for type-safe conversions between types.
  */
-export { From, from } from './from';
+export { From, from, implFrom } from './from';
 
 /**
  * Iterator Utilities
