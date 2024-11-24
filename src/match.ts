@@ -1,3 +1,4 @@
+import { stringify } from './stringfy';
 import { typeId } from './type_id';
 
 /**
@@ -27,7 +28,7 @@ interface EnumVariant {
 export function variant(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
   descriptor.value = function (...args: any[]) {
     const constructor = target.prototype.constructor;
-    return new constructor({ name: propertyKey, args });
+    return new constructor(propertyKey, ...args);
   };
   return descriptor;
 }
@@ -50,8 +51,8 @@ export function variant(target: any, propertyKey: string, descriptor: PropertyDe
 export abstract class Enum {
   private variant: EnumVariant;
 
-  protected constructor(variant: EnumVariant) {
-    this.variant = variant;
+  protected constructor(name: string, ...args: any[]) {
+    this.variant = { name, args };
   }
 
   /**
@@ -133,6 +134,47 @@ export abstract class Enum {
       return fn();
     }
     return fn(...this.variant.args);
+  }
+
+  /**
+   * Checks if this enum instance equals another enum instance
+   * Compares both variant names and their arguments
+   */
+  equals(other: Enum): boolean {
+    if (!(other instanceof Enum)) {
+      return false;
+    }
+
+    // Compare variant names
+    if (this.variant.name !== other.variant.name) {
+      return false;
+    }
+
+    // If no arguments in both, they are equal
+    if (!this.variant.args && !other.variant.args) {
+      return true;
+    }
+
+    // If one has args and other doesn't, they are not equal
+    if (!this.variant.args || !other.variant.args) {
+      return false;
+    }
+
+    // Compare argument lengths
+    if (this.variant.args.length !== other.variant.args.length) {
+      return false;
+    }
+
+    // Compare each argument
+    return this.variant.args.every((arg, index) => {
+      const otherArg = other.variant.args![index];
+      // Handle nested enums
+      if (arg instanceof Enum && otherArg instanceof Enum) {
+        return arg.equals(otherArg);
+      }
+      // Handle primitive values and objects
+      return stringify(arg) === stringify(otherArg);
+    });
   }
 
   [Symbol('ENUM')]() {

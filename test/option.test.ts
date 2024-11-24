@@ -82,13 +82,13 @@ describe('Option', () => {
         Some: (val) => val,
         None: 'default',
       });
-      expect(nullResult).toBe(null);
+      expect(nullResult).toBe('default');
 
       const undefResult = undefOpt.match({
         Some: (val) => val,
         None: 'default',
       });
-      expect(undefResult).toBe(undefined);
+      expect(undefResult).toBe('default');
     });
   });
 
@@ -168,7 +168,7 @@ describe('Option', () => {
     });
 
     test('Option.None should create None variant', () => {
-      const opt = Option.None<number>();
+      const opt = Option.None();
       expect(opt.isNone()).toBe(true);
       expect(() => opt.unwrap()).toThrow(ReferenceError);
     });
@@ -179,6 +179,8 @@ describe('Option', () => {
 
       expect(nullOpt.isNone()).toBe(true);
       expect(undefOpt.isNone()).toBe(true);
+      expect(nullOpt).toBe(None);
+      expect(undefOpt).toBe(None);
     });
   });
 

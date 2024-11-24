@@ -1,4 +1,4 @@
-import { Enum, variant } from './match';
+import { Enum } from './match';
 /**
  * Interface defining the pattern matching behavior for Option types.
  * Similar to Rust's match expression for Option<T>.
@@ -55,14 +55,21 @@ const defaultMatchOption: MatchOption<any, any> = {
  * ```
  */
 export class Option<T> extends Enum {
-  @variant
-  static Some<T>(_value: T): Option<T> {
-    return undefined as any;
+  protected static readonly NONE_INSTANCE = new Option<any>('None');
+
+  protected constructor(value: string, ...args: any[]) {
+    super(value, ...args);
   }
 
-  @variant
+  static Some<T>(value: T): Option<T> {
+    if (typeof value === 'undefined' || value === null) {
+      return None;
+    }
+    return new Option('Some', value);
+  }
+
   static None<T>(): Option<T> {
-    return undefined as any;
+    return Option.NONE_INSTANCE;
   }
 
   /**
