@@ -73,6 +73,30 @@ export class Option<T> extends Enum {
   }
 
   /**
+   * Pattern matches on the Option, executing different code paths for Some and None cases.
+   * Similar to Rust's match expression.
+   *
+   * @param fn Object containing functions for Some and None cases
+   * @returns Result of the matched function
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.match({
+   *   some: (val) => val * 2,
+   *   none: () => 0
+   * }); // result = 10
+   * ```
+   */
+  match<U>(patterns: Partial<MatchOption<T, U>>): U {
+    const defaults = {
+      Some: defaultMatchOption.Some,
+      None: defaultMatchOption.None,
+    };
+    return super.match(patterns, defaults);
+  }
+
+  /**
    * Checks if the Option contains a value (Some variant)
    * @returns true if Some, false if None
    *
@@ -102,7 +126,10 @@ export class Option<T> extends Enum {
    * ```
    */
   isSomeAnd(fn: (val: T) => boolean): boolean {
-    return this.isSome() && fn(this.unwrap());
+    return this.match({
+      Some: (val) => fn(val),
+      None: () => false,
+    });
   }
 
   /**
@@ -118,155 +145,63 @@ export class Option<T> extends Enum {
    * ```
    */
   isNone(): boolean {
-    return this.is('None') || typeof super.unwrap() === 'undefined' || super.unwrap() === null;
+    return !this.isSome();
   }
 
   /**
-   * Pattern matches on the Option, executing different code paths for Some and None cases.
-   * Similar to Rust's match expression.
-   *
-   * @param fn Object containing functions for Some and None cases
-   * @returns Result of the matched function
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const result = opt.match({
-   *   some: (val) => val * 2,
-   *   none: () => 0
-   * }); // result = 10
-   * ```
-   */
-  match<U>(fn: Partial<MatchOption<T, U>>): U {
-    const patterns = {
-      Some: fn.Some,
-      None: fn.None,
-    };
-    const defaults = {
-      Some: defaultMatchOption.Some,
-      None: defaultMatchOption.None,
-    };
-    return super.match(patterns, defaults);
-  }
-  /**
-   * Transforms the Option's contained value using a mapping function
-   * @param fn Function to transform the contained value
-   * @returns New Option containing the transformed value
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const mapped = opt.map(n => n.toString()); // Some("5")
-   * ```
-   */
-  map<U>(fn: (val: T) => U): Option<U> {
-    return this.isSome() ? Option.Some(fn(this.unwrap())) : Option.None();
-  }
-
-  /**
-   * Maps the contained value or returns a default if None
-   * @param def Default value to use if None
-   * @param fn Function to transform the contained value
-   * @returns Transformed value or default
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const result = opt.mapOr(0, n => n * 2); // 10
-   * ```
-   */
-  mapOr<U>(def: U, fn: (val: T) => U): U {
-    return this.isSome() ? fn(this.unwrap()) : def;
-  }
-
-  /**
-   * Maps the contained value or computes a default if None
-   * @param def Function to compute default value if None
-   * @param fn Function to transform the contained value
-   * @returns Transformed value or computed default
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const result = opt.mapOrElse(() => 0, n => n * 2); // 10
-   * ```
-   */
-  mapOrElse<U>(def: () => U, fn: (val: T) => U): U {
-    return this.isSome() ? fn(this.unwrap()) : def();
-  }
-
-  /**
-   * Chains Option-returning functions
-   * @param fn Function that returns an Option
-   * @returns Result of fn if Some, None if this is None
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const result = opt.andThen(n => Some(n * 2)); // Some(10)
-   * ```
-   */
-  andThen<U>(fn: (val: T) => Option<U>): Option<U> {
-    return this.isSome() ? fn(this.unwrap()) : Option.None();
-  }
-
-  /**
-   * Returns this Option if Some, or computes a new Option if None
-   * @param fn Function to compute new Option if None
-   * @returns This Option if Some, result of fn if None
-   *
-   * @example
-   * ```typescript
-   * const empty = None;
-   * const result = empty.orElse(() => Some(0)); // Some(0)
-   * ```
-   */
-  orElse<U>(fn: () => Option<U>): Option<T | U> {
-    return this.isSome() ? this : fn();
-  }
-  /**
-   * Returns this Option if Some, or the provided Option if None
-   * @param opt Alternative Option to use if None
-   * @returns This Option if Some, opt if None
-   *
-   * @example
-   * ```typescript
-   * const empty = None;
-   * const result = empty.or(Some(0)); // Some(0)
-   * ```
-   */
-  or<U extends T>(opt: Option<U>): Option<T> {
-    return this.isSome() ? this : opt;
-  }
-
-  /**
-   * Returns None if this is None, otherwise returns opt
-   * @param opt Option to return if this is Some
-   * @returns None if this is None, opt otherwise
-   *
-   * @example
-   * ```typescript
-   * const opt = Some(5);
-   * const result = opt.and(Some(0)); // Some(0)
-   * ```
-   */
-  and<U>(opt: Option<U>): Option<U> {
-    return this.isSome() ? opt : Option.None();
-  }
-
-  /**
-   * Returns None if the predicate returns false, otherwise returns the Option
+   * Tests if Option is None or the value matches a predicate
    * @param fn Predicate function to test the contained value
-   * @returns This Option if predicate returns true, None otherwise
+   * @returns true if None or predicate returns true
+   *
+   * @example
+   * ```typescript
+   * const empty = None;
+   * if (empty.isNoneOr(n => n > 0)) {
+   *   console.log("Is empty or has positive value");
+   * }
+   * ```
+   */
+  isNoneOr(fn: (val: T) => boolean): boolean {
+    return this.match({
+      None: () => true,
+      Some: (val) => fn(val),
+    });
+  }
+
+  /**
+   * Returns the contained value or throws if None
+   * @throws {Error} If the Option is None
+   * @returns The contained value
    *
    * @example
    * ```typescript
    * const opt = Some(5);
-   * const result = opt.filter(n => n > 0); // Some(5)
+   * const result = opt.expect("Expected Some value"); // 5
    * ```
    */
-  filter(fn: (val: T) => boolean): Option<T> {
-    return this.isSome() && fn(this.unwrap()) ? this : Option.None();
+  expect(msg: string): T {
+    if (this.isSome()) {
+      return super.unwrap();
+    }
+    throw new Error(msg);
+  }
+
+  /**
+   * Returns the contained value or throws if None
+   * @throws {ReferenceError} If the Option is None
+   * @returns The contained value
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.unwrap(); // 5
+   * ```
+   */
+  unwrap<U = T>(): U {
+    if (this.isSome()) {
+      return super.unwrap<U>();
+    }
+    throw new ReferenceError('Called unwrap on a None value');
   }
 
   /**
@@ -300,21 +235,188 @@ export class Option<T> extends Enum {
   }
 
   /**
-   * Returns the contained value or throws if None
-   * @throws {ReferenceError} If the Option is None
-   * @returns The contained value
+   * Transforms the Option's contained value using a mapping function
+   * @param fn Function to transform the contained value
+   * @returns New Option containing the transformed value
    *
    * @example
    * ```typescript
    * const opt = Some(5);
-   * const result = opt.unwrap(); // 5
+   * const mapped = opt.map(n => n.toString()); // Some("5")
    * ```
    */
-  unwrap<U = T>(): U {
+  map<U>(fn: (val: T) => U): Option<U> {
+    return this.isSome() ? Option.Some(fn(this.unwrap())) : Option.None();
+  }
+
+  /**
+   * Calls a function with the contained value if Some
+   * @param fn Function to call with the contained value
+   * @returns This Option
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * opt.inspect(n => console.log(n)); // 5
+   * ```
+   */
+  inspect(fn: (val: T) => void): Option<T> {
     if (this.isSome()) {
-      return super.unwrap<U>();
+      fn(this.unwrap());
     }
-    throw new ReferenceError('Called unwrap on a None value');
+    return this;
+  }
+
+  /**
+   * Maps the contained value or returns a default if None
+   * @param def Default value to use if None
+   * @param fn Function to transform the contained value
+   * @returns Transformed value or default
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.mapOr(0, n => n * 2); // 10
+   * ```
+   */
+  mapOr<U>(def: U, fn: (val: T) => U): U {
+    return this.match<U>({
+      Some: (val) => fn(val),
+      None: () => def,
+    });
+  }
+
+  /**
+   * Maps the contained value or computes a default if None
+   * @param def Function to compute default value if None
+   * @param fn Function to transform the contained value
+   * @returns Transformed value or computed default
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.mapOrElse(() => 0, n => n * 2); // 10
+   * ```
+   */
+  mapOrElse<U>(def: () => U, fn: (val: T) => U): U {
+    return this.match<U>({
+      Some: (val) => fn(val),
+      None: def,
+    });
+  }
+
+  /**
+   * Returns None if this is None, otherwise returns opt
+   * @param opt Option to return if this is Some
+   * @returns None if this is None, opt otherwise
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.and(Some(0)); // Some(0)
+   * ```
+   */
+  and<U>(opt: Option<U>): Option<U> {
+    return this.match<Option<U>>({
+      Some: () => opt,
+      None: () => Option.None(),
+    });
+  }
+
+  /**
+   * Chains Option-returning functions
+   * @param fn Function that returns an Option
+   * @returns Result of fn if Some, None if this is None
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.andThen(n => Some(n * 2)); // Some(10)
+   * ```
+   */
+  andThen<U>(fn: (val: T) => Option<U>): Option<U> {
+    return this.match<Option<U>>({
+      Some: (val) => fn(val),
+      None: () => Option.None(),
+    });
+  }
+
+  /**
+   * Returns None if the predicate returns false, otherwise returns the Option
+   * @param fn Predicate function to test the contained value
+   * @returns This Option if predicate returns true, None otherwise
+   *
+   * @example
+   * ```typescript
+   * const opt = Some(5);
+   * const result = opt.filter(n => n > 0); // Some(5)
+   * ```
+   */
+  filter(fn: (val: T) => boolean): Option<T> {
+    return this.isSome() && fn(this.unwrap()) ? this : Option.None();
+  }
+
+  /**
+   * Returns this Option if Some, or the provided Option if None
+   * @param opt Alternative Option to use if None
+   * @returns This Option if Some, opt if None
+   *
+   * @example
+   * ```typescript
+   * const empty = None;
+   * const result = empty.or(Some(0)); // Some(0)
+   * ```
+   */
+  or<U extends T>(opt: Option<U>): Option<T> {
+    return this.match<Option<T>>({
+      Some: () => this,
+      None: () => opt,
+    });
+  }
+
+  /**
+   * Returns this Option if Some, or computes a new Option if None
+   * @param fn Function to compute new Option if None
+   * @returns This Option if Some, result of fn if None
+   *
+   * @example
+   * ```typescript
+   * const empty = None;
+   * const result = empty.orElse(() => Some(0)); // Some(0)
+   * ```
+   */
+  orElse<U>(fn: () => Option<U>): Option<T | U> {
+    return this.match<Option<T | U>>({
+      Some: () => this,
+      None: () => fn(),
+    });
+  }
+
+  /**
+   * Returns the XOR of this Option and the provided Option
+   * @param opt Option to XOR with
+   * @returns XOR of this Option and opt
+   *
+   * @example
+   * ```typescript
+   * const opt1 = Some(5);
+   * const opt2 = None;
+   * const result = opt1.xor(opt2); // Some(5)
+   * ```
+   */
+  xor<U>(opt: Option<U>): Option<T | U> {
+    return this.match<Option<T | U>>({
+      Some: () =>
+        opt.match<Option<T | U>>({
+          Some: () => Option.None(),
+          None: () => this,
+        }),
+      None: () =>
+        opt.match<Option<T | U>>({
+          Some: () => opt,
+          None: () => Option.None(),
+        }),
+    });
   }
 }
 

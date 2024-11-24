@@ -90,6 +90,87 @@ describe('Option', () => {
       });
       expect(undefResult).toBe('default');
     });
+
+    describe('xor', () => {
+      test('Some xor None should return Some', () => {
+        const some = Some(42);
+        expect(some.xor(None).unwrap()).toBe(42);
+        expect(None.xor(some).unwrap()).toBe(42);
+      });
+
+      test('Some xor Some should return None', () => {
+        const some1 = Some(42);
+        const some2 = Some(84);
+        expect(some1.xor(some2).isNone()).toBe(true);
+      });
+
+      test('None xor None should return None', () => {
+        expect(None.xor(None).isNone()).toBe(true);
+      });
+
+      test('xor should handle different types', () => {
+        const someNum = Some(42);
+        const someStr = Some('hello');
+        const result = someNum.xor(someStr);
+        expect(result.isNone()).toBe(true);
+      });
+    });
+
+    describe('expect', () => {
+      test('expect should return value for Some', () => {
+        const some = Some(42);
+        expect(some.expect('Should have value')).toBe(42);
+      });
+
+      test('expect should throw with custom message for None', () => {
+        const errorMessage = 'Custom error message';
+        expect(() => None.expect(errorMessage)).toThrow(errorMessage);
+      });
+
+      test('expect should handle complex objects', () => {
+        const obj = { key: 'value' };
+        const some = Some(obj);
+        expect(some.expect('Should have object')).toBe(obj);
+      });
+    });
+
+    describe('inspect', () => {
+      test('inspect should call function for Some', () => {
+        const mockFn = jest.fn();
+        const some = Some(42);
+        const result = some.inspect(mockFn);
+        
+        expect(mockFn).toHaveBeenCalledWith(42);
+        expect(mockFn).toHaveBeenCalledTimes(1);
+        expect(result).toBe(some);  // Should return the same Option
+      });
+
+      test('inspect should not call function for None', () => {
+        const mockFn = jest.fn();
+        const result = None.inspect(mockFn);
+        
+        expect(mockFn).not.toHaveBeenCalled();
+        expect(result).toBe(None);  // Should return None
+      });
+
+      test('inspect should maintain chain for Some', () => {
+        const some = Some(42);
+        const result = some
+          .inspect(x => {})
+          .map(x => x * 2)
+          .inspect(x => {});
+        
+        expect(result.unwrap()).toBe(84);
+      });
+
+      test('inspect should handle side effects', () => {
+        let sideEffect = 0;
+        const some = Some(42);
+        some.inspect(x => sideEffect = x);
+        
+        expect(sideEffect).toBe(42);
+      });
+    });
   });
 
   describe('None', () => {
