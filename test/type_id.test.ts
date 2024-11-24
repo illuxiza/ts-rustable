@@ -74,6 +74,96 @@ describe('TypeId System', () => {
     });
   });
 
+  describe('Generic Type Cases', () => {
+    test('should generate different IDs for different generic type parameters', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Container<T> {}
+
+      const stringContainerId = typeId(Container, [String]);
+      const numberContainerId = typeId(Container, [Number]);
+      const booleanContainerId = typeId(Container, [Boolean]);
+
+      expect(stringContainerId).not.toBe(numberContainerId);
+      expect(numberContainerId).not.toBe(booleanContainerId);
+      expect(stringContainerId).not.toBe(booleanContainerId);
+    });
+
+    test('should return same ID for same generic type parameters', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Container<T> {}
+
+      const id1 = typeId(Container, [String]);
+      const id2 = typeId(Container, [String]);
+      const id3 = typeId(Container, [String]);
+
+      expect(id1).toBe(id2);
+      expect(id2).toBe(id3);
+    });
+
+    test('should work with nested generic types', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Container<T> {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class NestedContainer<T, U> {}
+
+      const singleId = typeId(Container, [Number]);
+      const nestedId1 = typeId(NestedContainer, [Container, String]);
+      const nestedId2 = typeId(NestedContainer, [Container, Number]);
+
+      expect(nestedId1).not.toBe(nestedId2);
+      expect(singleId).not.toBe(nestedId1);
+      expect(singleId).not.toBe(nestedId2);
+    });
+
+    test('should handle complex generic type hierarchies', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Base<T> {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Derived<T, U> extends Base<T> {}
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Complex<T, U, V> extends Derived<T, U> {}
+
+      const baseId = typeId(Base, [String]);
+      const derivedId = typeId(Derived, [String, Number]);
+      const complexId = typeId(Complex, [String, Number, Boolean]);
+
+      expect(baseId).not.toBe(derivedId);
+      expect(derivedId).not.toBe(complexId);
+      expect(baseId).not.toBe(complexId);
+    });
+
+    test('should handle array type parameters', () => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      class Container<T> {}
+
+      const numberArrayId = typeId(Container, [Array, Number]);
+      const stringArrayId = typeId(Container, [Array, String]);
+      const simpleNumberId = typeId(Container, [Number]);
+
+      expect(numberArrayId).not.toBe(stringArrayId);
+      expect(numberArrayId).not.toBe(simpleNumberId);
+      expect(stringArrayId).not.toBe(simpleNumberId);
+    });
+
+    test('should work with generic instances', () => {
+      class Container<T> {
+        constructor(private value: T) {}
+      }
+
+      const stringContainer = new Container('test');
+      const numberContainer = new Container(42);
+
+      const stringTypeId = typeId(Container, [String]);
+      const numberTypeId = typeId(Container, [Number]);
+      const instanceStringId = typeId(stringContainer.constructor, [String]);
+      const instanceNumberId = typeId(numberContainer.constructor, [Number]);
+
+      expect(stringTypeId).toBe(instanceStringId);
+      expect(numberTypeId).toBe(instanceNumberId);
+      expect(stringTypeId).not.toBe(numberTypeId);
+    });
+  });
+
   describe('Inheritance Cases', () => {
     test('should generate different IDs for base and derived classes', () => {
       class Base {}

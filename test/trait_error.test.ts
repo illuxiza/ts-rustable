@@ -156,7 +156,7 @@ describe('Trait Error Cases', () => {
       class TestClass extends BaseClass {}
       const instance = new TestClass('test');
 
-      expect(useTrait(instance, Print)).toBeUndefined();
+      expect(() => useTrait(instance, Print)).toThrow('Trait Print not implemented for TestClass');
       expect(hasTrait(instance, Print)).toBe(false);
     });
   });

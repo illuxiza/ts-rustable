@@ -8,6 +8,21 @@ if (fs.existsSync('lib')) {
 }
 fs.mkdirSync('lib');
 
+// First, generate .d.ts files with comments
+const tsconfigDTS = {
+  extends: './tsconfig.json',
+  compilerOptions: {
+    module: 'ESNext',
+    moduleResolution: 'node',
+    outDir: 'lib',
+    rootDir: 'src',
+    emitDeclarationOnly: true,
+  },
+  include: ['src/**/*'],
+  exclude: ['node_modules', 'lib', 'test']
+};
+fs.writeFileSync('tsconfig.dts.json', JSON.stringify(tsconfigDTS, null, 2));
+
 // Create temporary tsconfig for CJS
 const tsconfigCJS = {
   extends: './tsconfig.json',
@@ -16,8 +31,9 @@ const tsconfigCJS = {
     moduleResolution: 'node',
     outDir: 'lib',
     rootDir: 'src',
+    declaration: false,
     declarationMap: false,
-    sourceMap: false,
+    removeComments: true,
   },
   include: ['src/**/*'],
   exclude: ['node_modules', 'lib', 'test']
@@ -32,8 +48,9 @@ const tsconfigESM = {
     moduleResolution: 'node',
     outDir: 'lib',
     rootDir: 'src',
+    declaration: false,
     declarationMap: false,
-    sourceMap: false,
+    removeComments: true,
   },
   include: ['src/**/*'],
   exclude: ['node_modules', 'lib', 'test']
@@ -41,8 +58,11 @@ const tsconfigESM = {
 fs.writeFileSync('tsconfig.esm.json', JSON.stringify(tsconfigESM, null, 2));
 
 try {
+  // Generate .d.ts files with comments
+  console.log('Generating .d.ts files...');
+  execSync('tsc -p tsconfig.dts.json', { stdio: 'inherit' });
+
   // Build ESM and rename to .mjs
-  // eslint-disable-next-line no-undef
   console.log('Building ESM...');
   execSync('tsc -p tsconfig.esm.json', { stdio: 'inherit' });
   // Rename ESM files to .mjs
@@ -57,15 +77,15 @@ try {
       }
     }
   });
+
   // Build CommonJS
-  // eslint-disable-next-line no-undef
   console.log('Building CommonJS...');
   execSync('tsc -p tsconfig.cjs.json', { stdio: 'inherit' });
 
-  // eslint-disable-next-line no-undef
   console.log('Build completed successfully!');
 } finally {
   // Cleanup temporary config files
   fs.unlinkSync('tsconfig.cjs.json');
   fs.unlinkSync('tsconfig.esm.json');
+  fs.unlinkSync('tsconfig.dts.json');
 }

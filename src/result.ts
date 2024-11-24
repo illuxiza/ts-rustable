@@ -5,6 +5,7 @@
  * @module Result
  */
 
+import { Enum, variant } from './match';
 import { None, Option, Some } from './option';
 
 /**
@@ -29,22 +30,22 @@ interface MatchResult<T, E, U> {
    * @param val Ok value to handle
    * @returns Result of handling the Ok value
    */
-  ok: (val: T) => U;
+  Ok?: (val: T) => U;
   /**
    * Handler for Err values
    * @param val Err value to handle
    * @returns Result of handling the Err value
    */
-  err: (val: E) => U;
+  Err?: (val: E) => U;
 }
 
 /**
- * Default match handlers for internal use
+ * Default match patterns that preserve the original value
  * @internal
  */
 const defaultMatchResult: MatchResult<any, any, any> = {
-  ok: (val: any) => val,
-  err: (val: any) => val,
+  Ok: (val) => val,
+  Err: (val) => val,
 };
 
 /**
@@ -73,7 +74,17 @@ const defaultMatchResult: MatchResult<any, any, any> = {
  *   .unwrapOr(0);       // Default if Err
  * ```
  */
-export interface Result<T, E extends Error> {
+export class Result<T, E extends Error> extends Enum {
+  @variant
+  static Ok<T, E extends Error>(_value: T): Result<T, E> {
+    return undefined as any;
+  }
+
+  @variant
+  static Err<T, E extends Error>(_error: E): Result<T, E> {
+    return undefined as any;
+  }
+
   /**
    * Checks if the Result is Ok
    * @returns True if Ok, false if Err
@@ -86,7 +97,9 @@ export interface Result<T, E extends Error> {
    * }
    * ```
    */
-  isOk(): boolean;
+  isOk(): boolean {
+    return this.is('Ok');
+  }
 
   /**
    * Checks if the Result is Err
@@ -100,352 +113,131 @@ export interface Result<T, E extends Error> {
    * }
    * ```
    */
-  isErr(): boolean;
+  isErr(): boolean {
+    return this.is('Err');
+  }
 
   /**
    * Converts to Option<T>, Some(t) if Ok(t), None if Err
    * @returns Option<T> representation of the Result
    */
-  ok(): Option<T>;
+  ok(): Option<T> {
+    return this.isOk() ? Some(super.unwrap()) : None;
+  }
 
   /**
    * Converts to Option<E>, Some(e) if Err(e), None if Ok
    * @returns Option<E> representation of the Result
    */
-  err(): Option<E>;
+  err(): Option<E> {
+    return this.isErr() ? Some(super.unwrap()) : None;
+  }
 
   /**
    * Returns the Ok value or throws if Err
    * @throws Error if the Result is Err
    * @returns T Ok value
    */
-  unwrap(): T | never;
+  unwrap<U = T>(): U {
+    if (this.isOk()) {
+      return super.unwrap();
+    }
+    throw super.unwrap();
+  }
 
   /**
    * Returns the Ok value or the provided default
    * @param opt Default value to return if Err
    * @returns T Ok value or default
    */
-  unwrapOr(opt: T): T;
+  unwrapOr(def: T): T {
+    return this.isOk() ? this.unwrap() : def;
+  }
 
   /**
    * Returns the Ok value or computes it from the error
    * @param fn Function to compute the Ok value from the error
    * @returns T Ok value or computed value
    */
-  unwrapOrElse(fn: (err: E) => T): T;
+  unwrapOrElse(fn: (err: E) => T): T {
+    return this.isOk() ? this.unwrap() : fn(super.unwrap());
+  }
 
   /**
    * Returns the Ok value or throws the error if Err
    * @throws Error if the Result is Err
    * @returns T Ok value
    */
-  unwrapOrThrow(): T;
+  unwrapOrThrow(): T {
+    if (this.isOk()) {
+      return this.unwrap();
+    }
+    throw super.unwrap();
+  }
 
   /**
    * Returns the Err value or throws if Ok
    * @throws Error if the Result is Ok
    * @returns E Err value
    */
-  unwrapErr(): E | never;
+  unwrapErr(): E {
+    if (this.isErr()) {
+      return super.unwrap();
+    }
+    throw new ReferenceError('Cannot unwrap Err value of Result.Ok');
+  }
 
   /**
    * Pattern matches on the Result
    * @param fn Match handlers for Ok and Err values
    * @returns Result of matching the Result
    */
-  match<U>(fn: Partial<MatchResult<T, E, U>>): U;
+  match<U>(fn: Partial<MatchResult<T, E, U>>): U {
+    const patterns = {
+      Ok: fn.Ok,
+      Err: fn.Err,
+    };
+    const defaults = {
+      Ok: defaultMatchResult.Ok,
+      Err: defaultMatchResult.Err,
+    };
+    return super.match(patterns, defaults);
+  }
 
   /**
    * Maps the Ok value using the provided function
    * @param fn Function to map the Ok value
    * @returns Result<U, E> mapped Result
    */
-  map<U>(fn: (val: T) => U): Result<U, E>;
+  map<U>(fn: (val: T) => U): Result<U, E> {
+    return this.isOk() ? Result.Ok(fn(this.unwrap())) : Result.Err(this.unwrapErr());
+  }
 
   /**
    * Maps the Err value using the provided function
    * @param fn Function to map the Err value
    * @returns Result<T, U> mapped Result
    */
-  mapErr<U extends Error>(fn: (err: E) => U): Result<T, U>;
+  mapErr<F extends Error>(fn: (err: E) => F): Result<T, F> {
+    return this.isOk() ? Result.Ok(this.unwrap()) : Result.Err(fn(this.unwrapErr()));
+  }
 
   /**
    * Chain Result-returning functions
    * @param fn Function to chain
    * @returns Result<U, E> chained Result
    */
-  andThen<U>(fn: (val: T) => Result<U, E>): Result<U, E>;
+  andThen<U>(fn: (val: T) => Result<U, E>): Result<U, E> {
+    return this.isOk() ? fn(this.unwrap()) : Result.Err(this.unwrapErr());
+  }
 
   /**
    * Returns this Result if Ok, or computes a new Result if Err
    * @param fn Function to compute a new Result if Err
    * @returns Result<T, E> or Result<U, E> computed Result
    */
-  orElse<U>(fn: (err: E) => Result<U, E>): Result<T, E> | Result<U, E>;
-}
-
-/**
- * Ok variant of Result
- * Contains additional type information for better type inference
- */
-interface ResOk<T, E extends Error = never> extends Result<T, E> {
-  /**
-   * Returns the contained Ok value
-   * @returns T Ok value
-   */
-  unwrap(): T;
-
-  /**
-   * Returns the contained Ok value
-   * @returns T Ok value
-   */
-  unwrapOr(opt: T): T;
-
-  /**
-   * Returns the contained Ok value
-   * @returns T Ok value
-   */
-  unwrapOrElse(fn: (err: E) => T): T;
-
-  /**
-   * Throws since Ok contains no Err value
-   * @throws Error always
-   */
-  unwrapErr(): never;
-
-  /**
-   * Pattern matches on Ok variant
-   * @param fn Match handlers for Ok value
-   * @returns Result of matching the Ok value
-   */
-  match<U>(fn: Partial<MatchResult<T, never, U>>): U;
-
-  /**
-   * Maps the contained Ok value
-   * @param fn Function to map the Ok value
-   * @returns ResOk<U, never> mapped Ok Result
-   */
-  map<U>(fn: (val: T) => U): ResOk<U, never>;
-
-  /**
-   * Returns Ok since there is no Err to map
-   * @returns ResOk<T, never> Ok Result
-   */
-  mapErr<U extends Error>(fn: (err: E) => U): ResOk<T, never>;
-
-  /**
-   * Chain Result-returning functions
-   * @param fn Function to chain
-   * @returns Result<U, E> chained Result
-   */
-  andThen<U>(fn: (val: T) => Result<U, E>): Result<U, E>;
-
-  /**
-   * Returns this Result since it's Ok
-   * @returns Result<T, E> Ok Result
-   */
-  orElse<U>(fn: (err: E) => Result<U, E>): Result<T, E>;
-}
-
-/**
- * Implementation of Ok variant of Result
- */
-class ResOkImpl<T, E extends Error> implements ResOk<T, E> {
-  #val: T;
-
-  constructor(val: T) {
-    this.#val = val;
-  }
-
-  isOk(): boolean {
-    return true;
-  }
-
-  isErr(): boolean {
-    return false;
-  }
-
-  ok(): Option<T> {
-    return Some(this.#val);
-  }
-
-  err(): Option<E> {
-    return None;
-  }
-
-  unwrap(): T {
-    return this.#val;
-  }
-
-  unwrapOr(_opt: T): T {
-    return this.#val;
-  }
-
-  unwrapOrElse(_fn: (err: E) => T): T {
-    return this.#val;
-  }
-
-  unwrapOrThrow(): T {
-    return this.#val;
-  }
-
-  unwrapErr(): never {
-    throw new ReferenceError('Cannot unwrap Err value of Result.Ok');
-  }
-
-  match<U>(matchObject: Partial<MatchResult<T, never, U>>): U {
-    const { ok } = { ...defaultMatchResult, ...matchObject };
-    return ok(this.#val);
-  }
-
-  map<U>(fn: (val: T) => U): ResOk<U, never> {
-    return Ok(fn(this.#val));
-  }
-
-  mapErr<U extends Error>(_fn: (err: E) => U): ResOk<T, never> {
-    return Ok(this.#val);
-  }
-
-  andThen<U>(fn: (val: T) => Result<U, E>): Result<U, E> {
-    return fn(this.#val);
-  }
-
-  orElse<U>(_fn: (err: E) => Result<U, E>): ResOk<T, E> {
-    return Ok(this.#val);
-  }
-}
-
-/**
- * Err variant of Result
- * Contains additional type information for better type inference
- */
-interface ResErr<T, E extends Error> extends Result<T, E> {
-  /**
-   * Throws since Err contains no Ok value
-   * @throws Error always
-   */
-  unwrap(): never;
-
-  /**
-   * Returns the provided default value
-   * @param opt Default value to return
-   * @returns T Default value
-   */
-  unwrapOr(opt: T): T;
-
-  /**
-   * Computes a value from the contained error
-   * @param fn Function to compute a value from the error
-   * @returns T Computed value
-   */
-  unwrapOrElse(fn: (err: E) => T): T;
-
-  /**
-   * Returns the contained Err value
-   * @returns E Err value
-   */
-  unwrapErr(): E;
-
-  /**
-   * Pattern matches on Err variant
-   * @param fn Match handlers for Err value
-   * @returns Result of matching the Err value
-   */
-  match<U>(fn: Partial<MatchResult<never, E, U>>): U;
-
-  /**
-   * Returns Err since there is no Ok to map
-   * @returns ResErr<never, E> Err Result
-   */
-  map<U>(fn: (val: T) => U): ResErr<never, E>;
-
-  /**
-   * Maps the contained Err value
-   * @param fn Function to map the Err value
-   * @returns ResErr<never, U> mapped Err Result
-   */
-  mapErr<U extends Error>(fn: (err: E) => U): ResErr<never, U>;
-
-  /**
-   * Returns Err since there is no Ok to chain
-   * @returns ResErr<never, E> Err Result
-   */
-  andThen<U>(fn: (val: T) => Result<U, E>): ResErr<never, E>;
-
-  /**
-   * Computes a new Result from the contained error
-   * @param fn Function to compute a new Result from the error
-   * @returns Result<U, E> computed Result
-   */
-  orElse<U>(fn: (err: E) => Result<U, E>): Result<U, E>;
-}
-
-/**
- * Implementation of Err variant of Result
- */
-class ResErrImpl<T, E extends Error> implements ResErr<T, E> {
-  #err: E;
-
-  constructor(err: E) {
-    this.#err = err;
-  }
-
-  isOk(): boolean {
-    return false;
-  }
-
-  isErr(): boolean {
-    return true;
-  }
-
-  ok(): Option<T> {
-    return None;
-  }
-
-  err(): Option<E> {
-    return Some(this.#err);
-  }
-
-  unwrap(): never {
-    throw new ReferenceError('Cannot unwrap Ok value of Result.Err');
-  }
-
-  unwrapOr(opt: T): T {
-    return opt;
-  }
-
-  unwrapOrElse(fn: (err: E) => T): T {
-    return fn(this.#err);
-  }
-
-  unwrapOrThrow(): never {
-    throw this.#err;
-  }
-
-  unwrapErr(): E {
-    return this.#err;
-  }
-
-  match<U>(matchObject: Partial<MatchResult<never, E, U>>): U {
-    const { err } = { ...defaultMatchResult, ...matchObject };
-    return err(this.#err);
-  }
-
-  map<U>(_fn: (_val: T) => U): ResErr<never, E> {
-    return Err(this.#err);
-  }
-
-  mapErr<U extends Error>(fn: (err: E) => U): ResErr<never, U> {
-    return Err(fn(this.#err));
-  }
-
-  andThen<U>(_fn: (val: T) => Result<U, E>): ResErr<never, E> {
-    return Err(this.#err);
-  }
-
-  orElse<U>(fn: (err: E) => Result<U, E>): Result<U, E> {
-    return fn(this.#err);
+  orElse<F extends Error>(fn: (err: E) => Result<T, F>): Result<T, F> {
+    return this.isOk() ? Result.Ok(this.unwrap()) : fn(this.unwrapErr());
   }
 }
 
@@ -463,8 +255,8 @@ class ResErrImpl<T, E extends Error> implements ResErr<T, E> {
  *   .unwrapOr("error");
  * ```
  */
-export function Ok<T, E extends Error>(val: T): ResOk<T, E> {
-  return new ResOkImpl(val);
+export function Ok<T, E extends Error>(val: T): Result<T, E> {
+  return Result.Ok(val);
 }
 
 /**
@@ -481,6 +273,6 @@ export function Ok<T, E extends Error>(val: T): ResOk<T, E> {
  *   .unwrapOr(0);
  * ```
  */
-export function Err<T, E extends Error>(err: E): ResErr<T, E> {
-  return new ResErrImpl(err);
+export function Err<T, E extends Error>(err: E): Result<T, E> {
+  return Result.Err(err);
 }

@@ -44,6 +44,7 @@ export default [
       ],
 
       // General rules
+      'no-redeclare': 'off',
       'no-unused-vars': 'off',
       'no-console': 'warn',
       eqeqeq: ['error', 'always'],
@@ -63,6 +64,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
+      globals: { ...globals.node },
     },
   },
   {

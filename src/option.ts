@@ -1,3 +1,4 @@
+import { Enum, variant } from './match';
 /**
  * Interface defining the pattern matching behavior for Option types.
  * Similar to Rust's match expression for Option<T>.
@@ -15,8 +16,8 @@
  * ```
  */
 interface MatchOption<T, U> {
-  some: (val: T) => U;
-  none: (() => U) | U;
+  Some?: (val: T) => U;
+  None?: (() => U) | U;
 }
 
 /**
@@ -25,8 +26,8 @@ interface MatchOption<T, U> {
  * @internal
  */
 const defaultMatchOption: MatchOption<any, any> = {
-  some: (val) => val,
-  none: undefined,
+  Some: (val) => val,
+  None: null,
 };
 
 /**
@@ -53,7 +54,17 @@ const defaultMatchOption: MatchOption<any, any> = {
  *   .unwrapOr(0);       // Default if None
  * ```
  */
-export interface Option<T> {
+export class Option<T> extends Enum {
+  @variant
+  static Some<T>(_value: T): Option<T> {
+    return undefined as any;
+  }
+
+  @variant
+  static None<T>(): Option<T> {
+    return undefined as any;
+  }
+
   /**
    * Checks if the Option contains a value (Some variant)
    * @returns true if Some, false if None
@@ -66,7 +77,9 @@ export interface Option<T> {
    * }
    * ```
    */
-  isSome(): boolean;
+  isSome(): boolean {
+    return this.is('Some') && typeof super.unwrap() !== 'undefined' && super.unwrap() !== null;
+  }
 
   /**
    * Tests if Option is Some and the value matches a predicate
@@ -81,7 +94,9 @@ export interface Option<T> {
    * }
    * ```
    */
-  isSomeAnd(fn: (val: T) => boolean): boolean;
+  isSomeAnd(fn: (val: T) => boolean): boolean {
+    return this.isSome() && fn(this.unwrap());
+  }
 
   /**
    * Checks if the Option is None variant
@@ -95,7 +110,9 @@ export interface Option<T> {
    * }
    * ```
    */
-  isNone(): boolean;
+  isNone(): boolean {
+    return this.is('None') || typeof super.unwrap() === 'undefined' || super.unwrap() === null;
+  }
 
   /**
    * Pattern matches on the Option, executing different code paths for Some and None cases.
@@ -113,8 +130,17 @@ export interface Option<T> {
    * }); // result = 10
    * ```
    */
-  match<U>(fn: Partial<MatchOption<T, U>>): U;
-
+  match<U>(fn: Partial<MatchOption<T, U>>): U {
+    const patterns = {
+      Some: fn.Some,
+      None: fn.None,
+    };
+    const defaults = {
+      Some: defaultMatchOption.Some,
+      None: defaultMatchOption.None,
+    };
+    return super.match(patterns, defaults);
+  }
   /**
    * Transforms the Option's contained value using a mapping function
    * @param fn Function to transform the contained value
@@ -126,7 +152,9 @@ export interface Option<T> {
    * const mapped = opt.map(n => n.toString()); // Some("5")
    * ```
    */
-  map<U>(fn: (val: T) => U): Option<U>;
+  map<U>(fn: (val: T) => U): Option<U> {
+    return this.isSome() ? Option.Some(fn(this.unwrap())) : Option.None();
+  }
 
   /**
    * Maps the contained value or returns a default if None
@@ -140,7 +168,9 @@ export interface Option<T> {
    * const result = opt.mapOr(0, n => n * 2); // 10
    * ```
    */
-  mapOr<U>(def: U, fn: (val: T) => U): U;
+  mapOr<U>(def: U, fn: (val: T) => U): U {
+    return this.isSome() ? fn(this.unwrap()) : def;
+  }
 
   /**
    * Maps the contained value or computes a default if None
@@ -154,7 +184,9 @@ export interface Option<T> {
    * const result = opt.mapOrElse(() => 0, n => n * 2); // 10
    * ```
    */
-  mapOrElse<U>(def: () => U, fn: (val: T) => U): U;
+  mapOrElse<U>(def: () => U, fn: (val: T) => U): U {
+    return this.isSome() ? fn(this.unwrap()) : def();
+  }
 
   /**
    * Chains Option-returning functions
@@ -167,7 +199,9 @@ export interface Option<T> {
    * const result = opt.andThen(n => Some(n * 2)); // Some(10)
    * ```
    */
-  andThen<U>(fn: (val: T) => Option<U>): Option<U>;
+  andThen<U>(fn: (val: T) => Option<U>): Option<U> {
+    return this.isSome() ? fn(this.unwrap()) : Option.None();
+  }
 
   /**
    * Returns this Option if Some, or computes a new Option if None
@@ -180,8 +214,9 @@ export interface Option<T> {
    * const result = empty.orElse(() => Some(0)); // Some(0)
    * ```
    */
-  orElse<U>(fn: () => Option<U>): Option<T | U>;
-
+  orElse<U>(fn: () => Option<U>): Option<T | U> {
+    return this.isSome() ? this : fn();
+  }
   /**
    * Returns this Option if Some, or the provided Option if None
    * @param opt Alternative Option to use if None
@@ -193,7 +228,9 @@ export interface Option<T> {
    * const result = empty.or(Some(0)); // Some(0)
    * ```
    */
-  or<U>(opt: Option<U>): Option<T | U>;
+  or<U extends T>(opt: Option<U>): Option<T> {
+    return this.isSome() ? this : opt;
+  }
 
   /**
    * Returns None if this is None, otherwise returns opt
@@ -206,7 +243,9 @@ export interface Option<T> {
    * const result = opt.and(Some(0)); // Some(0)
    * ```
    */
-  and<U>(opt: Option<U>): Option<U>;
+  and<U>(opt: Option<U>): Option<U> {
+    return this.isSome() ? opt : Option.None();
+  }
 
   /**
    * Returns None if the predicate returns false, otherwise returns the Option
@@ -219,7 +258,9 @@ export interface Option<T> {
    * const result = opt.filter(n => n > 0); // Some(5)
    * ```
    */
-  filter(fn: (val: T) => boolean): Option<T>;
+  filter(fn: (val: T) => boolean): Option<T> {
+    return this.isSome() && fn(this.unwrap()) ? this : Option.None();
+  }
 
   /**
    * Returns the contained value or a default
@@ -232,7 +273,9 @@ export interface Option<T> {
    * const result = empty.unwrapOr(0); // 0
    * ```
    */
-  unwrapOr(def: T): T;
+  unwrapOr<U>(def: U): U {
+    return this.isSome() ? this.unwrap() : def;
+  }
 
   /**
    * Returns the contained value or computes a default
@@ -245,7 +288,9 @@ export interface Option<T> {
    * const result = empty.unwrapOrElse(() => 0); // 0
    * ```
    */
-  unwrapOrElse(fn: () => T): T;
+  unwrapOrElse<U>(fn: () => U): U {
+    return this.isSome() ? this.unwrap() : fn();
+  }
 
   /**
    * Returns the contained value or throws if None
@@ -258,239 +303,18 @@ export interface Option<T> {
    * const result = opt.unwrap(); // 5
    * ```
    */
-  unwrap(): T | never;
-}
-
-/**
- * Interface for Some variant of Option
- * Contains additional type information for better type inference
- * @template T The type of the contained value
- */
-interface OptSome<T> extends Option<T> {
-  /**
-   * Returns the contained value
-   * @returns The contained value
-   */
-  unwrap(): T;
-
-  /**
-   * Transforms the Option's contained value using a mapping function
-   * @param fn Function to transform the contained value
-   * @returns New Option containing the transformed value
-   */
-  map<U>(fn: (val: T) => U): OptSome<U>;
-
-  /**
-   * Returns this Option if Some, or the provided Option if None
-   * @param opt Alternative Option to use if None
-   * @returns This Option if Some, opt if None
-   */
-  or<U>(opt: Option<U>): Option<T>;
-
-  /**
-   * Returns None if this is None, otherwise returns opt
-   * @param opt Option to return if this is Some
-   * @returns None if this is None, opt otherwise
-   */
-  and<U>(opt: Option<U>): Option<U>;
-}
-
-/**
- * Implementation of Some variant of Option
- * @template T The type of the contained value
- */
-class OptSomeImpl<T> implements OptSome<T> {
-  readonly #val: T;
-
-  constructor(val: T) {
-    this.#val = val;
-  }
-
-  isSome(): boolean {
-    return true;
-  }
-
-  isNone(): boolean {
-    return false;
-  }
-
-  isSomeAnd(fn: (val: T) => boolean): boolean {
-    return fn(this.#val);
-  }
-
-  match<U>(fn: Partial<MatchOption<T, U>>): U {
-    const { some } = { ...defaultMatchOption, ...fn };
-    return some(this.#val);
-  }
-
-  map<U>(fn: (val: T) => U): OptSome<U> {
-    return new OptSomeImpl<U>(fn(this.#val));
-  }
-
-  mapOr<U>(_def: U, fn: (val: T) => U): U {
-    return fn(this.#val);
-  }
-
-  mapOrElse<U>(_def: () => U, fn: (val: T) => U): U {
-    return fn(this.#val);
-  }
-
-  andThen<U>(fn: (val: T) => Option<U>): Option<U> {
-    return fn(this.#val);
-  }
-
-  orElse<U>(_fn: () => Option<U>): Option<T> {
-    return this;
-  }
-
-  or<U>(_opt: Option<U>): Option<T> {
-    return this;
-  }
-
-  and<U>(opt: Option<U>): Option<U> {
-    return opt;
-  }
-
-  filter(fn: (val: T) => boolean): Option<T> {
-    return fn(this.#val) ? this : None;
-  }
-
-  unwrapOr(_def: T): T {
-    return this.#val;
-  }
-
-  unwrapOrElse(_fn: () => T): T {
-    return this.#val;
-  }
-
-  unwrap(): T {
-    return this.#val;
-  }
-}
-
-/**
- * Interface for None variant of Option
- * Contains additional type information for better type inference
- * @template T The type parameter (always empty)
- */
-interface OptNone<T> extends Option<T> {
-  /**
-   * Throws a ReferenceError
-   * @throws {ReferenceError} Always
-   */
-  unwrap(): never;
-
-  /**
-   * Returns None
-   * @param fn Function to transform the contained value (not used)
-   * @returns None
-   */
-  map<U>(_fn: (val: T) => U): OptNone<U>;
-
-  /**
-   * Returns the provided Option
-   * @param opt Alternative Option to use
-   * @returns opt
-   */
-  or<U>(opt: Option<U>): Option<U>;
-
-  /**
-   * Returns None
-   * @param opt Option to return (not used)
-   * @returns None
-   */
-  and<U>(_opt: Option<U>): OptNone<U>;
-}
-
-/**
- * Implementation of None variant of Option
- * @template T The type parameter (always empty)
- */
-class OptNoneImpl<T> implements OptNone<T> {
-  isSome(): boolean {
-    return false;
-  }
-
-  isNone(): boolean {
-    return true;
-  }
-
-  isSomeAnd(_fn: (val: T) => boolean): boolean {
-    return false;
-  }
-
-  match<U>(matchObject: Partial<MatchOption<T, U>>): U {
-    const { none } = { ...defaultMatchOption, ...matchObject };
-
-    if (typeof none === 'function') {
-      return (none as () => U)();
+  unwrap<U = T>(): U {
+    if (this.isSome()) {
+      return super.unwrap<U>();
     }
-
-    return none;
-  }
-
-  map<U>(_fn: (val: T) => U): OptNone<U> {
-    return None;
-  }
-
-  mapOr<U>(def: U, _fn: (val: T) => U): U {
-    return def;
-  }
-
-  mapOrElse<U>(fn: () => U, _fn: (val: T) => U): U {
-    return fn();
-  }
-
-  andThen<U>(_fn: (val: T) => Option<U>): OptNone<U> {
-    return None;
-  }
-
-  orElse<U>(fn: () => Option<U>): Option<U> {
-    return fn();
-  }
-
-  or<U>(opt: Option<U>): Option<U> {
-    return opt;
-  }
-
-  and<U>(_opt: Option<U>): OptNone<U> {
-    return None;
-  }
-
-  filter(_fn: (val: T) => boolean): OptNone<T> {
-    return None;
-  }
-
-  unwrapOr(def: T): T {
-    return def;
-  }
-
-  unwrapOrElse(fn: () => T): T {
-    return fn();
-  }
-
-  unwrap(): never {
-    throw new ReferenceError('Trying to unwrap None.');
+    throw new ReferenceError('Called unwrap on a None value');
   }
 }
 
-/**
- * Creates a Some variant of Option containing a value
- * @template T The type of the value
- * @param val The value to wrap in Some
- * @returns Option<T> containing the value
- *
- * @example
- * ```typescript
- * const opt = Some(5);
- * const mapped = opt.map(n => n.toString()); // Some("5")
- * ```
- */
-export function Some<T>(val?: T): Option<T> {
-  return typeof val === 'undefined' || val === null ? None : new OptSomeImpl(val);
-}
+// Export a singleton None instance for convenience
+export const None = Option.None<any>();
 
-/**
- * Singleton instance of None variant of Option
- */
-export const None = new OptNoneImpl<any>();
+// Helper function to create Some instances
+export function Some<T>(val: T): Option<T> {
+  return Option.Some(val);
+}

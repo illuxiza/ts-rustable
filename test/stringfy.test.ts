@@ -102,3 +102,10 @@ describe('stringify', () => {
     expect(result).toBe('{arr:[1,{nested:true}],bool:true,num:123,obj:{a:1,b:[2,3]},str:"test"}');
   });
 });
+
+describe('stringify special types', () => {
+  test('should stringify bigint values', () => {
+    const big = BigInt('9007199254740991');
+    expect(stringify(big)).toBe('9007199254740991');
+  });
+});

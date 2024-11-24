@@ -18,8 +18,8 @@ describe('Option', () => {
     test('should handle pattern matching', () => {
       const some = Some(42);
       const result = some.match({
-        some: (x) => x * 2,
-        none: 0,
+        Some: (x) => x * 2,
+        None: 0,
       });
       expect(result).toBe(84);
     });
@@ -67,6 +67,29 @@ describe('Option', () => {
       expect(some.unwrapOr(0)).toBe(42);
       expect(some.unwrapOrElse(() => 0)).toBe(42);
     });
+
+    test('should handle null and undefined values', () => {
+      const nullOpt = Some(null);
+      const undefOpt = Some(undefined);
+
+      expect(nullOpt.isNone()).toBe(true);
+      expect(undefOpt.isNone()).toBe(true);
+
+      expect(() => nullOpt.unwrap()).toThrow(ReferenceError);
+      expect(() => undefOpt.unwrap()).toThrow(ReferenceError);
+
+      const nullResult = nullOpt.match({
+        Some: (val) => val,
+        None: 'default',
+      });
+      expect(nullResult).toBe(null);
+
+      const undefResult = undefOpt.match({
+        Some: (val) => val,
+        None: 'default',
+      });
+      expect(undefResult).toBe(undefined);
+    });
   });
 
   describe('None', () => {
@@ -78,14 +101,14 @@ describe('Option', () => {
 
     test('should handle pattern matching', () => {
       const result = None.match({
-        some: (_x) => 42,
-        none: 0,
+        Some: (_x) => 42,
+        None: 0,
       });
       expect(result).toBe(0);
 
       const resultWithFn = None.match({
-        some: (_x) => 42,
-        none: () => 0,
+        Some: (_x) => 42,
+        None: () => 0,
       });
       expect(resultWithFn).toBe(0);
     });
@@ -124,6 +147,38 @@ describe('Option', () => {
       expect(None.unwrapOrElse(() => 42)).toBe(42);
       expect(() => None.unwrap()).toThrow(ReferenceError);
       expect(None.unwrapOr(null)).toBe(null);
+    });
+  });
+
+  describe('Default match patterns', () => {
+    test('should use default None pattern', () => {
+      const opt = None;
+      const some = Some(42);
+      expect(opt.match({})).toBe(null);
+      expect(some.match({})).toBe(42);
+    });
+  });
+
+  describe('Static variant methods', () => {
+    test('Option.Some should create Some variant', () => {
+      const value = 42;
+      const opt = Option.Some(value);
+      expect(opt.isSome()).toBe(true);
+      expect(opt.unwrap()).toBe(value);
+    });
+
+    test('Option.None should create None variant', () => {
+      const opt = Option.None<number>();
+      expect(opt.isNone()).toBe(true);
+      expect(() => opt.unwrap()).toThrow(ReferenceError);
+    });
+
+    test('Option.Some should handle null/undefined', () => {
+      const nullOpt = Option.Some(null);
+      const undefOpt = Option.Some(undefined);
+
+      expect(nullOpt.isNone()).toBe(true);
+      expect(undefOpt.isNone()).toBe(true);
     });
   });
 
@@ -177,6 +232,32 @@ describe('Option', () => {
     test('should handle nested Options', () => {
       const nested = Some(Some(42));
       expect(nested.andThen((x) => x).unwrap()).toBe(42);
+    });
+  });
+
+  describe('Additional edge cases', () => {
+    test('should handle isSomeAnd with null/undefined', () => {
+      const nullOpt = Some(null);
+      const undefOpt = Some(undefined);
+
+      expect(nullOpt.isSomeAnd((val) => val === null)).toBe(false);
+      expect(undefOpt.isSomeAnd((val) => val === undefined)).toBe(false);
+    });
+
+    test('should handle unwrapOr with null/undefined', () => {
+      const nullOpt = Some(null);
+      const undefOpt = Some(undefined);
+
+      expect(nullOpt.unwrapOr('default')).toBe('default');
+      expect(undefOpt.unwrapOr('default')).toBe('default');
+    });
+
+    test('should handle unwrapOrElse with null/undefined', () => {
+      const nullOpt = Some(null);
+      const undefOpt = Some(undefined);
+
+      expect(nullOpt.unwrapOrElse(() => 'computed')).toBe('computed');
+      expect(undefOpt.unwrapOrElse(() => 'computed')).toBe('computed');
     });
   });
 });

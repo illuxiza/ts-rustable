@@ -115,21 +115,24 @@ export abstract class Enum {
    * ```
    */
   match<U>(
-    patterns: Partial<{ [key: string]: (...args: any[]) => U }>,
-    defaultPatterns?: { [key: string]: (...args: any[]) => U },
+    patterns: Partial<{ [key: string]: ((...args: any[]) => U) | U }>,
+    defaultPatterns?: { [key: string]: ((...args: any[]) => U) | U },
   ): U {
     const variantName = this.variant.name;
-    const handler = patterns[variantName] || defaultPatterns?.[variantName];
+    const handler = patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
 
-    if (!handler) {
+    if (undefined === handler) {
       throw new Error(`Non-exhaustive pattern matching: missing handler for variant '${variantName}'`);
     }
-
-    if (!this.variant.args || this.variant.args.length === 0) {
-      return handler();
+    if (typeof handler !== 'function') {
+      return handler;
     }
 
-    return handler(...this.variant.args);
+    const fn = handler as (...args: any[]) => U;
+    if (!this.variant.args || this.variant.args.length === 0) {
+      return fn();
+    }
+    return fn(...this.variant.args);
   }
 
   [Symbol('ENUM')]() {

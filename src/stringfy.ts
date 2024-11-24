@@ -156,7 +156,7 @@ export function stringifyObject(obj: any) {
  * @returns String representation of the value
  */
 export const stringify = (obj: any) => {
-  if (obj === null || obj === undefined) {
+  if (obj === null || typeof obj === 'undefined') {
     return '';
   }
   if (typeof obj === 'string') {

@@ -21,7 +21,6 @@ A TypeScript library that brings Rust's powerful features and patterns to TypeSc
 ### Type Conversion System
 
 - `From` trait for type conversion
-- `Into` trait for reverse conversion
 - Type-safe conversion between compatible types
 - Zero runtime overhead conversions
 
@@ -95,7 +94,7 @@ console.log(hasTrait(person, Display)); // true
 #### Type Conversion
 
 ```typescript
-import { From, from, Into, into, implTrait } from 'rustable';
+import { From, from, implFrom } from 'rustable';
 
 // Define types
 class Celsius {
@@ -107,7 +106,7 @@ class Fahrenheit {
 }
 
 // Implement From trait for temperature conversion
-implTrait(Celsius, From, {
+implFrom(Celsius, Fahrenheit, {
   from(fahrenheit: Fahrenheit) {
     return new Celsius((fahrenheit.value - 32) * 5/9);
   }
@@ -118,15 +117,8 @@ const fahrenheit = new Fahrenheit(212);
 const celsius = from(fahrenheit, Celsius);
 console.log(celsius.value); // 100
 
-// Implement Into trait for reverse conversion
-implTrait(Celsius, Into, {
-  into(this: Celsius, _type: typeof Fahrenheit) {
-    return new Fahrenheit(this.value * 9/5 + 32);
-  }
-});
-
 // Convert using Into
-const backToFahrenheit = into(celsius, Fahrenheit);
+const backToFahrenheit = celsius.into(Fahrenheit);
 console.log(backToFahrenheit.value); // 212
 ```
 
@@ -149,8 +141,8 @@ const userName = findUser(1)
 
 // Pattern matching
 const greeting = findUser(2).match({
-  some: name => `Hello, ${name}!`,
-  none: () => "User not found"
+  Some: name => `Hello, ${name}!`,
+  None: () => "User not found"
 });
 ```
 
@@ -175,8 +167,8 @@ const result = divide(10, 2)
 
 // Pattern matching with Result
 const message = divide(10, 0).match({
-  ok: value => `Result: ${value}`,
-  err: error => `Error: ${error.message}`
+  Ok: value => `Result: ${value}`,
+  Err: error => `Error: ${error.message}`
 });
 ```
 
@@ -306,8 +298,8 @@ Type-safe conversion between compatible types:
 
 - `From<T>`: Trait for converting from type T
 - `from<T>`: Function to convert from type T
-- `Into<T>`: Trait for converting into type T
-- `into<T>`: Function to convert into type T
+- `implFrom<T1, T2>`: Function to implement From<T1> for T2
+- `Object.into<T>`: Conversion method from Object to T
 
 ### Option Type Operations
 

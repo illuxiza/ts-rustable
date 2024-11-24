@@ -101,4 +101,22 @@ describe('hash', () => {
     const complex3 = { ...complex1, num: 456 };
     expect(hash(complex1)).not.toBe(hash(complex3));
   });
+
+  describe('hash special types', () => {
+    test('should hash symbol values', () => {
+      const sym = Symbol('test');
+      const sym2 = Symbol('test');
+      expect(hash(sym)).toBe(hash(sym2));
+    });
+
+    test('should hash bigint values', () => {
+      const big = BigInt('9007199254740991');
+      const big2 = BigInt('9007199254740991');
+      expect(hash(big)).toBe(hash(big2));
+    });
+
+    test('should hash undefined value', () => {
+      expect(hash(undefined)).toBe(-1);
+    });
+  });
 });

@@ -47,8 +47,8 @@ describe('Result Type', () => {
 
     test('match() calls ok handler', () => {
       const result = ok.match({
-        ok: (val) => val * 2,
-        err: () => -1,
+        Ok: (val) => val * 2,
+        Err: () => -1,
       });
       expect(result).toBe(okValue * 2);
     });
@@ -99,7 +99,7 @@ describe('Result Type', () => {
     });
 
     test('unwrap() throws', () => {
-      expect(() => err.unwrap()).toThrow(ReferenceError);
+      expect(() => err.unwrap()).toThrow('test error');
     });
 
     test('unwrapOr() returns default value', () => {
@@ -121,8 +121,8 @@ describe('Result Type', () => {
 
     test('match() calls err handler', () => {
       const result = err.match({
-        ok: () => 42,
-        err: (e) => e.message.length,
+        Ok: () => 42,
+        Err: (e) => e.message.length,
       });
       expect(result).toBe(errorMessage.length);
     });
@@ -217,7 +217,7 @@ describe('Result Type', () => {
     test('match with only ok handler on Ok', () => {
       const ok = Ok(42);
       const result = ok.match({
-        ok: (val) => val * 2,
+        Ok: (val) => val * 2,
       });
       expect(result).toBe(84);
     });
@@ -225,7 +225,7 @@ describe('Result Type', () => {
     test('match with only err handler on Err', () => {
       const err = Err(new Error('test'));
       const result = err.match({
-        err: (e) => e.message,
+        Err: (e) => e.message,
       });
       expect(result).toBe('test');
     });
@@ -236,6 +236,25 @@ describe('Result Type', () => {
 
       expect(ok.match({})).toBe(42);
       expect((err.match({}) as Error).message).toBe('test');
+    });
+  });
+
+  describe('Additional edge cases', () => {
+    test('unwrap should throw the error for Err', () => {
+      const error = new Error('test error');
+      const err = Err(error);
+      expect(() => err.unwrap()).toThrow(error);
+    });
+
+    test('unwrapOrThrow should throw the error for Err', () => {
+      const error = new Error('test error');
+      const err = Err(error);
+      expect(() => err.unwrapOrThrow()).toThrow(error);
+    });
+
+    test('unwrapOrThrow should return value for Ok', () => {
+      const ok = Ok(42);
+      expect(ok.unwrapOrThrow()).toBe(42);
     });
   });
 });

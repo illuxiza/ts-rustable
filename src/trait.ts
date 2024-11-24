@@ -2,6 +2,7 @@
  * Core trait system implementation for TypeScript
  * Provides Rust-like trait functionality with compile-time type checking
  */
+import { Constructor } from './common';
 import { typeId, TypeId } from './type_id';
 
 /**
@@ -27,20 +28,12 @@ const traitSymbol = Symbol('TRAIT');
  * @template Class The class type implementing the trait
  * @template Trait The trait being implemented
  */
-type TraitImplementation<Class, Trait> = {
+export type TraitImplementation<Class, Trait> = {
   [K in keyof Trait]?: (
     this: Class,
     ...args: any[]
   ) => Trait[K] extends (...args: any[]) => any ? ReturnType<Trait[K]> : never;
 };
-
-/**
- * Generic constructor type.
- */
-interface Constructor<T> {
-  new (...args: any[]): T;
-  prototype: any;
-}
 
 /**
  * Constructor type for traits.
@@ -56,24 +49,26 @@ interface TraitConstructor<T> extends Constructor<T> {
  * @param trait The trait to collect parents for
  * @param visited Set of visited traits to prevent circular dependencies
  * @param cache Whether to use caching
+ * @param genericParams Optional array of generic type parameters
  * @returns Array of parent trait constructors
  */
 function collectParentTraits(
   trait: TraitConstructor<any>,
   visited = new Set<TypeId>(),
   cache = true,
+  genericParams?: any[],
 ): TraitConstructor<any>[] {
-  const cached = cache ? parentTraitsCache.get(trait) : undefined;
-  if (cached) {
-    return cached;
-  }
-
-  const traitId = typeId(trait);
+  const traitId = typeId(trait, genericParams);
   if (visited.has(traitId)) {
     // Return empty array for circular dependencies in inheritance chain
     return [];
   }
   visited.add(traitId);
+
+  const cached = cache ? parentTraitsCache.get(trait) : undefined;
+  if (cached) {
+    return cached;
+  }
 
   const parents: TraitConstructor<any>[] = [];
   let proto = Object.getPrototypeOf(trait.prototype);
@@ -81,7 +76,7 @@ function collectParentTraits(
     const parentTrait = proto.constructor;
     if (parentTrait && parentTrait !== Object) {
       parents.push(parentTrait);
-      const parentParents = collectParentTraits(parentTrait, visited, false);
+      const parentParents = collectParentTraits(parentTrait, visited, false, genericParams);
       parents.push(...parentParents);
     }
     proto = Object.getPrototypeOf(proto);
@@ -103,9 +98,9 @@ function collectParentTraits(
  * @example
  * ```typescript
  * @trait
- * class Display {
- *   display(): string {
- *     return '[Object]';  // Default implementation
+ * class Display<T> {
+ *   display(value: T): string {
+ *     return String(value);  // Default implementation
  *   }
  * }
  * ```
@@ -141,16 +136,55 @@ export function trait(traitClass: TraitConstructor<any>) {
  * });
  * ```
  */
-export function implTrait<Class, Trait>(
+export function implTrait<Class extends object, Trait extends object>(
   target: Constructor<Class>,
   trait: TraitConstructor<Trait>,
+  implementation?: TraitImplementation<Class, Trait>,
+): void;
+export function implTrait<Class extends object, Trait extends object>(
+  target: Constructor<Class>,
+  trait: TraitConstructor<Trait>,
+  generic: Constructor<any>,
+  implementation?: TraitImplementation<Class, Trait>,
+): void;
+export function implTrait<Class extends object, Trait extends object>(
+  target: Constructor<Class>,
+  trait: TraitConstructor<Trait>,
+  generic: Constructor<any>[],
+  implementation?: TraitImplementation<Class, Trait>,
+): void;
+export function implTrait<Class extends object, Trait extends object>(
+  target: Constructor<Class>,
+  trait: TraitConstructor<Trait>,
+  generic?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
   implementation?: TraitImplementation<Class, Trait>,
 ): void {
   if (!trait[traitSymbol]) {
     throw new Error('Trait must be implemented using the trait function');
   }
 
-  const traitId = typeId(trait);
+  // Handle generic parameters
+  let genericParams: any | undefined;
+  let actualImplementation: TraitImplementation<Class, Trait> | undefined;
+
+  if (implementation) {
+    genericParams = generic;
+    if (Array.isArray(generic) && generic.length === 0) {
+      throw new ReferenceError('At least one generic type of array parameter is required');
+    } else if (!Array.isArray(generic) && typeof generic !== 'function') {
+      throw new Error('Invalid generic parameter');
+    }
+    actualImplementation = implementation;
+  } else if (generic && (typeof generic === 'function' || Array.isArray(generic))) {
+    if (Array.isArray(generic) && generic.length === 0) {
+      throw new ReferenceError('At least one generic type of array parameter is required');
+    }
+    genericParams = generic;
+  } else if (generic && typeof generic === 'object') {
+    actualImplementation = generic;
+  }
+
+  const traitId = typeId(trait, genericParams);
   const targetProto = target.prototype;
 
   if (!traitRegistry.has(targetProto)) {
@@ -174,9 +208,10 @@ export function implTrait<Class, Trait>(
     throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
   }
 
-  const parents = collectParentTraits(trait);
+  // Check parent traits
+  const parents = collectParentTraits(trait, new Set(), true, genericParams);
   parents.forEach((parent) => {
-    const parentId = typeId(parent);
+    const parentId = typeId(parent, genericParams);
     if (!implMap.has(parentId)) {
       throw new Error(`Parent trait ${parent.name} not implemented for ${target.name}`);
     }
@@ -197,8 +232,8 @@ export function implTrait<Class, Trait>(
   });
 
   // Add custom implementation methods
-  if (implementation) {
-    Object.entries(implementation).forEach(([key, method]) => {
+  if (actualImplementation) {
+    Object.entries(actualImplementation).forEach(([key, method]) => {
       if (!(key in boundImpl)) {
         throw new Error(`Method ${key} not defined in trait`);
       }
@@ -243,18 +278,23 @@ export function implTrait<Class, Trait>(
  *
  * @param target The value to check
  * @param trait The trait to check for
+ * @param generic Optional generic type parameter
  * @returns true if the value implements the trait
  *
  * @example
  * ```typescript
  * const point = new Point(1, 2);
- * if (hasTrait(point, Display)) {
+ * if (hasTrait(point, Display, String)) {
  *   console.log(point.display());
  * }
  * ```
  */
-export function hasTrait<Class, Trait>(target: Class, trait: Constructor<Trait>): boolean {
-  const traitId = typeId(trait);
+export function hasTrait<Class extends object, Trait extends object>(
+  target: Class,
+  trait: Constructor<Trait>,
+  generic?: Constructor<any> | Constructor<any>[],
+): boolean {
+  const traitId = typeId(trait, generic);
   const implMap = traitRegistry.get(Object.getPrototypeOf(target));
   return implMap?.has(traitId) ?? false;
 }
@@ -264,20 +304,36 @@ export function hasTrait<Class, Trait>(target: Class, trait: Constructor<Trait>)
  *
  * @param target The value to get the trait implementation from
  * @param trait The trait to get
+ * @param generic Optional generic type parameter
  * @returns The trait implementation or undefined if not implemented
  *
  * @example
+ * ```typescript
  * const point = new Point(1, 2);
- * const display = useTrait(point, Display);
+ * const display = useTrait(point, Display, String);
  * if (display) {
- *   console.log(display.display());
+ *   console.log(display.display("test"));
  * }
+ * ```
  */
-export function useTrait<Class, Trait>(target: Class, trait: Constructor<Trait>): Trait | undefined {
-  const traitId = typeId(trait);
+export function useTrait<Class extends object, Trait extends object>(
+  target: Class,
+  trait: Constructor<Trait>,
+  generic?: Constructor<any> | Constructor<any>[],
+): Trait {
+  const traitId = typeId(trait, generic);
+
   const implMap = traitRegistry.get(Object.getPrototypeOf(target));
   if (!implMap?.has(traitId)) {
-    return undefined;
+    let traitName = trait.name;
+    if (generic) {
+      if (Array.isArray(generic)) {
+        traitName += `<${generic.map((g) => g.name).join(', ')}>`;
+      } else {
+        traitName += `<${generic.name}>`;
+      }
+    }
+    throw new Error(`Trait ${traitName} not implemented for ${target.constructor.name}`);
   }
 
   const impl = implMap.get(traitId);

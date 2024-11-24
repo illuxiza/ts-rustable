@@ -209,4 +209,28 @@ describe('Iterator Utilities', () => {
       expect(result).toEqual([]);
     });
   });
+
+  describe('error handling', () => {
+    test('chunks should throw on invalid size', () => {
+      expect(() => [...chunks([], 0)]).toThrow('Chunk size must be at least 1');
+      expect(() => [...chunks([], -1)]).toThrow('Chunk size must be at least 1');
+    });
+
+    test('windows should throw on invalid size', () => {
+      expect(() => [...windows([], 0)]).toThrow('Window size must be at least 1');
+      expect(() => [...windows([], -1)]).toThrow('Window size must be at least 1');
+    });
+  });
+
+  describe('groupBy sorting', () => {
+    test('should sort groups by key', () => {
+      const items = ['a', 'b', 'c', 'd'];
+      const groups = [...groupBy(items, (x) => (x > 'b' ? 'z' : 'a'))];
+
+      expect(groups).toEqual([
+        ['a', ['a', 'b']],
+        ['z', ['c', 'd']],
+      ]);
+    });
+  });
 });

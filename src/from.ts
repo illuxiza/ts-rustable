@@ -1,4 +1,16 @@
-import { trait, useTrait } from './trait';
+import { Constructor } from './common';
+import { implTrait, trait, TraitImplementation, useTrait } from './trait';
+
+declare global {
+  interface Object {
+    into<T>(targetType: Constructor<T>): T;
+  }
+}
+
+// Add into method to Object.prototype
+Object.prototype.into = function <T>(targetType: Constructor<T>): T {
+  return from(this, targetType as any) as T;
+};
 
 /**
  * From trait for type conversion.
@@ -6,29 +18,28 @@ import { trait, useTrait } from './trait';
  * This is the reciprocal of the Into trait.
  *
  * @example
- * class Meters {
- *   constructor(public value: number) {}
+ * class Target {
+ *   constructor(public value: string) {}
  * }
  *
- * class Centimeters {
- *   value: number;
+ * class Source {
+ *   constructor(public id: number) {}
  * }
  *
- * // Implement From<Meters> for Centimeters
- * implTrait(Centimeters, From, {
- *   from(meters: Meters): Centimeters {
- *     const cm = new Centimeters();
- *     cm.value = meters.value * 100;
- *     return cm;
+ * // Implement From<Source> for Target
+ * implTrait(Target, From, Source, {
+ *   from(source: Source): Target {
+ *     return new Target(`Number: ${source.id}`);
  *   }
  * });
- * const meters = new Meters(1);
- * const cm = from(meters, Centimeters); // Centimeters { value: 100 }
+ *
+ * const source = new Source(42);
+ * const target = from(source, Target); // Target { value: "Number: 42" }
  *
  * @template T The type to convert from
  */
 @trait
-export class From<T> {
+export class From<T = any> {
   /**
    * Creates a new instance of this type from the provided value.
    * Must be implemented by types that want to support conversion.
@@ -47,21 +58,82 @@ export class From<T> {
  * Creates a new instance of the target type from the source value.
  *
  * @example
- * const meters = new Meters(1);
- * const cm = from(meters, Centimeters); // Centimeters { value: 100 }
+ * const source = new Source(42);
+ * const target = from(source, Target); // Target { value: "Number: 42" }
  *
  * @template T The source type
  * @template U The target type
- * @param value The value to convert from
- * @param targetType Constructor of the target type
+ * @param source The source value to convert from
+ * @param targetType The target type to convert to
  * @returns The converted value
  * @throws {Error} If no From implementation is found
  */
-export function from<T, U extends object>(value: T, targetType: new (...args: any[]) => U): U {
-  const instance = new targetType();
-  const impl = useTrait(instance, From);
-  if (!impl) {
-    throw new Error(`Trait From<${typeof value}> not implemented for ${targetType.name}`);
+export function from<T, U extends object>(source: T, targetType: Constructor<U>): U {
+  if (source === null) {
+    throw new Error('Cannot convert null');
   }
-  return (impl as From<T>).from(value);
+  if (source === undefined) {
+    throw new Error('Cannot convert undefined');
+  }
+  if (typeof targetType !== 'function' || !targetType.prototype) {
+    throw new Error('Invalid target type');
+  }
+  const instance = new targetType();
+  let wrapped: any = source;
+  if (typeof source === 'string') {
+    wrapped = String(source);
+  } else if (typeof source === 'number') {
+    wrapped = Number(source);
+  } else if (typeof source === 'boolean') {
+    wrapped = Boolean(source);
+  }
+  const sourceType = wrapped.constructor as Constructor<T>;
+  const impl = useTrait(instance, From, sourceType);
+  return (impl as From<T>).from(source);
+}
+
+export function implFrom<T extends object, U extends object>(
+  sourceType: Constructor<T>,
+  targetType: Constructor<U>,
+  implementation: TraitImplementation<T, From<U>>,
+): void;
+export function implFrom<T extends object, U extends object>(
+  sourceType: Constructor<T>,
+  targetType: Constructor<U>,
+  generic: Constructor<any>,
+  implementation: TraitImplementation<T, From<U>>,
+): void;
+export function implFrom<T extends object, U extends object>(
+  sourceType: Constructor<T>,
+  targetType: Constructor<U>,
+  generic: Constructor<any>[],
+  implementation: TraitImplementation<T, From<U>>,
+): void;
+export function implFrom<T extends object, U extends object>(
+  targetType: Constructor<T>,
+  sourceType: Constructor<U>,
+  generic: Constructor<any> | Constructor<any>[] | TraitImplementation<T, From<U>>,
+  implementation?: TraitImplementation<T, From<U>>,
+): void {
+  // Handle generic parameters
+  let genericParams = [sourceType];
+  let actualImplementation: TraitImplementation<T, From<U>> | undefined;
+  if (implementation) {
+    actualImplementation = implementation;
+    if (Array.isArray(generic)) {
+      if (generic.length === 0) {
+        throw new ReferenceError('At least one generic type of array parameter is required');
+      }
+      genericParams = [sourceType, ...generic];
+    } else if (typeof generic === 'function') {
+      genericParams.push(generic);
+    } else {
+      throw new Error('Invalid generic parameter');
+    }
+  } else if (generic && typeof generic === 'object') {
+    actualImplementation = generic as TraitImplementation<T, From<U>>;
+  } else {
+    throw new Error('Invalid implementation');
+  }
+  implTrait(targetType, From, genericParams, actualImplementation);
 }

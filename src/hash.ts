@@ -36,7 +36,7 @@ const stringHash = (str: string) => {
  * @returns A number representing the hash code
  */
 export const hash = (obj: any) => {
-  if (obj === null || obj === undefined) {
+  if (obj === null || typeof obj === 'undefined') {
     return -1;
   }
   if (typeof obj === 'string') {
@@ -59,9 +59,6 @@ export const hash = (obj: any) => {
   }
   if (typeof obj === 'bigint') {
     return stringHash(obj.toString());
-  }
-  if (typeof obj === 'undefined') {
-    return -1;
   }
   return 0;
 };
