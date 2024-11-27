@@ -81,7 +81,7 @@ class Person {
 }
 
 implTrait(Person, Display, {
-  display() {
+  display(this: Person) {
     return `Person(${this.name})`;
   }
 });
@@ -109,6 +109,12 @@ class Fahrenheit {
 implFrom(Celsius, Fahrenheit, {
   from(fahrenheit: Fahrenheit) {
     return new Celsius((fahrenheit.value - 32) * 5/9);
+  }
+});
+
+implFrom(Fahrenheit, Celsius, {
+  from(celsius: Celsius) {
+    return new Fahrenheit((celsius.value * 9/5) + 32);
   }
 });
 
@@ -245,13 +251,19 @@ import { Enum, variant } from 'rustable';
 // Define a custom enum
 class HttpResponse extends Enum {
   @variant
-  static OK(data: any) { return data; }
+  static OK(data: any): HttpResponse {
+    return undefined as any;
+  }
 
   @variant
-  static NotFound(path: string) { return path; }
+  static NotFound(path: string): HttpResponse {
+    return undefined as any;
+  }
 
   @variant
-  static Error(message: string) { return message; }
+  static Error(message: string): HttpResponse {
+    return undefined as any;
+  }
 }
 
 // Create and match on variants

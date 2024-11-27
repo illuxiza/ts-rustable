@@ -51,6 +51,7 @@ export {
   product,
   permutations,
   combinations,
+  zip,
 } from './iter';
 
 /**

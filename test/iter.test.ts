@@ -9,6 +9,7 @@ import {
   skipWhile,
   takeWhile,
   windows,
+  zip,
 } from '../src/iter';
 
 describe('Iterator Utilities', () => {
@@ -207,6 +208,50 @@ describe('Iterator Utilities', () => {
     test('handles r > n', () => {
       const result = Array.from(combinations([1, 2], 3));
       expect(result).toEqual([]);
+    });
+  });
+
+  describe('zip', () => {
+    test('zips two iterables of equal length', () => {
+      const numbers = [1, 2, 3];
+      const letters = ['a', 'b', 'c'];
+      const result = Array.from(zip(numbers, letters));
+      expect(result).toEqual([[1, 'a'], [2, 'b'], [3, 'c']]);
+    });
+
+    test('zips three iterables of equal length', () => {
+      const numbers = [1, 2, 3];
+      const letters = ['a', 'b', 'c'];
+      const booleans = [true, false, true];
+      const result = Array.from(zip(numbers, letters, booleans));
+      expect(result).toEqual([[1, 'a', true], [2, 'b', false], [3, 'c', true]]);
+    });
+
+    test('stops at shortest iterable', () => {
+      const numbers = [1, 2, 3, 4];
+      const letters = ['a', 'b'];
+      const result = Array.from(zip(numbers, letters));
+      expect(result).toEqual([[1, 'a'], [2, 'b']]);
+    });
+
+    test('works with empty iterables', () => {
+      const numbers: number[] = [];
+      const letters = ['a', 'b', 'c'];
+      const result = Array.from(zip(numbers, letters));
+      expect(result).toEqual([]);
+    });
+
+    test('works with different types', () => {
+      const numbers = [1, 2];
+      const letters = ['a', 'b'];
+      const booleans = [true, false];
+      const objects = [{ x: 1 }, { x: 2 }];
+      
+      const result = Array.from(zip(numbers, letters, booleans, objects));
+      expect(result).toEqual([
+        [1, 'a', true, { x: 1 }],
+        [2, 'b', false, { x: 2 }]
+      ]);
     });
   });
 

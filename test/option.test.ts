@@ -139,35 +139,35 @@ describe('Option', () => {
         const mockFn = jest.fn();
         const some = Some(42);
         const result = some.inspect(mockFn);
-        
+
         expect(mockFn).toHaveBeenCalledWith(42);
         expect(mockFn).toHaveBeenCalledTimes(1);
-        expect(result).toBe(some);  // Should return the same Option
+        expect(result).toBe(some); // Should return the same Option
       });
 
       test('inspect should not call function for None', () => {
         const mockFn = jest.fn();
         const result = None.inspect(mockFn);
-        
+
         expect(mockFn).not.toHaveBeenCalled();
-        expect(result).toBe(None);  // Should return None
+        expect(result).toBe(None); // Should return None
       });
 
       test('inspect should maintain chain for Some', () => {
         const some = Some(42);
         const result = some
-          .inspect(x => {})
-          .map(x => x * 2)
-          .inspect(x => {});
-        
+          .inspect((_x) => {})
+          .map((x) => x * 2)
+          .inspect((_x) => {});
+
         expect(result.unwrap()).toBe(84);
       });
 
       test('inspect should handle side effects', () => {
         let sideEffect = 0;
         const some = Some(42);
-        some.inspect(x => sideEffect = x);
-        
+        some.inspect((x) => (sideEffect = x));
+
         expect(sideEffect).toBe(42);
       });
     });

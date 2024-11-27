@@ -306,3 +306,29 @@ export function* combinations<T>(iter: Iterable<T>, r: number): Generator<T[]> {
     yield indices.map((i) => pool[i]);
   }
 }
+
+/**
+ * Creates an iterator that yields tuples of elements from multiple iterables.
+ * The iterator stops when any of the input iterables is exhausted.
+ * 
+ * @example
+ * const numbers = [1, 2, 3];
+ * const letters = ['a', 'b', 'c'];
+ * const zipped = [...zip(numbers, letters)]; // [[1, 'a'], [2, 'b'], [3, 'c']]
+ * 
+ * @template T Tuple type containing element types of each iterable
+ * @param iters Iterables to zip together
+ */
+export function* zip<T extends any[]>(
+  ...iters: { [K in keyof T]: Iterable<T[K]> }
+): Generator<T> {
+  const iterators = iters.map(iter => iter[Symbol.iterator]());
+  
+  while (true) {
+    const results = iterators.map(iter => iter.next());
+    if (results.some(result => result.done)) {
+      break;
+    }
+    yield results.map(result => result.value) as T;
+  }
+}
