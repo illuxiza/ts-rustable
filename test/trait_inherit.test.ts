@@ -55,27 +55,25 @@ describe('Trait Inheritance', () => {
     interface RichItem extends RichDisplayable {}
     class RichItem extends Container {}
 
-    beforeAll(() => {
-      // Basic trait implementation
-      implTrait(BasicItem, Display);
+    // Basic trait implementation
+    implTrait(BasicItem, Display);
 
-      // Extended trait implementation
-      implTrait(FormattedItem, Display, {
-        display(this: FormattedItem) {
-          return `Value: ${this.getValue()}`;
-        },
-      });
-      implTrait(FormattedItem, FormattedDisplay);
-
-      // Rich trait implementation
-      implTrait(RichItem, Display, {
-        display(this: RichItem) {
-          return `Value: ${this.getValue()}`;
-        },
-      });
-      implTrait(RichItem, FormattedDisplay);
-      implTrait(RichItem, RichDisplay);
+    // Extended trait implementation
+    implTrait(FormattedItem, Display, {
+      display(this: FormattedItem) {
+        return `Value: ${this.getValue()}`;
+      },
     });
+    implTrait(FormattedItem, FormattedDisplay);
+
+    // Rich trait implementation
+    implTrait(RichItem, Display, {
+      display(this: RichItem) {
+        return `Value: ${this.getValue()}`;
+      },
+    });
+    implTrait(RichItem, FormattedDisplay);
+    implTrait(RichItem, RichDisplay);
 
     it('should handle trait inheritance chain correctly', () => {
       const basicItem = new BasicItem('basic');
@@ -118,14 +116,12 @@ describe('Trait Inheritance', () => {
     interface CustomItem extends FormattedDisplayable {}
     class CustomItem extends Container {}
 
-    beforeAll(() => {
-      implTrait(CustomItem, Display, {
-        display(this: CustomItem) {
-          return `custom: ${this.getValue()}`;
-        },
-      });
-      implTrait(CustomItem, CustomDisplay);
+    implTrait(CustomItem, Display, {
+      display(this: CustomItem) {
+        return `custom: ${this.getValue()}`;
+      },
     });
+    implTrait(CustomItem, CustomDisplay);
 
     it('should preserve method overrides in inheritance chain', () => {
       const item = new CustomItem('test');

@@ -53,6 +53,13 @@ A TypeScript library that brings Rust's powerful features and patterns to TypeSc
 - Efficient string representation
 - Zero-cost abstractions
 
+### Clone System
+
+- Provides deep cloning functionality for objects
+- Handles complex object structures and circular references
+- Supports cloning of special types like Date, RegExp, Set, Map, Error, and more
+- Preserves prototype chains and handles circular references efficiently
+
 ## Getting Started
 
 ### Package Installation
@@ -278,6 +285,23 @@ const result = response.match({
 });
 ```
 
+#### Clone System Implementation
+
+```typescript
+import { Clone } from 'rustable';
+
+@derive([Clone])
+class MyClass {
+    constructor(public name: string, public data: any) {}
+}
+
+const original = new MyClass('example', { key: 'value' });
+const cloned = original.clone();
+
+console.log(cloned !== original); // true
+console.log(cloned.data !== original.data); // true
+```
+
 #### Core Utility Functions
 
 ```typescript
@@ -362,6 +386,11 @@ Enum-based pattern matching system:
 - `match`: Pattern matching on variants
 - Type-safe variant handling
 - Exhaustive matching checks
+
+### Clone System Operations
+
+- `clone()`: Deep clone an object
+- `derive([Clone])`: Derive Clone trait for a class
 
 ### Utility Operations
 

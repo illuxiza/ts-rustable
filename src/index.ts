@@ -18,7 +18,7 @@
  * Implements Rust-like traits for TypeScript, enabling interface-based polymorphism
  * with compile-time checks.
  */
-export { trait, implTrait, useTrait, hasTrait } from './trait';
+export { derive, hasTrait, implTrait, trait, useTrait } from './trait';
 
 /**
  * Type Conversion Traits
@@ -61,7 +61,7 @@ export { HashMap } from './map';
  * Type-safe alternative to null/undefined for optional values.
  * Provides methods for safe value manipulation and error handling.
  */
-export { Option, Some, None } from './option';
+export { None, Option, Some } from './option';
 
 /**
  * Result Type
@@ -69,7 +69,7 @@ export { Option, Some, None } from './option';
  * Explicit error handling with Ok and Err variants.
  * Enables type-safe error handling and value transformation.
  */
-export { Result, Ok, Err } from './result';
+export { Err, Ok, Result } from './result';
 
 /**
  * Type System Utilities
@@ -77,7 +77,7 @@ export { Result, Ok, Err } from './result';
  * Runtime type identification and operations.
  * Provides consistent type IDs across instances.
  */
-export { typeId, TypeId } from './type_id';
+export { TypeId, typeId } from './type_id';
 
 /**
  * Pattern Matching
@@ -102,3 +102,11 @@ export { hash } from './hash';
  * Handles circular references and complex object structures.
  */
 export { stringify } from './stringfy';
+
+/**
+ * Clone System
+ *
+ * Provides deep cloning functionality for objects
+ * Handles complex object structures and circular references
+ */
+export { Clone, deepCopy } from './clone';

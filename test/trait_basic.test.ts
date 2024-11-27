@@ -1,9 +1,5 @@
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { derive, hasTrait, implTrait, trait, useTrait } from '../src/trait';
 
-// Basic class with traits
-class BasicClass {
-  constructor(public value: string) {}
-}
 
 // Basic trait interfaces
 interface BasicClass {
@@ -30,7 +26,13 @@ class Debug {
     return 'default debug';
   }
 }
-implTrait(BasicClass, Print);
+
+
+// Basic class with traits
+@derive([Print])
+class BasicClass {
+  constructor(public value: string) {}
+}
 implTrait(BasicClass, Debug, {
   debug(this: BasicClass) {
     return `custom debug for: ${this.value}`;

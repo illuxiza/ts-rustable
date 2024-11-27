@@ -349,3 +349,29 @@ export function useTrait<Class extends object, Trait extends object>(
     },
   ) as Trait;
 }
+
+
+/**
+ * Decorator for implementing traits at runtime.
+ * Supports single trait or array of traits.
+ * 
+ * @example
+ * ```typescript
+ * @derive(Debug)
+ * class Point { }
+ * 
+ * @derive([Debug, Clone])
+ * class Rectangle { }
+ * ```
+ */
+export function derive<T extends Constructor<any>>(
+  traits: Constructor<any> | Constructor<any>[]
+) {
+  return function(target: T): T & Constructor<any> {
+    const traitArray = Array.isArray(traits) ? traits : [traits];
+    traitArray.forEach(trait => {
+      implTrait(target, trait);
+    });
+    return target as T & Constructor<any>;
+  };
+}

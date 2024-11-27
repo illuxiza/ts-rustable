@@ -1,4 +1,4 @@
-import { implTrait, trait, useTrait } from '../src/trait';
+import { derive, implTrait, trait, useTrait } from '../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
@@ -93,6 +93,7 @@ describe('Advanced Trait Features', () => {
       }
     }
 
+    @derive([Playable, Scoreable])
     class Dog {
       constructor(
         public name: string,
@@ -103,23 +104,18 @@ describe('Advanced Trait Features', () => {
         return this.score;
       }
     }
-
-    beforeAll(() => {
-      implTrait(Dog, Animal, {
-        getName(this: Dog) {
-          return this.name;
-        },
-      });
-      implTrait(Dog, Pet, {
-        makeSound() {
-          return 'Woof!';
-        },
-        play() {
-          return 'Playing fetch!';
-        },
-      });
-      implTrait(Dog, Playable);
-      implTrait(Dog, Scoreable);
+    implTrait(Dog, Animal, {
+      getName(this: Dog) {
+        return this.name;
+      },
+    });
+    implTrait(Dog, Pet, {
+      makeSound() {
+        return 'Woof!';
+      },
+      play() {
+        return 'Playing fetch!';
+      },
     });
 
     test('should handle trait method conflicts', () => {
@@ -150,9 +146,8 @@ describe('Advanced Trait Features', () => {
     }
 
     test('should use default trait implementations', () => {
+      @derive([Printable, Displayable])
       class Target {}
-      implTrait(Target, Printable);
-      implTrait(Target, Displayable);
 
       const target = new Target();
       expect(useTrait(target, Printable)?.print()).toBe('default print');
