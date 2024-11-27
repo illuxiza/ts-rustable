@@ -26,9 +26,10 @@ A TypeScript library that brings Rust's powerful features and patterns to TypeSc
 
 ### Functional Collection Utilities
 
+- Rust-like iterator namespace with `iter` object
 - Lazy evaluation for better performance
 - Rich set of operations: `takeWhile`, `skipWhile`, `chunks`
-- Advanced operations: `permutations`, `combinations`, `product`
+- Advanced operations: `permutations`, `combinations`, `product`, `zip`
 - Memory-efficient implementations
 
 ### Type-Safe Data Structures
@@ -181,40 +182,41 @@ const message = divide(10, 0).match({
 #### Advanced Collection Operations
 
 ```typescript
-import { 
-  takeWhile, skipWhile, chunks, windows,
-  pairwise, enumerate, groupBy, product,
-  permutations, combinations
-} from 'rustable';
+import { iter } from 'rustable';
 
 const numbers = [1, 2, 3, 4, 5];
+const letters = ['a', 'b', 'c'];
 
 // Take and skip operations
-console.log([...takeWhile(numbers, n => n < 4)]); // [1, 2, 3]
-console.log([...skipWhile(numbers, n => n < 3)]); // [3, 4, 5]
+console.log([...iter.takeWhile(numbers, n => n < 4)]); // [1, 2, 3]
+console.log([...iter.skipWhile(numbers, n => n < 3)]); // [3, 4, 5]
 
 // Chunking and windowing
-console.log([...chunks(numbers, 2)]); // [[1, 2], [3, 4], [5]]
-console.log([...windows(numbers, 3)]); // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
+console.log([...iter.chunks(numbers, 2)]); // [[1, 2], [3, 4], [5]]
+console.log([...iter.windows(numbers, 3)]); // [[1, 2, 3], [2, 3, 4], [3, 4, 5]]
 
 // Pairing and enumeration
-console.log([...pairwise(numbers)]); // [[1, 2], [2, 3], [3, 4], [4, 5]]
-console.log([...enumerate(numbers)]); // [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
+console.log([...iter.pairwise(numbers)]); // [[1, 2], [2, 3], [3, 4], [4, 5]]
+console.log([...iter.enumerate(numbers)]); // [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]]
 
 // Grouping
 const words = ['one', 'two', 'three'];
-console.log(groupBy(words, w => w.length));
-// Map { 3 => ['one', 'two'], 5 => ['three'] }
+const groups = [...iter.groupBy(words, word => word.length)];
+// [[3, ['one', 'two']], [5, ['three']]]
 
 // Combinatorics
-console.log([...product([1, 2], ['a', 'b'])]); 
+console.log([...iter.product([1, 2], ['a', 'b'])]); 
 // [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
 
-console.log([...combinations(['A', 'B', 'C'], 2)]);
-// [['A', 'B'], ['A', 'C'], ['B', 'C']]
+console.log([...iter.permutations([1, 2, 3])]); 
+// [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
 
-console.log([...permutations(['A', 'B'])]);
-// [['A', 'B'], ['B', 'A']]
+console.log([...iter.combinations([1, 2, 3, 4], 2)]); 
+// [[1, 2], [1, 3], [1, 4], [2, 3], [2, 4], [3, 4]]
+
+// Zipping iterables
+console.log([...iter.zip(numbers, letters)]); 
+// [[1, 'a'], [2, 'b'], [3, 'c']]
 ```
 
 #### HashMap Implementation
@@ -340,6 +342,7 @@ Rich set of iterator operations:
 - `product`: Compute cartesian product
 - `permutations`: Generate all permutations
 - `combinations`: Generate all combinations
+- `zip`: Zip iterables
 
 ### HashMap Operations
 

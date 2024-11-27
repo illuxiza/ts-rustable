@@ -32,6 +32,10 @@ export { From, from, implFrom } from './from';
  *
  * Rich set of iterator operations inspired by Rust's Iterator trait.
  * Provides functions for working with iterables in a functional style:
+ * 
+ * Access all iterator functions through the `iter` namespace.
+ * 
+ * Available functions:
  * - takeWhile/skipWhile: Conditional iteration
  * - chunks/windows: Sequence grouping
  * - pairwise: Adjacent element pairs
@@ -39,20 +43,9 @@ export { From, from, implFrom } from './from';
  * - groupBy: Element grouping
  * - product: Cartesian products
  * - permutations/combinations: Sequence arrangements
+ * - zip: Combine multiple iterables
  */
-export {
-  takeWhile,
-  skipWhile,
-  chunks,
-  windows,
-  pairwise,
-  enumerate,
-  groupBy,
-  product,
-  permutations,
-  combinations,
-  zip,
-} from './iter';
+export { iter } from './iter';
 
 /**
  * HashMap Implementation

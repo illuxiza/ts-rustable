@@ -15,13 +15,13 @@ type Predicate<T> = (value: T) => boolean;
  *
  * @example
  * const numbers = [1, 2, 3, 4, 5];
- * const lessThanFour = [...takeWhile(numbers, n => n < 4)]; // [1, 2, 3]
+ * const lessThanFour = [...iter.takeWhile(numbers, n => n < 4)]; // [1, 2, 3]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param predicate Function that tests each element
  */
-export function* takeWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Generator<T> {
+function* takeWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Generator<T> {
   for (const item of iter) {
     if (!predicate(item)) {
       break;
@@ -36,13 +36,13 @@ export function* takeWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Gener
  *
  * @example
  * const numbers = [1, 2, 3, 4, 5];
- * const skipLessThanThree = [...skipWhile(numbers, n => n < 3)]; // [3, 4, 5]
+ * const skipLessThanThree = [...iter.skipWhile(numbers, n => n < 3)]; // [3, 4, 5]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param predicate Function that tests each element
  */
-export function* skipWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Generator<T> {
+function* skipWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Generator<T> {
   let skipping = true;
   for (const item of iter) {
     if (skipping && !predicate(item)) {
@@ -60,14 +60,14 @@ export function* skipWhile<T>(iter: Iterable<T>, predicate: Predicate<T>): Gener
  *
  * @example
  * const numbers = [1, 2, 3, 4, 5];
- * const pairs = [...chunks(numbers, 2)]; // [[1, 2], [3, 4], [5]]
+ * const pairs = [...iter.chunks(numbers, 2)]; // [[1, 2], [3, 4], [5]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param size Size of each chunk
  * @throws {Error} If size is less than 1
  */
-export function* chunks<T>(iter: Iterable<T>, size: number): Generator<T[]> {
+function* chunks<T>(iter: Iterable<T>, size: number): Generator<T[]> {
   if (size < 1) {
     throw new Error('Chunk size must be at least 1');
   }
@@ -90,14 +90,14 @@ export function* chunks<T>(iter: Iterable<T>, size: number): Generator<T[]> {
  *
  * @example
  * const numbers = [1, 2, 3, 4];
- * const windows3 = [...windows(numbers, 3)]; // [[1, 2, 3], [2, 3, 4]]
+ * const windows3 = [...iter.windows(numbers, 3)]; // [[1, 2, 3], [2, 3, 4]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param size Window size
  * @throws {Error} If size is less than 1
  */
-export function* windows<T>(iter: Iterable<T>, size: number): Generator<T[]> {
+function* windows<T>(iter: Iterable<T>, size: number): Generator<T[]> {
   if (size < 1) {
     throw new Error('Window size must be at least 1');
   }
@@ -116,12 +116,12 @@ export function* windows<T>(iter: Iterable<T>, size: number): Generator<T[]> {
  *
  * @example
  * const numbers = [1, 2, 3, 4];
- * const pairs = [...pairwise(numbers)]; // [[1, 2], [2, 3], [3, 4]]
+ * const pairs = [...iter.pairwise(numbers)]; // [[1, 2], [2, 3], [3, 4]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  */
-export function* pairwise<T>(iter: Iterable<T>): Generator<[T, T]> {
+function* pairwise<T>(iter: Iterable<T>): Generator<[T, T]> {
   let prev: T;
   let first = true;
   for (const item of iter) {
@@ -140,12 +140,12 @@ export function* pairwise<T>(iter: Iterable<T>): Generator<[T, T]> {
  *
  * @example
  * const numbers = [1, 2, 3, 4];
- * const indexed = [...enumerate(numbers)]; // [[0, 1], [1, 2], [2, 3], [3, 4]]
+ * const indexed = [...iter.enumerate(numbers)]; // [[0, 1], [1, 2], [2, 3], [3, 4]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  */
-export function* enumerate<T>(iter: Iterable<T>): Generator<[number, T]> {
+function* enumerate<T>(iter: Iterable<T>): Generator<[number, T]> {
   let index = 0;
   for (const item of iter) {
     yield [index++, item];
@@ -157,14 +157,14 @@ export function* enumerate<T>(iter: Iterable<T>): Generator<[number, T]> {
  *
  * @example
  * const numbers = [1, 2, 3, 4];
- * const groups = [...groupBy(numbers, n => n % 2)]; // [[0, [2, 4]], [1, [1, 3]]]
+ * const groups = [...iter.groupBy(numbers, n => n % 2)]; // [[0, [2, 4]], [1, [1, 3]]]
  *
  * @template T The type of elements in the iterator
  * @template K The type of keys
  * @param iter Source iterator
  * @param keyFn Function that computes the key for each element
  */
-export function* groupBy<T, K>(iter: Iterable<T>, keyFn: (item: T) => K): Generator<[K, T[]]> {
+function* groupBy<T, K>(iter: Iterable<T>, keyFn: (item: T) => K): Generator<[K, T[]]> {
   const groups = new Map<K, T[]>();
 
   for (const item of iter) {
@@ -190,12 +190,12 @@ export function* groupBy<T, K>(iter: Iterable<T>, keyFn: (item: T) => K): Genera
  * @example
  * const numbers = [1, 2];
  * const letters = ['a', 'b'];
- * const product = [...product(numbers, letters)]; // [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
+ * const product = [...iter.product(numbers, letters)]; // [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
  *
  * @template T The type of elements in the iterator
  * @param iters Iterables to compute product of
  */
-export function* product<T extends readonly unknown[]>(
+function* product<T extends any[]>(
   ...iters: { [K in keyof T]: Iterable<T[K]> }
 ): Generator<T extends readonly [] ? [] : [...T]> {
   if (iters.length === 0) {
@@ -229,13 +229,13 @@ export function* product<T extends readonly unknown[]>(
  *
  * @example
  * const numbers = [1, 2, 3];
- * const permutations = [...permutations(numbers)]; // [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
+ * const permutations = [...iter.permutations(numbers)]; // [[1, 2, 3], [1, 3, 2], [2, 1, 3], [2, 3, 1], [3, 1, 2], [3, 2, 1]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param r Length of each permutation (default: all elements)
  */
-export function* permutations<T>(iter: Iterable<T>, r?: number): Generator<T[]> {
+function* permutations<T>(iter: Iterable<T>, r?: number): Generator<T[]> {
   const arr = Array.from(iter);
   const n = arr.length;
   r = r === undefined ? n : r;
@@ -275,13 +275,13 @@ export function* permutations<T>(iter: Iterable<T>, r?: number): Generator<T[]> 
  *
  * @example
  * const numbers = [1, 2, 3];
- * const combinations = [...combinations(numbers, 2)]; // [[1, 2], [1, 3], [2, 3]]
+ * const combinations = [...iter.combinations(numbers, 2)]; // [[1, 2], [1, 3], [2, 3]]
  *
  * @template T The type of elements in the iterator
  * @param iter Source iterator
  * @param r Length of each combination
  */
-export function* combinations<T>(iter: Iterable<T>, r: number): Generator<T[]> {
+function* combinations<T>(iter: Iterable<T>, r: number): Generator<T[]> {
   const pool = Array.from(iter);
   const n = pool.length;
 
@@ -314,12 +314,12 @@ export function* combinations<T>(iter: Iterable<T>, r: number): Generator<T[]> {
  * @example
  * const numbers = [1, 2, 3];
  * const letters = ['a', 'b', 'c'];
- * const zipped = [...zip(numbers, letters)]; // [[1, 'a'], [2, 'b'], [3, 'c']]
+ * const zipped = [...iter.zip(numbers, letters)]; // [[1, 'a'], [2, 'b'], [3, 'c']]
  * 
  * @template T Tuple type containing element types of each iterable
  * @param iters Iterables to zip together
  */
-export function* zip<T extends any[]>(
+function* zip<T extends any[]>(
   ...iters: { [K in keyof T]: Iterable<T[K]> }
 ): Generator<T> {
   const iterators = iters.map(iter => iter[Symbol.iterator]());
@@ -332,3 +332,21 @@ export function* zip<T extends any[]>(
     yield results.map(result => result.value) as T;
   }
 }
+
+/**
+ * Collection of iterator utility functions inspired by Rust's Iterator trait.
+ * Provides methods for working with iterables in a functional style.
+ */
+export const iter = {
+  takeWhile,
+  skipWhile,
+  chunks,
+  windows,
+  pairwise,
+  enumerate,
+  groupBy,
+  product,
+  permutations,
+  combinations,
+  zip,
+} as const;
