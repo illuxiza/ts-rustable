@@ -185,46 +185,6 @@ function* groupBy<T, K>(iter: Iterable<T>, keyFn: (item: T) => K): Generator<[K,
 }
 
 /**
- * Creates an iterator that yields the cartesian product of iterables.
- *
- * @example
- * const numbers = [1, 2];
- * const letters = ['a', 'b'];
- * const product = [...iter.product(numbers, letters)]; // [[1, 'a'], [1, 'b'], [2, 'a'], [2, 'b']]
- *
- * @template T The type of elements in the iterator
- * @param iters Iterables to compute product of
- */
-function* product<T extends any[]>(
-  ...iters: { [K in keyof T]: Iterable<T[K]> }
-): Generator<T extends readonly [] ? [] : [...T]> {
-  if (iters.length === 0) {
-    yield [] as T extends readonly [] ? [] : [...T];
-    return;
-  }
-
-  const arrays = iters.map((iter) => Array.from(iter));
-  const indices = new Array(arrays.length).fill(0);
-
-  while (true) {
-    yield indices.map((i, j) => arrays[j][i]) as T extends readonly [] ? [] : [...T];
-
-    let i = indices.length - 1;
-    while (i >= 0) {
-      indices[i]++;
-      if (indices[i] < arrays[i].length) {
-        break;
-      }
-      indices[i] = 0;
-      i--;
-    }
-    if (i < 0) {
-      break;
-    }
-  }
-}
-
-/**
  * Generates all permutations of elements.
  *
  * @example
@@ -310,27 +270,52 @@ function* combinations<T>(iter: Iterable<T>, r: number): Generator<T[]> {
 /**
  * Creates an iterator that yields tuples of elements from multiple iterables.
  * The iterator stops when any of the input iterables is exhausted.
- * 
+ *
  * @example
  * const numbers = [1, 2, 3];
  * const letters = ['a', 'b', 'c'];
  * const zipped = [...iter.zip(numbers, letters)]; // [[1, 'a'], [2, 'b'], [3, 'c']]
- * 
+ *
  * @template T Tuple type containing element types of each iterable
  * @param iters Iterables to zip together
  */
-function* zip<T extends any[]>(
-  ...iters: { [K in keyof T]: Iterable<T[K]> }
-): Generator<T> {
-  const iterators = iters.map(iter => iter[Symbol.iterator]());
-  
+function* zip<T extends any[]>(...iters: { [K in keyof T]: Iterable<T[K]> }): Generator<T> {
+  const iterators = iters.map((iter) => iter[Symbol.iterator]());
+
   while (true) {
-    const results = iterators.map(iter => iter.next());
-    if (results.some(result => result.done)) {
+    const results = iterators.map((iter) => iter.next());
+    if (results.some((result) => result.done)) {
       break;
     }
-    yield results.map(result => result.value) as T;
+    yield results.map((result) => result.value) as T;
   }
+}
+
+/**
+ * Computes the product of all numeric elements in the iterator.
+ *
+ * @example
+ * const numbers = [1, 2, 3, 4];
+ * const prod = iter.product(numbers); // 24 (1 * 2 * 3 * 4)
+ *
+ * @template T The type of elements in the iterator
+ * @param iter Source iterator
+ * @throws {Error} If iterator is empty or contains non-numeric values
+ */
+function product<T>(iter: Iterable<T>): number {
+  let result = 1;
+  let empty = true;
+  for (const item of iter) {
+    if (typeof item !== 'number') {
+      throw new Error('Product can only be computed for numeric values');
+    }
+    result *= item;
+    empty = false;
+  }
+  if (empty) {
+    throw new Error('Cannot compute product of empty iterator');
+  }
+  return result;
 }
 
 /**
@@ -345,8 +330,8 @@ export const iter = {
   pairwise,
   enumerate,
   groupBy,
-  product,
   permutations,
   combinations,
   zip,
+  product,
 } as const;

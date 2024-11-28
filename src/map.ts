@@ -1,5 +1,6 @@
-import { hash } from './hash';
+import { hash } from './utils/hash';
 import { None, Option, Some } from './option';
+import { stringifyObject } from './utils/stringfy';
 
 /**
  * A type-safe hash map implementation similar to Rust's HashMap.
@@ -26,9 +27,9 @@ import { None, Option, Some } from './option';
 export class HashMap<K, V> implements Iterable<[K, V]> {
   /**
    * Internal storage using a Map with hashed keys.
-   * Each entry stores both the original key and value to handle hash collisions.
+   * Each bucket stores an array of entries to handle hash collisions.
    */
-  #entries = new Map<number, { key: K; value: V }>();
+  #entries = new Map<number, Array<{ key: K; value: V }>>();
 
   /**
    * Creates a new HashMap instance.
@@ -75,7 +76,8 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
         if (result.done) {
           return { done: true, value: undefined };
         }
-        const { key, value } = result.value;
+        // Return the first entry in the bucket
+        const { key, value } = result.value[0];
         return { done: false, value: [key, value] };
       },
     };
@@ -103,7 +105,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * console.log(map.size); // 2
    */
   get size(): number {
-    return this.#entries.size;
+    let size = 0;
+    for (const bucket of this.#entries.values()) {
+      size += bucket.length;
+    }
+    return size;
   }
 
   /**
@@ -130,7 +136,18 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns true if an element was removed, false if the key wasn't found
    */
   delete(key: K): boolean {
-    return this.#entries.delete(hash(key));
+    const hashKey = hash(key);
+    const bucket = this.#entries.get(hashKey);
+    if (!bucket) return false;
+
+    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
+    if (index === -1) return false;
+
+    bucket.splice(index, 1);
+    if (bucket.length === 0) {
+      this.#entries.delete(hashKey);
+    }
+    return true;
   }
 
   /**
@@ -147,7 +164,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns Option containing the value if found
    */
   get(key: K): Option<V> {
-    const entry = this.#entries.get(hash(key));
+    const hashKey = hash(key);
+    const bucket = this.#entries.get(hashKey);
+    if (!bucket) return None;
+
+    const entry = bucket.find((entry) => this.#keysEqual(entry.key, key));
     return entry ? Some(entry.value) : None;
   }
 
@@ -163,7 +184,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns true if the key exists, false otherwise
    */
   has(key: K): boolean {
-    return this.#entries.has(hash(key));
+    const hashKey = hash(key);
+    const bucket = this.#entries.get(hashKey);
+    if (!bucket) return false;
+
+    return bucket.some((entry) => this.#keysEqual(entry.key, key));
   }
 
   /**
@@ -179,8 +204,36 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns The map instance for method chaining
    */
   set(key: K, value: V): this {
-    this.#entries.set(hash(key), { key, value });
+    const hashKey = hash(key);
+    let bucket = this.#entries.get(hashKey);
+
+    if (!bucket) {
+      bucket = [];
+      this.#entries.set(hashKey, bucket);
+    }
+
+    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
+    if (index !== -1) {
+      // Update existing entry
+      bucket[index].value = value;
+    } else {
+      // Add new entry
+      bucket.push({ key, value });
+    }
+
     return this;
+  }
+
+  /**
+   * Compare two keys for equality.
+   * This is a private helper method used to handle key comparison.
+   */
+  #keysEqual(a: K, b: K): boolean {
+    if (a === b) return true;
+    if (typeof a === 'object' && typeof b === 'object') {
+      return stringifyObject(a) === stringifyObject(b);
+    }
+    return false;
   }
 
   /**
@@ -204,7 +257,9 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
         if (result.done) {
           return { done: true, value: undefined };
         }
-        return { done: false, value: result.value.key };
+        // Return the first entry in the bucket
+        const { key } = result.value[0];
+        return { done: false, value: key };
       },
     };
   }
@@ -230,7 +285,9 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
         if (result.done) {
           return { done: true, value: undefined };
         }
-        return { done: false, value: result.value.value };
+        // Return the first entry in the bucket
+        const { value } = result.value[0];
+        return { done: false, value };
       },
     };
   }
@@ -248,8 +305,10 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @param thisArg Value to use as 'this' when executing the callback
    */
   forEach(callback: (value: V, key: K, map: HashMap<K, V>) => void, thisArg?: any): void {
-    for (const { key, value } of this.#entries.values()) {
-      callback.call(thisArg, value, key, this);
+    for (const bucket of this.#entries.values()) {
+      for (const { key, value } of bucket) {
+        callback.call(thisArg, value, key, this);
+      }
     }
   }
 }

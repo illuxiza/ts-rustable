@@ -1,4 +1,4 @@
-import { iter } from '../src/iter';
+import { iter } from '../src/utils/iter';
 
 describe('Iterator Utilities', () => {
   describe('takeWhile', () => {
@@ -31,7 +31,10 @@ describe('Iterator Utilities', () => {
     test('creates chunks of specified size', () => {
       const numbers = [1, 2, 3, 4, 5, 7];
       const result = Array.from(iter.chunks(numbers, 3));
-      expect(result).toEqual([[1, 2, 3], [4, 5, 7]]);
+      expect(result).toEqual([
+        [1, 2, 3],
+        [4, 5, 7],
+      ]);
     });
 
     test('handles empty iterator', () => {
@@ -122,28 +125,6 @@ describe('Iterator Utilities', () => {
     });
   });
 
-  describe('product', () => {
-    test('computes cartesian product of iterables', () => {
-      const result = Array.from(iter.product([1, 2], ['a', 'b']));
-      expect(result).toEqual([
-        [1, 'a'],
-        [1, 'b'],
-        [2, 'a'],
-        [2, 'b'],
-      ]);
-    });
-
-    test('handles empty iterables', () => {
-      const result = Array.from(iter.product());
-      expect(result).toEqual([[]]);
-    });
-
-    test('handles single iterable', () => {
-      const result = Array.from(iter.product([1, 2, 3]));
-      expect(result).toEqual([[1], [2], [3]]);
-    });
-  });
-
   describe('permutations', () => {
     test('generates all permutations', () => {
       const result = Array.from(iter.permutations([1, 2, 3]));
@@ -204,7 +185,11 @@ describe('Iterator Utilities', () => {
       const numbers = [1, 2, 3];
       const letters = ['a', 'b', 'c'];
       const result = Array.from(iter.zip(numbers, letters));
-      expect(result).toEqual([[1, 'a'], [2, 'b'], [3, 'c']]);
+      expect(result).toEqual([
+        [1, 'a'],
+        [2, 'b'],
+        [3, 'c'],
+      ]);
     });
 
     test('zips three iterables of equal length', () => {
@@ -212,14 +197,21 @@ describe('Iterator Utilities', () => {
       const letters = ['a', 'b', 'c'];
       const booleans = [true, false, true];
       const result = Array.from(iter.zip(numbers, letters, booleans));
-      expect(result).toEqual([[1, 'a', true], [2, 'b', false], [3, 'c', true]]);
+      expect(result).toEqual([
+        [1, 'a', true],
+        [2, 'b', false],
+        [3, 'c', true],
+      ]);
     });
 
     test('stops at shortest iterable', () => {
       const numbers = [1, 2, 3, 4];
       const letters = ['a', 'b'];
       const result = Array.from(iter.zip(numbers, letters));
-      expect(result).toEqual([[1, 'a'], [2, 'b']]);
+      expect(result).toEqual([
+        [1, 'a'],
+        [2, 'b'],
+      ]);
     });
 
     test('works with empty iterables', () => {
@@ -234,11 +226,11 @@ describe('Iterator Utilities', () => {
       const letters = ['a', 'b'];
       const booleans = [true, false];
       const objects = [{ x: 1 }, { x: 2 }];
-      
+
       const result = Array.from(iter.zip(numbers, letters, booleans, objects));
       expect(result).toEqual([
         [1, 'a', true, { x: 1 }],
-        [2, 'b', false, { x: 2 }]
+        [2, 'b', false, { x: 2 }],
       ]);
     });
   });

@@ -3,7 +3,7 @@
  * Provides Rust-like trait functionality with compile-time type checking
  */
 import { Constructor } from './common';
-import { typeId, TypeId } from './type_id';
+import { typeId, TypeId } from './utils/type_id';
 
 /**
  * Registry for storing trait implementations.
@@ -187,18 +187,25 @@ export function implTrait<Class extends object, Trait extends object>(
   const traitId = typeId(trait, genericParams);
   const targetProto = target.prototype;
 
+  let selfBoundImpl: Record<string, any>;
   if (!traitRegistry.has(targetProto)) {
     const implMap = new Map<TypeId, any>();
     traitRegistry.set(targetProto, implMap);
     // Create implementation that binds 'this' correctly
-    const boundImpl: Record<string, any> = {};
+    selfBoundImpl = {};
     Object.getOwnPropertyNames(targetProto).forEach((name) => {
-      const method = targetProto[name];
-      if (typeof method === 'function') {
-        boundImpl[name] = method;
+      try {
+        const method = targetProto[name];
+        if (typeof method === 'function') {
+          selfBoundImpl[name] = method;
+        }
+      } catch (_) {
+        /* empty */
       }
     });
-    implMap.set(typeId(target), boundImpl);
+    implMap.set(typeId(target), selfBoundImpl);
+  } else {
+    selfBoundImpl = traitRegistry.get(targetProto)!.get(typeId(target))!;
   }
 
   // Get or create implementation map for target
@@ -260,7 +267,7 @@ export function implTrait<Class extends object, Trait extends object>(
         configurable: true,
         writable: true,
       });
-    } else {
+    } else if (!(name in selfBoundImpl)) {
       Object.defineProperty(targetProto, name, {
         value: function (this: Class, ..._args: any[]) {
           throw new Error(`Multiple implementations of method ${name} for ${target.name}, please use useTrait`);
@@ -293,12 +300,25 @@ export function hasTrait<Class extends object, Trait extends object>(
   target: Class,
   trait: Constructor<Trait>,
   generic?: Constructor<any> | Constructor<any>[],
+): boolean;
+export function hasTrait<Class extends object, Trait extends object>(
+  target: Constructor<Class>,
+  trait: Constructor<Trait>,
+  generic?: Constructor<any> | Constructor<any>[],
+): boolean;
+export function hasTrait<Class extends object, Trait extends object>(
+  target: Class | Constructor<Class>,
+  trait: Constructor<Trait>,
+  generic?: Constructor<any> | Constructor<any>[],
 ): boolean {
   const traitId = typeId(trait, generic);
-  const implMap = traitRegistry.get(Object.getPrototypeOf(target));
+  let proto = Object.getPrototypeOf(target);
+  if (typeof target === 'function') {
+    proto = target.prototype;
+  }
+  const implMap = traitRegistry.get(proto);
   return implMap?.has(traitId) ?? false;
 }
-
 /**
  * Gets the trait implementation for a value.
  *
@@ -350,26 +370,23 @@ export function useTrait<Class extends object, Trait extends object>(
   ) as Trait;
 }
 
-
 /**
  * Decorator for implementing traits at runtime.
  * Supports single trait or array of traits.
- * 
+ *
  * @example
  * ```typescript
  * @derive(Debug)
  * class Point { }
- * 
+ *
  * @derive([Debug, Clone])
  * class Rectangle { }
  * ```
  */
-export function derive<T extends Constructor<any>>(
-  traits: Constructor<any> | Constructor<any>[]
-) {
-  return function(target: T): T & Constructor<any> {
+export function derive<T extends Constructor<any>>(traits: Constructor<any> | Constructor<any>[]) {
+  return function (target: T): T & Constructor<any> {
     const traitArray = Array.isArray(traits) ? traits : [traits];
-    traitArray.forEach(trait => {
+    traitArray.forEach((trait) => {
       implTrait(target, trait);
     });
     return target as T & Constructor<any>;

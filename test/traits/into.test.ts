@@ -1,5 +1,4 @@
-import { implTrait } from '../src/trait';
-import { From } from '../src/from';
+import { implFrom } from '../../src/traits/from';
 
 // Example classes for testing
 class Celsius {
@@ -21,28 +20,28 @@ class Kelvin {
 describe('Type Conversion', () => {
   beforeAll(() => {
     // Implement From<Celsius> for Fahrenheit
-    implTrait(Fahrenheit, From, Celsius, {
+    implFrom(Fahrenheit, Celsius, {
       from(celsius: Celsius): Fahrenheit {
         return new Fahrenheit((celsius.value * 9) / 5 + 32);
       },
     });
 
     // Implement From<Fahrenheit> for Celsius
-    implTrait(Celsius, From, Fahrenheit, {
+    implFrom(Celsius, Fahrenheit, {
       from(fahrenheit: Fahrenheit): Celsius {
         return new Celsius(((fahrenheit.value - 32) * 5) / 9);
       },
     });
 
     // Implement From<Celsius> for Kelvin
-    implTrait(Kelvin, From, Celsius, {
+    implFrom(Kelvin, Celsius, {
       from(celsius: Celsius): Kelvin {
         return new Kelvin(celsius.value + 273.15);
       },
     });
 
     // Implement From<Fahrenheit> for Kelvin
-    implTrait(Kelvin, From, Fahrenheit, {
+    implFrom(Kelvin, Fahrenheit, {
       from(fahrenheit: Fahrenheit): Kelvin {
         const celsius = new Celsius(((fahrenheit.value - 32) * 5) / 9);
         return new Kelvin(celsius.value + 273.15);
@@ -50,14 +49,14 @@ describe('Type Conversion', () => {
     });
 
     // Implement From<Celsius> for Temperature
-    implTrait(Temperature, From, Celsius, {
+    implFrom(Temperature, Celsius, {
       from(celsius: Celsius): Temperature {
         return new Temperature(celsius.value);
       },
     });
 
     // Implement From<Fahrenheit> for Temperature
-    implTrait(Temperature, From, Fahrenheit, {
+    implFrom(Temperature, Fahrenheit, {
       from(fahrenheit: Fahrenheit): Temperature {
         const celsius = new Celsius(((fahrenheit.value - 32) * 5) / 9);
         return new Temperature(celsius.value);
@@ -65,7 +64,7 @@ describe('Type Conversion', () => {
     });
 
     // Implement From<Kelvin> for Temperature
-    implTrait(Temperature, From, Kelvin, {
+    implFrom(Temperature, Kelvin, {
       from(kelvin: Kelvin): Temperature {
         return new Temperature(kelvin.value - 273.15);
       },
@@ -100,7 +99,7 @@ describe('Type Conversion', () => {
 
   test('should work with primitive types', () => {
     // Implement From<number> for Celsius
-    implTrait(Celsius, From, Number, {
+    implFrom(Celsius, Number, {
       from(value: number): Celsius {
         return new Celsius(value);
       },

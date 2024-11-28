@@ -1,4 +1,4 @@
-import { from, implFrom } from '../src/from';
+import { from, implFrom } from '../../src/traits/from';
 
 // Example classes for testing
 class Target {
@@ -139,7 +139,7 @@ describe('Type Conversion System', () => {
     test('should throw error for non-implemented conversions', () => {
       const noImpl = new NoImpl();
       expect(() => from(noImpl, Target)).toThrow(/not implemented/);
-      expect(() => noImpl.into(Target)).toThrow(/not implemented/);
+      expect(() => noImpl.into(Target)).toThrow(/into is not a function/);
     });
   });
 

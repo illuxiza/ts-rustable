@@ -1,5 +1,5 @@
-import { stringify } from './stringfy';
-import { typeId } from './type_id';
+import { stringify } from './utils/stringfy';
+import { typeId } from './utils/type_id';
 
 /**
  * Represents a variant in an enumerated type.

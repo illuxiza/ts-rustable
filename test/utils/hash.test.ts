@@ -1,4 +1,4 @@
-import { hash } from '../src/hash';
+import { hash } from '../../src/utils/hash';
 
 describe('hash', () => {
   test('should handle primitive types', () => {

@@ -1,5 +1,4 @@
-import { derive, hasTrait, implTrait, trait, useTrait } from '../src/trait';
-
+import { derive, hasTrait, implTrait, trait, useTrait } from '../../src/trait';
 
 // Basic trait interfaces
 interface BasicClass {
@@ -26,7 +25,6 @@ class Debug {
     return 'default debug';
   }
 }
-
 
 // Basic class with traits
 @derive([Print])

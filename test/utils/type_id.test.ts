@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { typeId } from '../src/type_id';
+import { typeId } from '../../src/utils/type_id';
 
 describe('TypeId System', () => {
   describe('typeId Generation', () => {

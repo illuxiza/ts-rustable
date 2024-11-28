@@ -1,4 +1,4 @@
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { hasTrait, implTrait, trait, useTrait } from '../../src/trait';
 
 describe('Trait Error Cases', () => {
   // Base class for testing

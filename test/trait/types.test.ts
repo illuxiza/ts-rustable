@@ -1,4 +1,4 @@
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { hasTrait, implTrait, trait, useTrait } from '../../src/trait';
 
 describe('Trait Type System', () => {
   // Base container for all tests

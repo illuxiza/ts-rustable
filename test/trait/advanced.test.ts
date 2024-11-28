@@ -1,4 +1,4 @@
-import { derive, implTrait, trait, useTrait } from '../src/trait';
+import { derive, implTrait, trait, useTrait } from '../../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
@@ -120,7 +120,7 @@ describe('Advanced Trait Features', () => {
 
     test('should handle trait method conflicts', () => {
       const dog = new Dog('Buddy', 100);
-      expect(() => dog.getScore()).toThrow('Multiple implementations of method getScore for Dog, please use useTrait');
+      expect(dog.getScore()).toBe(100);
       expect(useTrait(dog, Animal).getName()).toBe('Buddy');
       expect(useTrait(dog, Pet).makeSound()).toBe('Woof!');
       expect(useTrait(dog, Pet).play()).toBe('Playing fetch!');

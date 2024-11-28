@@ -25,16 +25,16 @@ export { derive, hasTrait, implTrait, trait, useTrait } from './trait';
  *
  * Provides From and Into traits for type-safe conversions between types.
  */
-export { From, from, implFrom } from './from';
+export { From, from, implFrom } from './traits/from';
 
 /**
  * Iterator Utilities
  *
  * Rich set of iterator operations inspired by Rust's Iterator trait.
  * Provides functions for working with iterables in a functional style:
- * 
+ *
  * Access all iterator functions through the `iter` namespace.
- * 
+ *
  * Available functions:
  * - takeWhile/skipWhile: Conditional iteration
  * - chunks/windows: Sequence grouping
@@ -45,7 +45,7 @@ export { From, from, implFrom } from './from';
  * - permutations/combinations: Sequence arrangements
  * - zip: Combine multiple iterables
  */
-export { iter } from './iter';
+export { iter } from './utils/iter';
 
 /**
  * HashMap Implementation
@@ -77,7 +77,7 @@ export { Err, Ok, Result } from './result';
  * Runtime type identification and operations.
  * Provides consistent type IDs across instances.
  */
-export { TypeId, typeId } from './type_id';
+export { TypeId, typeId } from './utils/type_id';
 
 /**
  * Pattern Matching
@@ -93,7 +93,7 @@ export { Enum, variant } from './match';
  * Consistent hash generation for any value.
  * Provides deterministic hash codes for objects and primitives.
  */
-export { hash } from './hash';
+export { hash } from './utils/hash';
 
 /**
  * String Formatting
@@ -101,7 +101,7 @@ export { hash } from './hash';
  * Consistent string representation for any value.
  * Handles circular references and complex object structures.
  */
-export { stringify } from './stringfy';
+export { stringify } from './utils/stringfy';
 
 /**
  * Clone System
@@ -109,4 +109,4 @@ export { stringify } from './stringfy';
  * Provides deep cloning functionality for objects
  * Handles complex object structures and circular references
  */
-export { Clone, deepCopy } from './clone';
+export { deepCopy } from './utils/clone';

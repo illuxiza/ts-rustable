@@ -38,75 +38,117 @@
  * @param obj Any JavaScript object to stringify
  * @returns A string representation of the object with reference markers
  */
-export function stringifyObject(obj: any) {
-  const exists = [obj]; // Track processed objects to avoid circular references
-  const used: any[] = []; // Track reference markers that are actually used
+export function stringifyObject(obj: any): string {
+  // First pass: scan for repeated objects
+  const objectRefs = new Map<any, { count: number; id?: number }>();
+  let nextRefId = 0;
 
-  /**
-   * Recursively stringifies an object by processing its keys in sorted order.
-   * Handles arrays, nested objects, and marks circular references.
-   *
-   * @param obj Object to stringify
-   * @returns String representation with reference markers
-   */
-  const stringifyObjectByKeys = (obj: any) => {
-    if (Array.isArray(obj)) {
-      const items: string[] = obj.map((item: any) => {
-        if (item && typeof item === 'object') {
-          return stringifyObjectByKeys(item);
-        } else {
-          return JSON.stringify(item);
-        }
-      });
-      return '[' + items.join(',') + ']';
+  function scanObject(value: any) {
+    if (
+      value === null ||
+      typeof value === 'undefined' ||
+      Object.is(value, NaN) ||
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      typeof value === 'function' ||
+      typeof value === 'symbol' ||
+      typeof value === 'bigint'
+    ) {
+      return;
     }
 
-    let str = '{';
-    let keys = Object.keys(obj);
-    let total = keys.length;
-    keys.sort(); // Sort keys for consistent output
-    keys.forEach((key, i) => {
-      let value = obj[key];
-      str += key + ':';
+    const existing = objectRefs.get(value);
+    if (existing) {
+      existing.count++;
+      return;
+    }
 
-      if (value && typeof value === 'object') {
-        let index = exists.indexOf(value);
-        if (index > -1) {
-          // Object already processed, use reference marker
-          str += '#' + index;
-          used.push(index);
-        } else {
-          // New object, add to tracking and process
-          exists.push(value);
-          let num = exists.length - 1;
-          str += '#' + num + stringifyObjectByKeys(value);
-        }
-      } else {
-        str += JSON.stringify(value);
-      }
+    objectRefs.set(value, { count: 1 });
 
-      if (i < total - 1) {
-        str += ',';
-      }
-    });
-    str += '}';
-    return str;
-  };
-  let str = stringifyObjectByKeys(obj);
+    if (Array.isArray(value)) {
+      value.forEach(scanObject);
+    } else if (value instanceof Map) {
+      Array.from(value.entries()).forEach(([k, v]) => {
+        scanObject(k);
+        scanObject(v);
+      });
+    } else if (value[Symbol.iterator] && typeof value !== 'string') {
+      Array.from(value).forEach(scanObject);
+    } else {
+      Object.keys(value)
+        .sort()
+        .forEach((key) => scanObject(value[key]));
+    }
+  }
 
-  // Clean up unused reference markers
-  exists.forEach((item, i) => {
-    if (!used.includes(i)) {
-      str = str.replace(new RegExp(`:#${i}`, 'g'), ':');
+  // Scan the object tree
+  scanObject(obj);
+
+  // Assign IDs only to objects referenced more than once
+  objectRefs.forEach((info, _) => {
+    if (info.count > 1) {
+      info.id = nextRefId++;
     }
   });
 
-  // Add root reference marker if needed
-  if (used.includes(0)) {
-    str = '#0' + str;
+  // Second pass: generate string representation
+  const processedRefs = new Set<any>();
+
+  function stringifyValue(value: any): string {
+    if (value === null || typeof value === 'undefined') {
+      return '';
+    }
+    if (Object.is(value, NaN)) {
+      return 'NaN';
+    }
+    if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
+      return value.toString();
+    }
+    if (typeof value !== 'object') {
+      return JSON.stringify(value);
+    }
+
+    if (value instanceof Date) {
+      return `Date("${value.getTime()}")`;
+    }
+
+    const ref = objectRefs.get(value);
+    if (ref?.id !== undefined) {
+      if (processedRefs.has(value)) {
+        return '#' + ref.id;
+      }
+      processedRefs.add(value);
+    }
+
+    let result = '';
+    if (Array.isArray(value)) {
+      const items = value.map(stringifyValue);
+      result = '[' + items.join(',') + ']';
+    } else if (value instanceof Map) {
+      const entries = Array.from(value.entries())
+        .map(([k, v]) => `${stringifyValue(k)}:${stringifyValue(v)}`)
+        .join(',');
+      result = `Map{${entries}}`;
+    } else if (value[Symbol.iterator] && typeof value !== 'string') {
+      const elements = Array.from(value).map(stringifyValue).join(',');
+      const typeName = value.constructor.name;
+      result = typeName !== 'Object' ? `${typeName}{${elements}}` : `[${elements}]`;
+    } else {
+      const pairs = Object.keys(value)
+        .sort()
+        .map((key) => `${key}:${stringifyValue(value[key])}`)
+        .join(',');
+      result = '{' + pairs + '}';
+    }
+
+    if (ref?.id !== undefined) {
+      return '#' + ref.id + result;
+    }
+    return result;
   }
 
-  return str;
+  return stringifyValue(obj);
 }
 
 /**
@@ -155,9 +197,12 @@ export function stringifyObject(obj: any) {
  * @param obj Any JavaScript value to convert to string
  * @returns String representation of the value
  */
-export const stringify = (obj: any) => {
+export const stringify = (obj: any): string => {
   if (obj === null || typeof obj === 'undefined') {
     return '';
+  }
+  if (Object.is(obj, NaN)) {
+    return 'NaN';
   }
   if (typeof obj === 'string') {
     return obj;

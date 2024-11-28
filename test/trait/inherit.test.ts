@@ -1,4 +1,4 @@
-import { hasTrait, implTrait, trait } from '../src/trait';
+import { hasTrait, implTrait, trait } from '../../src/trait';
 
 describe('Trait Inheritance', () => {
   // Base container class

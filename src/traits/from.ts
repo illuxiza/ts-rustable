@@ -1,23 +1,18 @@
-import { Constructor } from './common';
-import { implTrait, trait, TraitImplementation, useTrait } from './trait';
+import { Constructor } from '../common';
+import { hasTrait, implTrait, trait, TraitImplementation, useTrait } from '../trait';
 
-declare global {
-  interface Object {
-    into<T>(targetType: Constructor<T>): T;
-  }
-}
-
-// Add into method to Object.prototype
-Object.prototype.into = function <T>(targetType: Constructor<T>): T {
-  return from(this, targetType as any) as T;
-};
+// // Add into method to Object.prototype
+// Object.prototype.into = function <T>(targetType: Constructor<T>): T {
+//   return from(this, targetType as any) as T;
+// };
 
 /**
  * From trait for type conversion.
  * Provides a way to convert from one type into another, similar to Rust's From trait.
  * This is the reciprocal of the Into trait.
  *
- * @example
+ * # Examples
+ * ```typescript
  * class Target {
  *   constructor(public value: string) {}
  * }
@@ -35,6 +30,14 @@ Object.prototype.into = function <T>(targetType: Constructor<T>): T {
  *
  * const source = new Source(42);
  * const target = from(source, Target); // Target { value: "Number: 42" }
+ * ```
+ *
+ * # Implementation Details
+ * - Type-safe conversions between compatible types
+ * - Automatic reciprocal Into trait implementation
+ * - Supports generic type parameters
+ * - Compile-time type checking
+ * - Runtime type validation
  *
  * @template T The type to convert from
  */
@@ -50,6 +53,27 @@ export class From<T = any> {
    */
   from(_value: T): any {
     throw new Error('Not implemented');
+  }
+}
+
+/**
+ * Into trait for type conversion.
+ * Provides a way to convert a type into another type.
+ * This trait is automatically implemented for any type that implements the From trait.
+ *
+ * @template T The type to convert into
+ */
+@trait
+export class Into {
+  /**
+   * Converts this value into the target type.
+   *
+   * @param value The value to convert
+   * @returns The converted value
+   * @throws {Error} If conversion is not implemented
+   */
+  into<T>(this: any, targetType: Constructor<T>): T {
+    return from(this, targetType as any) as T;
   }
 }
 
@@ -136,4 +160,7 @@ export function implFrom<T extends object, U extends object>(
     throw new Error('Invalid implementation');
   }
   implTrait(targetType, From, genericParams, actualImplementation);
+  if (!hasTrait(sourceType, Into)) {
+    implTrait(sourceType, Into);
+  }
 }

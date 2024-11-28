@@ -1,4 +1,4 @@
-import { Constructor } from './common';
+import { Constructor } from '../common';
 
 /**
  * Registry for storing type IDs.
