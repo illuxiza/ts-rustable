@@ -1,0 +1,48 @@
+{
+  "name": "@rustable/match",
+  "version": "0.1.0",
+  "description": "Rust-inspired pattern matching and type-safe error handling for TypeScript. Includes Option<T> for null-safety and Result<T, E> for error handling, with comprehensive pattern matching support",
+  "keywords": [
+    "typescript",
+    "rust",
+    "pattern-matching",
+    "option-type",
+    "result-type",
+    "error-handling",
+    "null-safety",
+    "functional",
+    "enum",
+    "match"
+  ],
+  "main": "./lib/index.js",
+  "source": "./src/index.ts",
+  "module": "./lib/index.mjs",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "@rustable/utils": "workspace:*"
+  },
+  "author": "illuxiza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuxiza/ts-rustable"
+  },
+  "bugs": {
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
+  },
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

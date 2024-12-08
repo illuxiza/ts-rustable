@@ -1,0 +1,52 @@
+{
+  "name": "@rustable/coll",
+  "version": "0.1.0",
+  "description": "Rust-inspired collection types for TypeScript: HashMap, HashSet, and Vec with type safety and efficient implementations",
+  "keywords": [
+    "typescript",
+    "rust",
+    "collections",
+    "hashmap",
+    "hashset",
+    "vector",
+    "type-safe",
+    "data-structures",
+    "option",
+    "efficient"
+  ],
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "scripts": {
+    "test": "jest",
+    "clean": "rimraf lib"
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "@rustable/match": "workspace:*",
+    "@rustable/utils": "workspace:*"
+  },
+  "author": "illuxiza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuxiza/ts-rustable"
+  },
+  "bugs": {
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
+  },
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@rustable/utils",
+  "version": "0.1.0",
+  "description": "Utility TypeScript utilities inspired by Rust, providing type-safe implementations of HashMap, TypeId, deep cloning, hashing, and equality comparison",
+  "keywords": [
+    "typescript",
+    "rust",
+    "type-id",
+    "hashmap",
+    "deep-clone",
+    "equality",
+    "hash"
+  ],
+  "main": "./lib/index.js",
+  "source": "./src/index.ts",
+  "module": "./lib/index.mjs",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "author": "illuxiza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuxiza/ts-rustable"
+  },
+  "bugs": {
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
+  },
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

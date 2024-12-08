@@ -1,8 +1,10 @@
 {
+  "include": ["packages", "types", "scripts", "src"],
   "compilerOptions": {
     "allowJs": false,
     "target": "ESNext",
     "module": "ESNext",
+    "baseUrl": "./",
     "moduleResolution": "node",
     "declaration": true,
     "declarationMap": true,
@@ -10,15 +12,20 @@
     "outDir": "./lib",
     "strict": true,
     "esModuleInterop": true,
+    "removeComments": true,
+    "importHelpers": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "types": ["node", "jest"]
-  },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
-  "exclude": ["node_modules", "lib"]
+    "useDefineForClassFields": false,
+    "types": ["node", "jest"],
+    "paths": {
+      "@rustable/coll": ["packages/coll"],
+      "@rustable/utils": ["packages/utils"],
+      "@rustable/match": ["packages/match"],
+      "@rustable/trait": ["packages/trait"],
+      "@rustable/traits": ["packages/traits"],
+    }
+  }
 }

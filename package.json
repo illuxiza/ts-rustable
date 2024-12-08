@@ -1,6 +1,10 @@
 {
   "name": "rustable",
-  "version": "0.0.9",
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "packageManager": "yarn@4.5.0",
   "description": "A TypeScript library that brings Rust-inspired features to TypeScript, including traits, Option, Result, and more. Zero dependencies, type-safe implementation.",
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",
@@ -8,19 +12,24 @@
   "exports": {
     ".": {
       "require": "./lib/index.js",
-      "import": "./lib/index.mjs",
-      "types": "./lib/index.d.ts"
+      "import": "./lib/index.mjs"
     }
   },
   "scripts": {
-    "build": "npm run clean && node scripts/build.mjs",
-    "clean": "rimraf lib",
+    "build": "monoup build",
     "test": "jest",
-    "test:watch": "jest --watch",
-    "lint": "eslint src/**/*.ts test/**/*.ts",
-    "format": "prettier --write src/**/*.ts test/**/*.ts",
-    "prepublishOnly": "npm run lint && npm run test && npm run build",
-    "prepare": "npm run build"
+    "clean": "monoup clean",
+    "lint": "eslint packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
+    "format": "prettier --write packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
+    "publish": "yarn lint && yarn clean && yarn build && yarn workspaces foreach -R npm publish",
+    "ver": "monoup version"
+  },
+  "dependencies": {
+    "@rustable/coll": "workspace:*",
+    "@rustable/match": "workspace:*",
+    "@rustable/trait": "workspace:*",
+    "@rustable/traits": "workspace:*",
+    "@rustable/utils": "workspace:*"
   },
   "files": [
     "lib",
@@ -42,26 +51,26 @@
   "author": "illuxiza",
   "repository": {
     "type": "git",
-    "url": "https://github.com/illuxiza/rustable.git"
+    "url": "https://github.com/illuxiza/ts-rustable"
   },
   "bugs": {
-    "url": "https://github.com/illuxiza/rustable/issues"
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
   },
-  "homepage": "https://github.com/illuxiza/rustable#readme",
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
   "license": "MIT",
   "devDependencies": {
     "@types/jest": "^29.5.14",
-    "@typescript-eslint/eslint-plugin": "^8.15.0",
-    "@typescript-eslint/parser": "^8.15.0",
+    "@typescript-eslint/eslint-plugin": "^8.16.0",
+    "@typescript-eslint/parser": "^8.16.0",
     "eslint": "^9.15.0",
     "jest": "^29.7.0",
-    "prettier": "^3.3.3",
+    "monoup": "^0.1.0",
+    "prettier": "^3.4.1",
     "rimraf": "^6.0.1",
     "ts-jest": "^29.2.5",
     "typescript": "^5.7.2"
   },
   "publishConfig": {
     "access": "public"
-  },
-  "packageManager": "yarn@4.5.0"
+  }
 }

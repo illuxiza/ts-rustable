@@ -1,0 +1,49 @@
+{
+  "name": "@rustable/trait",
+  "version": "0.1.0",
+  "description": "Powerful TypeScript implementation of Rust-like traits. Features type-safe interface definitions, generic traits, multiple implementations, default methods, and runtime trait checking. Perfect for building flexible and maintainable TypeScript applications with Rust-inspired patterns.",
+  "keywords": [
+    "typescript",
+    "rust",
+    "traits",
+    "interfaces",
+    "polymorphism",
+    "generics",
+    "type-safe",
+    "decorators",
+    "multiple-inheritance",
+    "default-methods",
+    "runtime-checking"
+  ],
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "source": "./src/index.ts",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "@rustable/utils": "workspace:*"
+  },
+  "author": "illuxiza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuxiza/ts-rustable"
+  },
+  "bugs": {
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
+  },
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

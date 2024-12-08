@@ -22,7 +22,7 @@ export default [
       // TypeScript specific rules
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': [
-        'warn', // or "error"
+        'error', // or "error"
         {
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
@@ -46,7 +46,7 @@ export default [
       // General rules
       'no-redeclare': 'off',
       'no-unused-vars': 'off',
-      'no-console': 'warn',
+      'no-console': 'error',
       eqeqeq: ['error', 'always'],
       'no-unused-expressions': 'error',
       'no-duplicate-imports': 'error',
