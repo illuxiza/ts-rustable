@@ -23,7 +23,7 @@ describe('derive decorator', () => {
     expect(point instanceof Point).toBeTruthy();
   });
 
-  test('should derive multiple traits', () => {
+  test('should derive multiple trait-impls', () => {
     @derive([Debug])
     class Rectangle {
       constructor(

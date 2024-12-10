@@ -126,7 +126,7 @@ describe('Trait Error Cases', () => {
 
       class TestClass {}
 
-      // Implement traits in reverse order to test inheritance chain validation
+      // Implement trait-impls in reverse order to test inheritance chain validation
       expect(() => {
         implTrait(TestClass, ExtendedC);
       }).toThrow('Parent trait ExtendedB not implemented for TestClass');

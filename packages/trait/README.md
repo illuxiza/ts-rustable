@@ -131,7 +131,7 @@ console.log(hexFormat.toString()); // "2a"
 ```typescript
 import { derive } from '@rustable/trait';
 
-// Automatically implement multiple traits
+// Automatically implement multiple trait-impls
 @derive([Display, Clone, Debug])
 class Rectangle {
   constructor(

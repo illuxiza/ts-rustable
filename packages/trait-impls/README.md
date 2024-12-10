@@ -1,4 +1,4 @@
-# @rustable/traits
+# @rustable/trait-impls
 
 A TypeScript implementation of Rust-like traits system, providing core traits such as Clone, Eq, and From with full type safety and decorator support.
 
@@ -12,11 +12,11 @@ A TypeScript implementation of Rust-like traits system, providing core traits su
 ## Installation
 
 ```bash
-npm install @rustable/traits
+npm install @rustable/trait-impls
 # or
-yarn add @rustable/traits
+yarn add @rustable/trait-impls
 # or
-pnpm add @rustable/traits
+pnpm add @rustable/trait-impls
 
 ```
 
@@ -34,7 +34,7 @@ Provides deep cloning capability with full support for:
 
 ```typescript
 import { derive } from '@rustable/trait';
-import { Clone } from '@rustable/traits';
+import { Clone } from '@rustable/trait-impls';
 
 @derive([Clone])
 class ComplexObject {
@@ -61,7 +61,7 @@ Type conversion system supporting:
 - Temperature conversion example:
 
 ```typescript
-import { from, implFrom } from '@rustable/traits';
+import { from, implFrom } from '@rustable/trait-impls';
 
 class Celsius {
   constructor(public value: number) {}
@@ -92,7 +92,7 @@ Equality comparison with support for:
 
 ```typescript
 import { derive } from '@rustable/trait';
-import { Eq } from '@rustable/traits';
+import { Eq } from '@rustable/trait-impls';
 
 @derive([Eq])
 class Point {

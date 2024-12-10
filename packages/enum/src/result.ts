@@ -5,7 +5,7 @@
  * @module Result
  */
 
-import { Enum } from './match';
+import { Enum } from './enum';
 import { None, Option, Some } from './option';
 
 /**
@@ -14,11 +14,11 @@ import { None, Option, Some } from './option';
  *
  * @template T Type of the Ok value
  * @template E Type of the Error value
- * @template U Return type of the match operation
+ * @template U Return type of the enum operation
  *
  * @example
  * ```typescript
- * const result = Ok(5).match({
+ * const result = Ok(5).enum({
  *   ok: (val) => val * 2,
  *   err: (e) => 0
  * }); // result = 10
@@ -40,7 +40,7 @@ interface MatchResult<T, E, U> {
 }
 
 /**
- * Default match patterns that preserve the original value
+ * Default enum patterns that preserve the original value
  * @internal
  */
 const defaultMatchResult: MatchResult<any, any, any> = {

@@ -1,25 +1,25 @@
-# @rustable/match
+# @rustable/enum
 
 A TypeScript implementation of Rust-style pattern matching, Option, and Result types. This package provides type-safe alternatives to null/undefined and error handling patterns in TypeScript.
 
 ## Installation
 
 ```bash
-npm install @rustable/match
+npm install @rustable/enum
 # or
-yarn add @rustable/match
+yarn add @rustable/enum
 # or
-pnpm add @rustable/match
+pnpm add @rustable/enum
 ```
 
 ## Core Components
 
-### Pattern Matching (`match.ts`)
+### Pattern Matching (`enum.ts`)
 
 Implements Rust-style pattern matching for TypeScript through the `Enum` base class and variant system.
 
 ```typescript
-import { Enum } from '@rustable/match';
+import { Enum } from '@rustable/enum';
 
 class MyEnum extends Enum {
   static Variant1(value: string) {
@@ -42,7 +42,7 @@ value.match({
 Represents an optional value that may or may not be present. A type-safe alternative to null/undefined.
 
 ```typescript
-import { Some, None } from '@rustable/match';
+import { Some, None } from '@rustable/enum';
 
 function divide(a: number, b: number): Option<number> {
   return b === 0 ? None : Some(a / b);
@@ -58,7 +58,7 @@ const result = divide(10, 2)
 Represents either success (Ok) or failure (Err). A type-safe way to handle operations that may fail.
 
 ```typescript
-import { Result } from '@rustable/match';
+import { Result } from '@rustable/enum';
 
 function validateAge(age: number): Result<number, Error> {
   return age >= 0 && age <= 120 ? Result.Ok(age) : Result.Err(new Error('Invalid age'));

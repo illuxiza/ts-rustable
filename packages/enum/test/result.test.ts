@@ -45,7 +45,7 @@ describe('Result Type', () => {
       expect(() => ok.unwrapErr()).toThrow(ReferenceError);
     });
 
-    test('match() calls ok handler', () => {
+    test('enum() calls ok handler', () => {
       const result = ok.match({
         Ok: (val) => val * 2,
         Err: () => -1,
@@ -119,7 +119,7 @@ describe('Result Type', () => {
       expect(err.unwrapErr().message).toBe(errorMessage);
     });
 
-    test('match() calls err handler', () => {
+    test('enum() calls err handler', () => {
       const result = err.match({
         Ok: () => 42,
         Err: (e) => e.message.length,
@@ -212,9 +212,9 @@ describe('Result Type', () => {
     });
   });
 
-  // Test match with partial handlers
+  // Test enum with partial handlers
   describe('Partial Match Handlers', () => {
-    test('match with only ok handler on Ok', () => {
+    test('enum with only ok handler on Ok', () => {
       const ok = Ok(42);
       const result = ok.match({
         Ok: (val) => val * 2,
@@ -222,7 +222,7 @@ describe('Result Type', () => {
       expect(result).toBe(84);
     });
 
-    test('match with only err handler on Err', () => {
+    test('enum with only err handler on Err', () => {
       const err = Err(new Error('test'));
       const result = err.match({
         Err: (e) => e.message,
@@ -230,7 +230,7 @@ describe('Result Type', () => {
       expect(result).toBe('test');
     });
 
-    test('match with no handlers uses defaults', () => {
+    test('enum with no handlers uses defaults', () => {
       const ok = Ok(42);
       const err = Err(new Error('test'));
 

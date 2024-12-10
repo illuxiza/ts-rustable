@@ -231,7 +231,7 @@ describe('Option', () => {
     });
   });
 
-  describe('Default match patterns', () => {
+  describe('Default enum patterns', () => {
     test('should use default None pattern', () => {
       const opt = None;
       const some = Some(42);

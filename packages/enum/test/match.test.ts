@@ -1,4 +1,4 @@
-import { Enum, variant } from '../src/match';
+import { Enum, variant } from '../src/enum';
 
 class TestEnum extends Enum {
   @variant

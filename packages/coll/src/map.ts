@@ -1,4 +1,4 @@
-import { None, Option, Some } from '@rustable/match';
+import { None, Option, Some } from '@rustable/enum';
 import { equals, hash } from '@rustable/utils';
 
 /**

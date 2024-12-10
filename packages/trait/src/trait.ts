@@ -11,7 +11,7 @@ import { Constructor, typeId, TypeId } from '@rustable/utils';
 const traitRegistry = new WeakMap<object, Map<TypeId, any>>();
 
 /**
- * Cache for parent traits to optimize inheritance chain lookups.
+ * Cache for parent trait-impls to optimize inheritance chain lookups.
  */
 const parentTraitsCache = new WeakMap<object, TraitConstructor<any>[]>();
 
@@ -35,7 +35,7 @@ export type TraitImplementation<Class, Trait> = {
 };
 
 /**
- * Constructor type for traits.
+ * Constructor type for trait-impls.
  * Extends the base constructor with trait metadata.
  */
 interface TraitConstructor<T> extends Constructor<T> {
@@ -43,10 +43,10 @@ interface TraitConstructor<T> extends Constructor<T> {
 }
 
 /**
- * Internal function to collect all parent traits with caching
+ * Internal function to collect all parent trait-impls with caching
  *
  * @param trait The trait to collect parents for
- * @param visited Set of visited traits to prevent circular dependencies
+ * @param visited Set of visited trait-impls to prevent circular dependencies
  * @param cache Whether to use caching
  * @param genericParams Optional array of generic type parameters
  * @returns Array of parent trait constructors
@@ -88,7 +88,7 @@ function collectParentTraits(
 }
 
 /**
- * Decorator for defining traits.
+ * Decorator for defining trait-impls.
  * Marks a class as a trait and sets up its metadata.
  *
  * @param traitClass - The class to be marked as a trait
@@ -214,7 +214,7 @@ export function implTrait<Class extends object, Trait extends object>(
     throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
   }
 
-  // Check parent traits
+  // Check parent trait-impls
   const parents = collectParentTraits(trait, new Set(), true, genericParams);
   parents.forEach((parent) => {
     const parentId = typeId(parent, genericParams);
@@ -370,8 +370,8 @@ export function useTrait<Class extends object, Trait extends object>(
 }
 
 /**
- * Decorator for implementing traits at runtime.
- * Supports single trait or array of traits.
+ * Decorator for implementing trait-impls at runtime.
+ * Supports single trait or array of trait-impls.
  *
  * @example
  * ```typescript

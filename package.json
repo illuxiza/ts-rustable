@@ -1,6 +1,6 @@
 {
   "name": "rustable",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "workspaces": [
     "packages/*"
   ],
@@ -21,14 +21,14 @@
     "clean": "monoup clean",
     "lint": "eslint packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
     "format": "prettier --write packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
-    "publish": "yarn lint && yarn clean && yarn build && yarn workspaces foreach -R npm publish",
+    "publish": "yarn workspaces foreach -R npm publish",
     "ver": "monoup version"
   },
   "dependencies": {
     "@rustable/coll": "workspace:*",
-    "@rustable/match": "workspace:*",
+    "@rustable/enum": "workspace:*",
     "@rustable/trait": "workspace:*",
-    "@rustable/traits": "workspace:*",
+    "@rustable/trait-impls": "workspace:*",
     "@rustable/utils": "workspace:*"
   },
   "files": [
@@ -39,7 +39,7 @@
   "keywords": [
     "typescript",
     "rust",
-    "traits",
+    "trait",
     "option",
     "result",
     "type-safe",

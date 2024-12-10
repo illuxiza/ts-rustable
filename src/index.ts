@@ -11,8 +11,8 @@
  * - Pattern matching
  * - Efficient data structures
  */
-export * from '@rustable/utils';
-export * from '@rustable/match';
 export * from '@rustable/coll';
+export * from '@rustable/enum';
 export * from '@rustable/trait';
-export * from '@rustable/traits';
+export * from '@rustable/trait-impls';
+export * from '@rustable/utils';

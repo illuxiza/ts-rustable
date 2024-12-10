@@ -1,16 +1,16 @@
-import { Enum } from './match';
+import { Enum } from './enum';
 
 /**
  * Interface defining the pattern matching behavior for Option types.
- * Similar to Rust's match expression for Option<T>.
+ * Similar to Rust's enum expression for Option<T>.
  *
  * @template T The type of value contained in Some
- * @template U The return type of the match operation
+ * @template U The return type of the enum operation
  *
  * @example
  * ```typescript
  * const opt = Some(5);
- * const result = opt.match({
+ * const result = opt.enum({
  *   some: (val) => val * 2,
  *   none: () => 0
  * }); // result = 10
@@ -22,8 +22,8 @@ interface MatchOption<T, U> {
 }
 
 /**
- * Default match patterns that preserve the original value
- * Used when partial match patterns are provided
+ * Default enum patterns that preserve the original value
+ * Used when partial enum patterns are provided
  * @internal
  */
 const defaultMatchOption: MatchOption<any, any> = {
@@ -75,7 +75,7 @@ export class Option<T> extends Enum {
 
   /**
    * Pattern matches on the Option, executing different code paths for Some and None cases.
-   * Similar to Rust's match expression.
+   * Similar to Rust's enum expression.
    *
    * @param fn Object containing functions for Some and None cases
    * @returns Result of the matched function
@@ -83,7 +83,7 @@ export class Option<T> extends Enum {
    * @example
    * ```typescript
    * const opt = Some(5);
-   * const result = opt.match({
+   * const result = opt.enum({
    *   some: (val) => val * 2,
    *   none: () => 0
    * }); // result = 10

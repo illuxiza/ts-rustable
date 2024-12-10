@@ -1,5 +1,5 @@
 import { Vec } from '../src/vec';
-import { None, Some } from '@rustable/match';
+import { None, Some } from '@rustable/enum';
 
 describe('Vec', () => {
   describe('construction', () => {

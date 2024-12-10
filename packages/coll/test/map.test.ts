@@ -1,5 +1,5 @@
 import { HashMap } from '../src/map';
-import { None } from '@rustable/match';
+import { None } from '@rustable/enum';
 
 describe('HashMap', () => {
   describe('Basic Operations', () => {

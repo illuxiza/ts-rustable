@@ -1,4 +1,4 @@
-import { None, Option, Some } from '@rustable/match';
+import { None, Option, Some } from '@rustable/enum';
 
 /**
  * A growable array implementation similar to Rust's Vec<T>.
@@ -328,7 +328,7 @@ export class Vec<T> implements Iterable<T> {
   }
 
   /**
-   * Shrinks the capacity to match the length.
+   * Shrinks the capacity to enum the length.
    * Useful for reclaiming unused memory.
    */
   shrinkToFit() {

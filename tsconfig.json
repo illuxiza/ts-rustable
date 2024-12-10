@@ -23,9 +23,9 @@
     "paths": {
       "@rustable/coll": ["packages/coll"],
       "@rustable/utils": ["packages/utils"],
-      "@rustable/match": ["packages/match"],
+      "@rustable/enum": ["packages/enum"],
       "@rustable/trait": ["packages/trait"],
-      "@rustable/traits": ["packages/traits"],
+      "@rustable/trait-impls": ["packages/trait-impls"],
     }
   }
 }

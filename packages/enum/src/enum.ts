@@ -100,7 +100,7 @@ export abstract class Enum {
   }
 
   /**
-   * Pattern matches on the enum variant, similar to Rust's match expression
+   * Pattern matches on the enum variant, similar to Rust's enum expression
    * Use this method to handle different variants of the enum in a type-safe way.
    *
    * @param patterns Object mapping variant names to handler functions
@@ -108,7 +108,7 @@ export abstract class Enum {
    * @throws Error if no matching pattern is found and no default pattern is provided
    * @example
    * ```typescript
-   * enum.match({
+   * enum.enum({
    *   Success: (value) => `Got ${value}`,
    *   Error: (err) => `Error: ${err.message}`,
    * })

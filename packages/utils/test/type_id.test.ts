@@ -208,7 +208,7 @@ describe('TypeId System', () => {
       const cat = new Cat();
       const animal = new Animal();
 
-      // Instance IDs should match their class IDs
+      // Instance IDs should enum their class IDs
       expect(typeId(dog)).toBe(typeId(Dog));
       expect(typeId(cat)).toBe(typeId(Cat));
       expect(typeId(animal)).toBe(typeId(Animal));
@@ -255,7 +255,7 @@ describe('TypeId System', () => {
       // Concrete implementations should have different IDs
       expect(typeId(Circle)).not.toBe(typeId(Rectangle));
 
-      // Instances should match their class IDs
+      // Instances should enum their class IDs
       expect(typeId(circle)).toBe(typeId(Circle));
       expect(typeId(rectangle)).toBe(typeId(Rectangle));
     });
@@ -289,7 +289,7 @@ describe('TypeId System', () => {
       expect(typeId(UIComponent)).not.toBe(typeId(Icon));
       expect(typeId(Button)).not.toBe(typeId(Icon));
 
-      // Instances should match their class IDs
+      // Instances should enum their class IDs
       expect(typeId(button)).toBe(typeId(Button));
       expect(typeId(icon)).toBe(typeId(Icon));
     });
