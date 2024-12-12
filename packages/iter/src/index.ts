@@ -31,6 +31,8 @@ export function iter<T>(items: Iterable<T>): IterImpl<T> {
   return IterImpl.from(items);
 }
 
+export type RustIter<T> = IterImpl<T>;
+
 /**
  * Creates a new range iterator
  * @param start Starting value (inclusive)

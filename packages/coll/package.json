@@ -1,6 +1,6 @@
 {
   "name": "@rustable/coll",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Rust-inspired collection types for TypeScript: HashMap, HashSet, and Vec with type safety and efficient implementations",
   "keywords": [
     "typescript",
