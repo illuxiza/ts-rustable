@@ -6,18 +6,18 @@ import { None, Option, Some } from '@rustable/enum';
  * @template T The type of elements stored in the Vec
  */
 export class Vec<T> implements Iterable<T> {
-  private buffer: T[];
-  private _length: number;
-  private _capacity: number;
+  #buffer: T[];
+  #length: number;
+  #capacity: number;
 
   /**
    * Creates a new Vec with the specified initial capacity.
    * @param capacity Initial capacity of the Vec (default: 0)
    */
   constructor(capacity: number = 0) {
-    this._capacity = Math.max(capacity, 0);
-    this.buffer = new Array(this._capacity);
-    this._length = 0;
+    this.#capacity = Math.max(capacity, 0);
+    this.#buffer = new Array(this.#capacity);
+    this.#length = 0;
   }
 
   /**
@@ -44,17 +44,21 @@ export class Vec<T> implements Iterable<T> {
   }
 
   /**
-   * Creates a new Vec from an existing array.
-   * @template T The type of elements in the array
-   * @param array Source array to create Vec from
-   * @returns A new Vec<T> containing all elements from the array
+   * Creates a new Vec from an iterable.
+   * @template T The type of elements to store
+   * @param iterable The iterable to convert to a Vec
+   * @returns A new Vec<T> populated with elements from the iterable
    * @example
-   * const vec = Vec.fromArray([1, 2, 3]);
+   * const vec = Vec.from([1, 2, 3]);
    */
-  static fromArray<T>(array: T[]): Vec<T> {
-    const vec = new Vec<T>(array.length);
-    vec.buffer = [...array];
-    vec._length = array.length;
+  static from<T>(iterable: Iterable<T>): Vec<T> {
+    const vec = new Vec<T>();
+    let length = 0;
+    for (const item of iterable) {
+      vec.push(item);
+      length++;
+    }
+    vec.#length = length;
     return vec;
   }
 
@@ -62,8 +66,16 @@ export class Vec<T> implements Iterable<T> {
    * Gets the current number of elements in the Vec.
    * @returns The number of elements
    */
-  get length(): number {
-    return this._length;
+  len(): number {
+    return this.#length;
+  }
+
+  /**
+   * Sets the current number of elements in the Vec.
+   * @param length The new length
+   */
+  setlen(length: number) {
+    this.#length = length;
   }
 
   /**
@@ -71,7 +83,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns The current capacity
    */
   get capacity(): number {
-    return this._capacity;
+    return this.#capacity;
   }
 
   /**
@@ -79,7 +91,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns true if the Vec contains no elements, false otherwise
    */
   isEmpty(): boolean {
-    return this._length === 0;
+    return this.#length === 0;
   }
 
   /**
@@ -91,10 +103,10 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.get(1); // Some(2)
    */
   get(index: number): Option<T> {
-    if (index >= this._length) {
+    if (index >= this.#length) {
       return None;
     }
-    return Some(this.buffer[index]);
+    return Some(this.#buffer[index]);
   }
 
   /**
@@ -104,25 +116,7 @@ export class Vec<T> implements Iterable<T> {
    * @warning This method does not perform bounds checking
    */
   getUnchecked(index: number): T {
-    return this.buffer[index];
-  }
-
-  /**
-   * Sets the element at the specified index.
-   * @param index Zero-based index to set
-   * @param value New value to set
-   * @returns Some(old_value) if index was valid, None if out of bounds
-   * @example
-   * const vec = Vec.fromArray([1, 2, 3]);
-   * vec.set(1, 5); // Some(2), vec is now [1, 5, 3]
-   */
-  set(index: number, value: T): Option<T> {
-    if (index >= this._length) {
-      return None;
-    }
-    const old = this.buffer[index];
-    this.buffer[index] = value;
-    return Some(old);
+    return this.#buffer[index];
   }
 
   /**
@@ -134,9 +128,9 @@ export class Vec<T> implements Iterable<T> {
    * vec.push(1); // vec is now [1]
    */
   push(value: T) {
-    this.reserveExact(this._length + 1);
-    this.buffer[this._length] = value;
-    this._length++;
+    this.reserveExact(this.#length + 1);
+    this.#buffer[this.#length] = value;
+    this.#length++;
   }
 
   /**
@@ -147,11 +141,35 @@ export class Vec<T> implements Iterable<T> {
    * const last = vec.pop(); // Some(2), vec is now [1]
    */
   pop(): Option<T> {
-    if (this._length === 0) {
+    if (this.#length === 0) {
       return None;
     }
-    this._length--;
-    return Some(this.buffer[this._length]);
+    this.#length--;
+    return Some(this.#buffer[this.#length]);
+  }
+
+  /**
+   * Removes and returns the last element if it satisfies the predicate.
+   * @param predicate The predicate to check the last element
+   * @returns Some(element) if the last element satisfies the predicate, None otherwise
+   */
+  popIf(predicate: (value: T) => boolean): Option<T> {
+    const value = this.last();
+    if (value.isSome() && predicate(value.unwrap())) {
+      return this.pop();
+    }
+    return None;
+  }
+
+  /**
+   * Returns the last element of the Vec.
+   * @returns Some(element) if Vec is not empty, None if empty
+   */
+  last(): Option<T> {
+    if (this.#length === 0) {
+      return None;
+    }
+    return Some(this.#buffer[this.#length - 1]);
   }
 
   /**
@@ -160,12 +178,12 @@ export class Vec<T> implements Iterable<T> {
    * @param additional Number of additional elements to reserve space for
    */
   reserve(additional: number) {
-    const needed = this._length + additional;
-    if (needed <= this._capacity) {
+    const needed = this.#length + additional;
+    if (needed <= this.#capacity) {
       return;
     }
     // Use Rust's growth strategy: double or add needed space
-    const newCapacity = Math.max(this._capacity * 2, needed);
+    const newCapacity = Math.max(this.#capacity * 2, needed);
     this.reserveExact(newCapacity);
   }
 
@@ -174,15 +192,15 @@ export class Vec<T> implements Iterable<T> {
    * @param capacity New capacity to allocate
    */
   reserveExact(capacity: number) {
-    if (capacity <= this._capacity) {
+    if (capacity <= this.#capacity) {
       return;
     }
     const newBuffer = new Array(capacity);
-    for (let i = 0; i < this._length; i++) {
-      newBuffer[i] = this.buffer[i];
+    for (let i = 0; i < this.#length; i++) {
+      newBuffer[i] = this.#buffer[i];
     }
-    this.buffer = newBuffer;
-    this._capacity = capacity;
+    this.#buffer = newBuffer;
+    this.#capacity = capacity;
   }
 
   /**
@@ -190,7 +208,7 @@ export class Vec<T> implements Iterable<T> {
    * Does not affect capacity.
    */
   clear() {
-    this._length = 0;
+    this.#length = 0;
   }
 
   /**
@@ -199,9 +217,30 @@ export class Vec<T> implements Iterable<T> {
    * @param length New length to truncate to
    */
   truncate(length: number) {
-    if (length < this._length) {
-      this._length = length;
+    if (length < this.#length) {
+      this.#length = length;
     }
+  }
+
+  /**
+   * Inserts an element at the specified index, shifting all elements after it to the right.
+   * @param index Index where the element should be inserted
+   * @param value Element to insert
+   * @throws Error if index is out of bounds
+   * @example
+   * const vec = Vec.fromArray([1, 3]);
+   * vec.insert(1, 2); // vec is now [1, 2, 3]
+   */
+  insert(index: number, value: T) {
+    if (index > this.#length || index < 0) {
+      throw new Error('Index out of bounds');
+    }
+    this.reserve(1);
+    for (let i = this.#length; i > index; i--) {
+      this.#buffer[i] = this.#buffer[i - 1];
+    }
+    this.#buffer[index] = value;
+    this.#length++;
   }
 
   /**
@@ -214,14 +253,14 @@ export class Vec<T> implements Iterable<T> {
    * vec.remove(1); // Some(2), vec is now [1, 3]
    */
   remove(index: number): Option<T> {
-    if (index >= this._length) {
+    if (index >= this.#length) {
       return None;
     }
-    const value = this.buffer[index];
-    for (let i = index; i < this._length - 1; i++) {
-      this.buffer[i] = this.buffer[i + 1];
+    const value = this.#buffer[index];
+    for (let i = index; i < this.#length - 1; i++) {
+      this.#buffer[i] = this.#buffer[i + 1];
     }
-    this._length--;
+    this.#length--;
     return Some(value);
   }
 
@@ -235,54 +274,31 @@ export class Vec<T> implements Iterable<T> {
    * vec.swapRemove(1); // Some(2), vec is now [1, 4, 3]
    */
   swapRemove(index: number): Option<T> {
-    if (index >= this._length) {
+    if (index >= this.#length) {
       return None;
     }
-    const value = this.buffer[index];
-    this._length--;
-    if (index < this._length) {
-      this.buffer[index] = this.buffer[this._length];
+    const value = this.#buffer[index];
+    this.#length--;
+    if (index < this.#length) {
+      this.#buffer[index] = this.#buffer[this.#length];
     }
     return Some(value);
-  }
-
-  /**
-   * Inserts an element at the specified index, shifting all elements after it to the right.
-   * @param index Index where the element should be inserted
-   * @param value Element to insert
-   * @throws Error if index is out of bounds
-   * @example
-   * const vec = Vec.fromArray([1, 3]);
-   * vec.insert(1, 2); // vec is now [1, 2, 3]
-   */
-  insert(index: number, value: T) {
-    if (index > this._length) {
-      throw new Error('Index out of bounds');
-    }
-    this.reserve(1);
-    for (let i = this._length; i > index; i--) {
-      this.buffer[i] = this.buffer[i - 1];
-    }
-    this.buffer[index] = value;
-    this._length++;
   }
 
   /**
    * Converts the Vec to a standard array.
    * @returns A new array containing all elements
    */
-  toArray(): T[] {
-    return this.buffer.slice(0, this._length);
+  asSlice(): T[] {
+    return this.#buffer.slice(0, this.#length);
   }
 
   /**
    * Implements the Iterator protocol for the Vec.
    * @yields Each element in the Vec in order
    */
-  *[Symbol.iterator](): Iterator<T> {
-    for (let i = 0; i < this._length; i++) {
-      yield this.buffer[i];
-    }
+  [Symbol.iterator](): IterableIterator<T> {
+    return this.#buffer.slice(0, this.#length)[Symbol.iterator]();
   }
 
   /**
@@ -304,8 +320,8 @@ export class Vec<T> implements Iterable<T> {
    * @param end End index (default: length)
    * @returns Array containing elements from start to end
    */
-  slice(start: number = 0, end: number = this._length): T[] {
-    return this.buffer.slice(start, Math.min(end, this._length));
+  slice(start: number = 0, end: number = this.#length): T[] {
+    return this.#buffer.slice(start, Math.min(end, this.#length));
   }
 
   /**
@@ -318,13 +334,13 @@ export class Vec<T> implements Iterable<T> {
    * vec.resize(4, 0); // vec is now [1, 2, 0, 0]
    */
   resize(newLength: number, value: T) {
-    if (newLength > this._length) {
-      this.reserve(newLength - this._length);
-      for (let i = this._length; i < newLength; i++) {
-        this.buffer[i] = value;
+    if (newLength > this.#length) {
+      this.reserve(newLength - this.#length);
+      for (let i = this.#length; i < newLength; i++) {
+        this.#buffer[i] = value;
       }
     }
-    this._length = newLength;
+    this.#length = newLength;
   }
 
   /**
@@ -332,13 +348,13 @@ export class Vec<T> implements Iterable<T> {
    * Useful for reclaiming unused memory.
    */
   shrinkToFit() {
-    if (this._capacity > this._length) {
-      const newBuffer = new Array(this._length);
-      for (let i = 0; i < this._length; i++) {
-        newBuffer[i] = this.buffer[i];
+    if (this.#capacity > this.#length) {
+      const newBuffer = new Array(this.#length);
+      for (let i = 0; i < this.#length; i++) {
+        newBuffer[i] = this.#buffer[i];
       }
-      this.buffer = newBuffer;
-      this._capacity = this._length;
+      this.#buffer = newBuffer;
+      this.#capacity = this.#length;
     }
   }
 }

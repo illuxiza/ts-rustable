@@ -1,0 +1,43 @@
+{
+  "name": "@rustable/iter",
+  "version": "0.1.2",
+  "description": "Rust-style iterator adapters for TypeScript, providing a rich set of functional operations for iterating over collections",
+  "main": "./lib/index.js",
+  "module": "./lib/index.mjs",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "scripts": {
+    "build": "monoup build",
+    "test": "jest",
+    "clean": "monoup clean"
+  },
+  "dependencies": {
+    "@rustable/utils": "workspace:*",
+    "@rustable/enum": "workspace:*"
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "keywords": [
+    "iterator",
+    "rust",
+    "functional",
+    "collection",
+    "sequence",
+    "lazy",
+    "chain",
+    "map",
+    "filter",
+    "reduce",
+    "typescript"
+  ],
+  "author": "",
+  "license": "MIT"
+}

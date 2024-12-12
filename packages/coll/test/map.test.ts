@@ -1,166 +1,139 @@
 import { HashMap } from '../src/map';
-import { None } from '@rustable/enum';
+import { Option } from '@rustable/enum';
 
 describe('HashMap', () => {
-  describe('Basic Operations', () => {
-    test('should create an empty map', () => {
-      const map = new HashMap<string, number>();
-      expect(map.size).toBe(0);
-    });
+  let map: HashMap<string, number>;
 
-    test('should create a map with initial entries', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      expect(map.size).toBe(2);
-      expect(map.get('a').unwrap()).toBe(1);
-      expect(map.get('b').unwrap()).toBe(2);
-    });
-
-    test('should set and get values', () => {
-      const map = new HashMap<string, number>();
-      map.set('test', 123);
-      expect(map.get('test').unwrap()).toBe(123);
-    });
-
-    test('should handle non-existent keys', () => {
-      const map = new HashMap<string, number>();
-      expect(map.get('nonexistent')).toBe(None);
-    });
-
-    test('should check if key exists', () => {
-      const map = new HashMap<string, number>();
-      map.set('test', 123);
-      expect(map.has('test')).toBe(true);
-      expect(map.has('nonexistent')).toBe(false);
-    });
-
-    test('should delete entries', () => {
-      const map = new HashMap<string, number>();
-      map.set('test', 123);
-      expect(map.delete('test')).toBe(true);
-      expect(map.has('test')).toBe(false);
-      expect(map.delete('nonexistent')).toBe(false);
-    });
-
-    test('should clear all entries', () => {
-      const map = new HashMap<string, number>();
-      map.set('a', 1).set('b', 2);
-      map.clear();
-      expect(map.size).toBe(0);
-      expect(map.has('a')).toBe(false);
-    });
+  beforeEach(() => {
+    map = new HashMap<string, number>();
   });
 
-  describe('Iterators', () => {
-    test('should iterate over entries', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      const entries = [...map.entries()];
-      expect(entries).toEqual([
-        ['a', 1],
-        ['b', 2],
-      ]);
-    });
-
-    test('should iterate over keys', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      const keys = [...map.keys()];
-      expect(keys).toEqual(['a', 'b']);
-    });
-
-    test('should iterate over values', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      const values = [...map.values()];
-      expect(values).toEqual([1, 2]);
-    });
-
-    test('should support for...of iteration', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      const entries: [string, number][] = [];
-      for (const [key, value] of map) {
-        entries.push([key, value]);
-      }
-      expect(entries).toEqual([
-        ['a', 1],
-        ['b', 2],
-      ]);
-    });
+  test('should create an empty HashMap', () => {
+    expect(map.len()).toBe(0);
   });
 
-  describe('Advanced Features', () => {
-    test('should handle complex object keys', () => {
-      const map = new HashMap<object, string>();
-      const key1 = { id: 1 };
-      const key2 = { id: 2 };
+  test('should insert and retrieve key-value pairs', () => {
+    expect(map.insert('a', 1)).toEqual(Option.None());
+    expect(map.len()).toBe(1);
+    expect(map.get('a').unwrapOr(0)).toBe(1);
+  });
 
-      map.set(key1, 'value1');
-      map.set(key2, 'value2');
+  test('should update existing key', () => {
+    map.insert('a', 1);
+    expect(map.insert('a', 2).unwrap()).toBe(1);
+    expect(map.get('a').unwrapOr(0)).toBe(2);
+  });
 
-      expect(map.get(key1).unwrap()).toBe('value1');
-      expect(map.get(key2).unwrap()).toBe('value2');
-    });
+  test('should remove key-value pairs', () => {
+    map.insert('a', 1);
+    expect(map.remove('a').unwrap()).toBe(1);
+    expect(map.len()).toBe(0);
+    expect(map.get('a').isNone()).toBe(true);
+  });
 
-    test('should handle Option chaining', () => {
-      const map = new HashMap<string, number>();
-      map.set('test', 5);
+  test('should handle non-existing keys', () => {
+    expect(map.get('b').isNone()).toBe(true);
+  });
 
-      const doubled = map
-        .get('test')
-        .map((n) => n * 2)
-        .unwrapOr(0);
+  test('should clear the map', () => {
+    map.insert('a', 1);
+    map.clear();
+    expect(map.len()).toBe(0);
+  });
 
-      expect(doubled).toBe(10);
+  test('should iterate over entries', () => {
+    map.insert('a', 1);
+    map.insert('b', 2);
+    expect([...map.entries()]).toEqual([
+      ['a', 1],
+      ['b', 2],
+    ]);
+  });
 
-      const nonexistent = map
-        .get('missing')
-        .map((n) => n * 2)
-        .unwrapOr(0);
+  test('should handle multiple entries with the same hash', () => {
+    const map = new HashMap<{ id: number }, number>();
+    const key1 = { id: 1 };
+    const key2 = { id: 2 };
+    map.insert(key1, 1);
+    map.insert(key2, 2);
+    expect(map.get(key1).unwrapOr(0)).toBe(1);
+    expect(map.get(key2).unwrapOr(0)).toBe(2);
+  });
 
-      expect(nonexistent).toBe(0);
-    });
+  test('should handle large number of entries', () => {
+    for (let i = 0; i < 1000; i++) {
+      map.insert(`key${i}`, i);
+    }
+    expect(map.len()).toBe(1000);
+  });
 
-    test('should execute forEach callback', () => {
-      const map = new HashMap([
-        ['a', 1],
-        ['b', 2],
-      ]);
-      const entries: [string, number][] = [];
+  test('should implement removeEntry', () => {
+    map.insert('a', 1);
+    const entry = map
+      .removeEntry('a')
+      .map(([k, v]) => [k, v * 2])
+      .unwrapOr(['', 0]);
+    expect(entry).toEqual(['a', 2]);
+    expect(map.len()).toBe(0);
+  });
 
-      map.forEach((value, key) => {
-        entries.push([key, value]);
-      });
+  test('should implement keys and values iterators', () => {
+    map.insert('a', 1);
+    map.insert('b', 2);
+    expect([...map.keys()]).toEqual(['a', 'b']);
+    expect([...map.values()]).toEqual([1, 2]);
+  });
 
-      expect(entries).toEqual([
-        ['a', 1],
-        ['b', 2],
-      ]);
-    });
+  test('should retain elements based on predicate', () => {
+    map.insert('a', 1);
+    map.insert('b', 2);
+    map.insert('c', 3);
+    map.retain((_, v) => v % 2 === 0);
+    expect(map.len()).toBe(1);
+    expect(map.get('b').unwrapOr(0)).toBe(2);
+  });
 
-    test('should handle hash collisions', () => {
-      // Create two different keys that might have the same hash
-      const key1 = { toString: () => 'collision1' };
-      const key2 = { toString: () => 'collision2' };
+  test('should drain all entries', () => {
+    map.insert('a', 1);
+    map.insert('b', 2);
+    const entries = [...map.drain()];
+    expect(entries).toEqual([
+      ['a', 1],
+      ['b', 2],
+    ]);
+    expect(map.len()).toBe(0);
+  });
 
-      const map = new HashMap<object, string>();
-      map.set(key1, 'value1');
-      map.set(key2, 'value2');
+  test('should initialize with entries', () => {
+    const entries: [string, number][] = [
+      ['a', 1],
+      ['b', 2],
+    ];
+    const mapWithEntries = new HashMap(entries);
+    expect(mapWithEntries.len()).toBe(2);
+    expect(mapWithEntries.get('a').unwrapOr(0)).toBe(1);
+    expect(mapWithEntries.get('b').unwrapOr(0)).toBe(2);
+  });
 
-      expect(map.get(key1).unwrap()).toBe('value1');
-      expect(map.get(key2).unwrap()).toBe('value2');
-      expect(map.size).toBe(2);
-    });
+  test('should handle getUnchecked method', () => {
+    map.insert('a', 1);
+    expect(map.getUnchecked('a')).toBe(1);
+    expect(() => map.getUnchecked('nonexistent')).toThrow('Key not found');
+  });
+
+  test('should handle key equality edge cases', () => {
+    // Test object equality
+    const objMap = new HashMap<{ id: string }, number>();
+    const key1 = { id: 'same' };
+    const key2 = { id: 'same' };
+    objMap.insert(key1, 1);
+    expect(objMap.get(key2).unwrapOr(0)).toBe(1);
+
+    // Test null/undefined handling
+    const nullMap = new HashMap<any, number>();
+    nullMap.insert(null, 1);
+    nullMap.insert(undefined, 2);
+    expect(nullMap.get(null).unwrapOr(0)).toBe(1);
+    expect(nullMap.get(undefined).unwrapOr(0)).toBe(2);
   });
 });

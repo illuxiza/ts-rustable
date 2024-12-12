@@ -1,6 +1,6 @@
 # @rustable/trait-impls
 
-A TypeScript implementation of Rust-like traits system, providing core traits such as Clone, Eq, and From with full type safety and decorator support.
+Common trait implementations for the Rustable trait system, providing ready-to-use implementations of standard traits like Clone, Eq, From, and Iter.
 
 ## Features
 
@@ -17,7 +17,6 @@ npm install @rustable/trait-impls
 yarn add @rustable/trait-impls
 # or
 pnpm add @rustable/trait-impls
-
 ```
 
 ### Clone Trait
@@ -106,6 +105,43 @@ interface Point extends Eq {}
 const p1 = new Point(1, 2);
 const p2 = new Point(1, 2);
 console.log(p1.eq(p2)); // true
+```
+
+### Iter Trait
+
+Provides a powerful iteration interface inspired by Rust's Iterator trait:
+
+- Lazy evaluation
+- Chaining of operations
+- Efficient data processing
+- Compatible with various collection types
+
+```typescript
+import { derive } from '@rustable/trait';
+import { Iter } from '@rustable/trait-impls';
+
+@derive([Iter])
+class NumberRange {
+  constructor(
+    public start: number,
+    public end: number,
+  ) {}
+
+  *[Symbol.iterator]() {
+    for (let i = this.start; i <= this.end; i++) {
+      yield i;
+    }
+  }
+}
+interface NumberRange extends Iter<number> {}
+
+const range = new NumberRange(1, 5);
+const doubledEvenSum = range
+  .filter(n => n % 2 === 0)
+  .map(n => n * 2)
+  .sum();
+
+console.log(doubledEvenSum); // 12 (2*2 + 4*2)
 ```
 
 ## License

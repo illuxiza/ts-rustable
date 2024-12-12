@@ -7,5 +7,11 @@ import { stringify } from './stringify';
  * @returns true if values are equal, false otherwise
  */
 export function equals(a: any, b: any): boolean {
+  if (a === b) {
+    return true;
+  }
+  if (typeof a !== typeof b) {
+    return false;
+  }
   return stringify(a) === stringify(b);
 }

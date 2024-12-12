@@ -32,27 +32,27 @@ const defaultMatchOption: MatchOption<any, any> = {
 };
 
 /**
- * Option<T> type representing an optional value
- * A type-safe alternative to null/undefined that forces explicit handling
- * of the absence of a value
+ * Option<T> type representing an optional value.
+ * A type-safe alternative to handle optional values with explicit control flow.
  *
  * Key features:
- * - No null/undefined related bugs
- * - Forces handling of both presence and absence cases
+ * - Explicit handling of optional values
  * - Rich set of combinators for value transformation
  * - Pattern matching support
+ * - Chainable operations
  *
  * @template T The type of the contained value
  *
  * @example
  * ```typescript
- * function divide(a: number, b: number): Option<number> {
+ * function divide(a: number, b: number): Option<T> {
  *   return b === 0 ? None : Some(a / b);
  * }
  *
  * const result = divide(10, 2)
- *   .map(n => n * 2)    // Transform if Some
- *   .unwrapOr(0);       // Default if None
+ *   .map(n => n * 2)      // Transform the value
+ *   .filter(n => n > 0)   // Keep only positive numbers
+ *   .unwrapOr(0);         // Provide default value
  * ```
  */
 export class Option<T> extends Enum {
@@ -62,13 +62,33 @@ export class Option<T> extends Enum {
     super(value, ...args);
   }
 
+  /**
+   * Creates a Some variant containing a value.
+   *
+   * @template T The type of value to wrap
+   * @param val The value to wrap
+   * @returns Option<T> containing the value
+   *
+   * @example
+   * ```typescript
+   * const num = Some(42);           // Option<number>
+   * const str = Some("hello");      // Option<string>
+   * const obj = Some({x: 1});       // Option<{x: number}>
+   * ```
+   */
   static Some<T>(value: T): Option<T> {
-    if (typeof value === 'undefined' || value === null) {
-      return Option.NONE_INSTANCE;
-    }
     return new Option('Some', value);
   }
 
+  /**
+   * Creates an Option containing no value
+   * @returns Option containing no value
+   *
+   * @example
+   * ```typescript
+   * const empty = None;
+   * ```
+   */
   static None<T>(): Option<T> {
     return Option.NONE_INSTANCE;
   }
@@ -110,7 +130,7 @@ export class Option<T> extends Enum {
    * ```
    */
   isSome(): boolean {
-    return this.is('Some') && typeof super.unwrap() !== 'undefined' && super.unwrap() !== null;
+    return this.is('Some');
   }
 
   /**
@@ -422,38 +442,31 @@ export class Option<T> extends Enum {
 }
 
 /**
- * A singleton None instance that represents the absence of a value.
- * This is the preferred way to create None values in your code.
+ * A singleton None instance representing absence of a value.
+ * This is the recommended way to create None values.
  *
  * @example
  * ```typescript
- * const empty = None;
- * if (empty.isNone()) {
- *   console.log("No value present");
+ * function find(id: string): Option<User> {
+ *   const user = db.get(id);
+ *   return user ? Some(user) : None;
  * }
  * ```
  */
 export const None = Option.None<any>();
 
 /**
- * Creates a new Option containing a value (Some variant).
- * If the provided value is null or undefined, returns None instead.
- * This is the preferred way to create Some values in your code.
+ * Creates a Some variant containing a value.
  *
  * @template T The type of value to wrap
- * @param val The value to wrap in Some
- * @returns Option<T> containing the value, or None if value is null/undefined
+ * @param val The value to wrap
+ * @returns Option<T> containing the value
  *
  * @example
  * ```typescript
- * const value = Some(42);          // Option<number>
- * const empty = Some(null);        // None
- * const empty2 = Some(undefined);  // None
- *
- * // Use in functions
- * function divide(a: number, b: number): Option<number> {
- *   return b === 0 ? None : Some(a / b);
- * }
+ * const num = Some(42);           // Option<number>
+ * const str = Some("hello");      // Option<string>
+ * const obj = Some({x: 1});       // Option<{x: number}>
  * ```
  */
 export function Some<T>(val: T): Option<T> {

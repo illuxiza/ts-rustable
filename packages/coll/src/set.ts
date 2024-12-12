@@ -1,110 +1,138 @@
 import { HashMap } from './map';
 
 /**
- * A type-safe hash set implementation similar to Rust's HashSet.
- * Provides efficient storage and lookup of unique values.
+ * A hash set implementation similar to Rust's HashSet.
  *
- * Key features:
- * - Type-safe value type
- * - Efficient hash-based storage
- * - Standard Set interface compatibility
- * - Built on top of HashMap implementation
+ * The HashSet class provides an unordered set of unique values,
+ * backed by a HashMap where all values are mapped to void.
  *
- * @example
- * const set = new HashSet<string>();
- * set.add('one');
- * set.add('two');
+ * # Examples
+ * ```ts
+ * let set = new HashSet<string>();
  *
- * console.log(set.has('one')); // true
- * console.log(set.size); // 2
+ * // Insert some values
+ * set.insert("a");
+ * set.insert("b");
  *
- * @template T The type of values stored in the set
+ * // Check for values
+ * assert(set.contains("a"));
+ * assert(!set.contains("c"));
+ *
+ * // Remove values
+ * set.remove("a");
+ * ```
  */
 export class HashSet<T> implements Iterable<T> {
-  /**
-   * Internal storage using HashMap with dummy value
-   */
-  #map: HashMap<T, boolean>;
+  /** Internal storage using HashMap */
+  #map: HashMap<T, void>;
 
   /**
-   * Creates a new HashSet
-   * @param values The values to add to the set
+   * Creates an empty HashSet or one populated with the given values.
+   *
+   * # Examples
+   * ```ts
+   * // Empty set
+   * let set1 = new HashSet<string>();
+   *
+   * // Set with initial values
+   * let set2 = new HashSet(["a", "b", "c"]);
+   * ```
    */
-  constructor(values?: Iterable<T>) {
-    this.#map = new HashMap<T, boolean>();
+  constructor(values?: readonly T[]) {
+    this.#map = new HashMap();
     if (values) {
       for (const value of values) {
-        this.add(value);
+        this.insert(value);
       }
     }
   }
 
   /**
-   * Adds a value to the set
-   * @param value The value to add
-   * @returns true if the value was newly added, false if it was already present
+   * Returns the number of elements in the set.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet(["a", "b"]);
+   * assert(set.len === 2);
+   * ```
    */
-  add(value: T): boolean {
-    const wasPresent = this.#map.get(value).isSome();
-    this.#map.set(value, true);
-    return !wasPresent;
+  len(): number {
+    return this.#map.len();
   }
 
   /**
-   * Checks if a value exists in the set
-   * @param value The value to check
-   * @returns true if the value exists, false otherwise
-   */
-  has(value: T): boolean {
-    return this.#map.get(value).isSome();
-  }
-
-  /**
-   * Removes a value from the set
-   * @param value The value to remove
-   * @returns true if the value was present and removed, false if it wasn't present
-   */
-  delete(value: T): boolean {
-    return this.#map.delete(value);
-  }
-
-  /**
-   * Removes all values from the set
+   * Removes all elements from the set.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet(["a", "b"]);
+   * set.clear();
+   * assert(set.len === 0);
+   * ```
    */
   clear(): void {
     this.#map.clear();
   }
 
   /**
-   * Returns the number of values in the set
+   * Returns true if the set contains the specified value.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet(["a"]);
+   * assert(set.contains("a"));
+   * assert(!set.contains("b"));
+   * ```
    */
-  get size(): number {
-    return this.#map.size;
+  contains(value: T): boolean {
+    return this.#map.containsKey(value);
   }
 
   /**
-   * Returns an iterator over the values in the set
+   * Adds a value to the set.
+   *
+   * Returns true if the value was not present in the set,
+   * false if it was already present.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet<string>();
+   * assert(set.insert("a")); // true - value was inserted
+   * assert(!set.insert("a")); // false - value was already present
+   * ```
+   */
+  insert(value: T): boolean {
+    return this.#map.insert(value, void 0).isNone();
+  }
+
+  /**
+   * Removes a value from the set.
+   *
+   * Returns true if the value was present in the set,
+   * false if it was not present.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet(["a"]);
+   * assert(set.remove("a")); // true - value was present
+   * assert(!set.remove("a")); // false - value was not present
+   * ```
+   */
+  remove(value: T): boolean {
+    return this.#map.remove(value).isSome();
+  }
+
+  /**
+   * Returns an iterator over the set's values.
    */
   [Symbol.iterator](): IterableIterator<T> {
-    return this.values();
+    return this.#map.keys();
   }
 
   /**
-   * Returns an iterator over the values in the set
+   * Returns an iterator over the set's values.
    */
   values(): IterableIterator<T> {
-    const mapIterator = this.#map[Symbol.iterator]();
-    return {
-      [Symbol.iterator]() {
-        return this;
-      },
-      next(): IteratorResult<T> {
-        const result = mapIterator.next();
-        if (result.done) {
-          return { done: true, value: undefined };
-        }
-        return { done: false, value: result.value[0] };
-      },
-    };
+    return this[Symbol.iterator]();
   }
 }

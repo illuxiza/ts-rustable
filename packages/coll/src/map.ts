@@ -2,26 +2,27 @@ import { None, Option, Some } from '@rustable/enum';
 import { equals, hash } from '@rustable/utils';
 
 /**
- * A type-safe hash map implementation similar to Rust's HashMap.
- * Provides efficient key-value storage with support for any hashable key type.
+ * A hash map implementation similar to Rust's HashMap.
  *
- * Key features:
- * - Type-safe key and value types
- * - Option-based value retrieval
- * - Efficient hash-based storage
- * - Standard Map interface compatibility
+ * The HashMap class provides a way to store key-value pairs where
+ * keys are hashed for efficient lookup. It handles hash collisions
+ * using chaining.
  *
- * @example
- * const map = new HashMap<string, number>();
- * map.set('one', 1);
- * map.set('two', 2);
+ * # Examples
+ * ```ts
+ * let map = new HashMap<string, number>();
  *
- * const value = map.get('one')
- *   .map(n => n * 2)
- *   .unwrapOr(0); // 2
+ * // Insert some values
+ * map.insert("a", 1);
+ * map.insert("b", 2);
  *
- * @template K The type of keys stored in the map
- * @template V The type of values stored in the map
+ * // Get values
+ * let a = map.get("a").unwrapOr(0); // 1
+ * let c = map.get("c").unwrapOr(0); // 0
+ *
+ * // Remove values
+ * map.remove("a");
+ * ```
  */
 export class HashMap<K, V> implements Iterable<[K, V]> {
   /**
@@ -31,24 +32,24 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   #entries = new Map<number, Array<{ key: K; value: V }>>();
 
   /**
-   * Creates a new HashMap instance.
+   * Creates an empty HashMap or one populated with the given entries.
    *
-   * @example
+   * # Examples
+   * ```ts
    * // Empty map
-   * const map1 = new HashMap<string, number>();
+   * let map1 = new HashMap<string, number>();
    *
-   * // Initialize with entries
-   * const map2 = new HashMap([
-   *   ['a', 1],
-   *   ['b', 2]
+   * // Map with initial entries
+   * let map2 = new HashMap([
+   *   ["a", 1],
+   *   ["b", 2]
    * ]);
-   *
-   * @param entries Optional array of key-value pairs for initialization
+   * ```
    */
   constructor(entries?: readonly [K, V][]) {
     if (entries) {
       for (const [key, value] of entries) {
-        this.set(key, value);
+        this.insert(key, value);
       }
     }
   }
@@ -66,18 +67,22 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   [Symbol.iterator](): IterableIterator<[K, V]> {
     const entriesIterator = this.#entries.values();
+    let bucketsIterator = entriesIterator.next();
     return {
       [Symbol.iterator]() {
         return this;
       },
       next(): IteratorResult<[K, V]> {
-        const result = entriesIterator.next();
-        if (result.done) {
+        if (bucketsIterator.done) {
           return { done: true, value: undefined };
         }
-        // Return the first entry in the bucket
-        const { key, value } = result.value[0];
-        return { done: false, value: [key, value] };
+        const bucket = bucketsIterator.value;
+        const entry = bucket.shift();
+        if (entry) {
+          return { done: false, value: [entry.key, entry.value] };
+        }
+        bucketsIterator = entriesIterator.next();
+        return this.next();
       },
     };
   }
@@ -97,13 +102,15 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   }
 
   /**
-   * Returns the number of key-value pairs in the map.
+   * Returns the number of elements in the map.
    *
-   * @example
-   * const map = new HashMap([['a', 1], ['b', 2]]);
-   * console.log(map.size); // 2
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1], ["b", 2]]);
+   * assert(map.len === 2);
+   * ```
    */
-  get size(): number {
+  len(): number {
     let size = 0;
     for (const bucket of this.#entries.values()) {
       size += bucket.length;
@@ -112,55 +119,70 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   }
 
   /**
-   * Removes all entries from the map.
+   * Removes all key-value pairs from the map.
    *
-   * @example
-   * const map = new HashMap([['a', 1], ['b', 2]]);
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1], ["b", 2]]);
    * map.clear();
-   * console.log(map.size); // 0
+   * assert(map.len === 0);
+   * ```
    */
   clear(): void {
     this.#entries.clear();
   }
 
   /**
-   * Removes an entry from the map.
+   * Removes and returns the value associated with the given key.
    *
-   * @example
-   * const map = new HashMap([['a', 1], ['b', 2]]);
-   * map.delete('a');
-   * console.log(map.has('a')); // false
-   *
-   * @param key The key to remove
-   * @returns true if an element was removed, false if the key wasn't found
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1]]);
+   * let value = map.remove("a").unwrapOr(0); // 1
+   * assert(!map.containsKey("a"));
+   * ```
    */
-  delete(key: K): boolean {
-    const hashKey = hash(key);
-    const bucket = this.#entries.get(hashKey);
-    if (!bucket) return false;
-
-    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
-    if (index === -1) return false;
-
-    bucket.splice(index, 1);
-    if (bucket.length === 0) {
-      this.#entries.delete(hashKey);
-    }
-    return true;
+  remove(key: K): Option<V> {
+    return this.removeEntry(key).map(([_, value]) => value);
   }
 
   /**
-   * Retrieves a value from the map.
-   * Returns Some(value) if the key exists, None if it doesn't.
+   * Removes an entry from the map and returns the removed key-value pair.
    *
    * @example
-   * const map = new HashMap([['a', 1]]);
-   * const value = map.get('a')
-   *   .map(n => n * 2)
-   *   .unwrapOr(0); // 2
+   * const map = new HashMap([['a', 1], ['b', 2]]);
+   * const entry = map.removeEntry('a')
+   *   .map(([k, v]) => [k, v * 2])
+   *   .unwrapOr([0, 0]); // ['a', 2]
    *
-   * @param key The key to look up
-   * @returns Option containing the value if found
+   * @param key The key to remove
+   * @returns Option containing the removed key-value pair if found, None otherwise
+   */
+  removeEntry(key: K): Option<[K, V]> {
+    const hashKey = hash(key);
+    const bucket = this.#entries.get(hashKey);
+    if (!bucket) return None;
+
+    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
+    if (index === -1) return None;
+
+    const [entry] = bucket.splice(index, 1);
+    if (bucket.length === 0) {
+      this.#entries.delete(hashKey);
+    }
+
+    return Some([entry.key, entry.value]);
+  }
+
+  /**
+   * Returns a reference to the value associated with the given key.
+   *
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1]]);
+   * let value = map.get("a").unwrapOr(0); // 1
+   * let none = map.get("b").unwrapOr(0); // 0
+   * ```
    */
   get(key: K): Option<V> {
     const hashKey = hash(key);
@@ -171,18 +193,24 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     return entry ? Some(entry.value) : None;
   }
 
+  getUnchecked(key: K): V {
+    const hashKey = hash(key);
+    const bucket = this.#entries.get(hashKey);
+    if (!bucket) throw new Error('Key not found');
+    return bucket.find((entry) => this.#keysEqual(entry.key, key))!.value;
+  }
+
   /**
-   * Checks if a key exists in the map.
+   * Returns true if the map contains the specified key.
    *
-   * @example
-   * const map = new HashMap([['a', 1]]);
-   * console.log(map.has('a')); // true
-   * console.log(map.has('b')); // false
-   *
-   * @param key The key to check
-   * @returns true if the key exists, false otherwise
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1]]);
+   * assert(map.containsKey("a"));
+   * assert(!map.containsKey("b"));
+   * ```
    */
-  has(key: K): boolean {
+  containsKey(key: K): boolean {
     const hashKey = hash(key);
     const bucket = this.#entries.get(hashKey);
     if (!bucket) return false;
@@ -191,18 +219,20 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   }
 
   /**
-   * Adds or updates a key-value pair in the map.
+   * Inserts a key-value pair into the map.
    *
-   * @example
-   * const map = new HashMap<string, number>();
-   * map.set('a', 1);
-   * map.set('a', 2); // Updates existing value
+   * If the map already had this key present, the old value is returned.
+   * If the key was not present, None is returned.
    *
-   * @param key The key to set
-   * @param value The value to associate with the key
-   * @returns The map instance for method chaining
+   * # Examples
+   * ```ts
+   * let map = new HashMap<string, number>();
+   *
+   * assert(map.insert("a", 1).isNone()); // Key not present
+   * assert(map.insert("a", 2).unwrap() === 1); // Returns old value
+   * ```
    */
-  set(key: K, value: V): this {
+  insert(key: K, value: V): Option<V> {
     const hashKey = hash(key);
     let bucket = this.#entries.get(hashKey);
 
@@ -214,13 +244,14 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
     if (index !== -1) {
       // Update existing entry
+      const oldValue = bucket[index].value;
       bucket[index].value = value;
+      return Some(oldValue);
     } else {
       // Add new entry
       bucket.push({ key, value });
+      return None;
     }
-
-    return this;
   }
 
   /**
@@ -289,22 +320,42 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   }
 
   /**
-   * Executes a provided function once for each key-value pair in the map.
+   * Retains only the elements specified by the predicate.
    *
-   * @example
-   * const map = new HashMap([['a', 1], ['b', 2]]);
-   * map.forEach((value, key) => {
-   *   console.log(`${key}: ${value}`);
-   * });
-   *
-   * @param callback Function to execute for each entry
-   * @param thisArg Value to use as 'this' when executing the callback
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1], ["b", 2], ["c", 3]]);
+   * map.retain((_, v) => v % 2 === 0);
+   * assert(map.len === 1);
+   * ```
    */
-  forEach(callback: (value: V, key: K, map: HashMap<K, V>) => void, thisArg?: any): void {
+  retain(predicate: (key: K, value: V) => boolean): void {
     for (const bucket of this.#entries.values()) {
-      for (const { key, value } of bucket) {
-        callback.call(thisArg, value, key, this);
+      let i = 0;
+      while (i < bucket.length) {
+        const { key, value } = bucket[i];
+        if (!predicate(key, value)) {
+          bucket.splice(i, 1);
+        } else {
+          i++;
+        }
       }
     }
+  }
+
+  /**
+   * Removes all entries and returns an iterator over the removed entries.
+   *
+   * # Examples
+   * ```ts
+   * let map = new HashMap([["a", 1], ["b", 2]]);
+   * let entries = [...map.drain()];
+   * assert(map.len === 0);
+   * ```
+   */
+  drain(): IterableIterator<[K, V]> {
+    const entries = [...this.entries()];
+    this.clear();
+    return entries[Symbol.iterator]();
   }
 }

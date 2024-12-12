@@ -7,83 +7,83 @@ describe('HashSet', () => {
     set = new HashSet<string>();
   });
 
-  test('should create an empty set', () => {
-    expect(set.size).toBe(0);
+  test('should create an empty HashSet', () => {
+    expect(set.len()).toBe(0);
   });
 
-  test('should add elements', () => {
-    expect(set.add('one')).toBe(true);
-    expect(set.size).toBe(1);
-    expect(set.has('one')).toBe(true);
+  test('should insert values', () => {
+    expect(set.insert('a')).toBe(true);
+    expect(set.len()).toBe(1);
+    expect(set.contains('a')).toBe(true);
   });
 
-  test('should not add duplicate elements', () => {
-    set.add('one');
-    expect(set.add('one')).toBe(false);
-    expect(set.size).toBe(1);
+  test('should not insert duplicate values', () => {
+    set.insert('a');
+    expect(set.insert('a')).toBe(false);
+    expect(set.len()).toBe(1);
   });
 
-  test('should delete elements', () => {
-    set.add('one');
-    expect(set.delete('one')).toBe(true);
-    expect(set.size).toBe(0);
-    expect(set.has('one')).toBe(false);
+  test('should remove values', () => {
+    set.insert('a');
+    expect(set.remove('a')).toBe(true);
+    expect(set.len()).toBe(0);
+    expect(set.contains('a')).toBe(false);
   });
 
-  test('should return false when deleting non-existent element', () => {
-    expect(set.delete('nonexistent')).toBe(false);
+  test('should return false when removing non-existing values', () => {
+    expect(set.remove('b')).toBe(false);
   });
 
-  test('should clear all elements', () => {
-    set.add('one');
-    set.add('two');
+  test('should return false for non-existing values', () => {
+    expect(set.contains('b')).toBe(false);
+  });
+
+  test('should clear the set', () => {
+    set.insert('a');
     set.clear();
-    expect(set.size).toBe(0);
-    expect(set.has('one')).toBe(false);
-    expect(set.has('two')).toBe(false);
+    expect(set.len()).toBe(0);
   });
 
-  test('should iterate over elements', () => {
-    const elements = ['one', 'two', 'three'];
-    elements.forEach((el) => set.add(el));
-
-    const result = Array.from(set);
-    expect(result.length).toBe(elements.length);
-    elements.forEach((el) => {
-      expect(result).toContain(el);
-    });
+  test('should iterate over values', () => {
+    set.insert('a');
+    set.insert('b');
+    const values = [...set];
+    expect(values).toEqual(expect.arrayContaining(['a', 'b']));
   });
 
-  test('should work with values() iterator', () => {
-    const elements = ['one', 'two', 'three'];
-    elements.forEach((el) => set.add(el));
-
-    const result = Array.from(set.values());
-    expect(result.length).toBe(elements.length);
-    elements.forEach((el) => {
-      expect(result).toContain(el);
-    });
-  });
-
-  test('should work with complex objects', () => {
-    const set = new HashSet<{ id: number; name: string }>();
-    const obj1 = { id: 1, name: 'one' };
-    const obj2 = { id: 2, name: 'two' };
-
-    set.add(obj1);
-    set.add(obj2);
-
-    expect(set.size).toBe(2);
-    expect(set.has(obj1)).toBe(true);
-    expect(set.has(obj2)).toBe(true);
+  test('should handle complex objects', () => {
+    const set = new HashSet<{ id: number }>();
+    const obj1 = { id: 1 };
+    const obj2 = { id: 2 };
+    set.insert(obj1);
+    set.insert(obj2);
+    expect(set.len()).toBe(2);
+    expect(set.contains(obj1)).toBe(true);
+    expect(set.contains(obj2)).toBe(true);
   });
 
   test('should work with constructor parameters', () => {
     const elements = ['one', 'two', 'three'];
     const set = new HashSet(elements);
-    expect(set.size).toBe(elements.length);
+    expect(set.len()).toBe(elements.length);
     elements.forEach((el) => {
-      expect(set.has(el)).toBe(true);
+      expect(set.contains(el)).toBe(true);
     });
+  });
+
+  test('should handle large number of entries', () => {
+    for (let i = 0; i < 1000; i++) {
+      set.insert(`value${i}`);
+    }
+    expect(set.len()).toBe(1000);
+  });
+
+  test('values() method should return an iterator', () => {
+    set.insert('a');
+    set.insert('b');
+    const iterator = set.values();
+    expect(typeof iterator.next).toBe('function');
+    const values = [...iterator];
+    expect(values).toEqual(expect.arrayContaining(['a', 'b']));
   });
 });

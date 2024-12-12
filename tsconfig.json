@@ -24,6 +24,7 @@
       "@rustable/coll": ["packages/coll"],
       "@rustable/utils": ["packages/utils"],
       "@rustable/enum": ["packages/enum"],
+      "@rustable/iter": ["packages/iter"],
       "@rustable/trait": ["packages/trait"],
       "@rustable/trait-impls": ["packages/trait-impls"],
     }

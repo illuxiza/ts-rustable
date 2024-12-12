@@ -1,6 +1,6 @@
 {
   "name": "@rustable/trait-impls",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "A TypeScript implementation of Rust-like traits system, providing Clone, Eq, and From traits for type-safe operations. Zero dependencies, fully type-safe.",
   "keywords": [
     "typescript",
@@ -39,7 +39,9 @@
   "license": "MIT",
   "dependencies": {
     "@rustable/trait": "workspace:*",
-    "@rustable/utils": "workspace:*"
+    "@rustable/utils": "workspace:*",
+    "@rustable/iter": "workspace:*",
+    "@rustable/coll": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

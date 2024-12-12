@@ -4,8 +4,8 @@ A TypeScript implementation of Rust-like collections, providing efficient and ty
 
 ## Features
 
-- 🔐 Type-safe implementations
-- 🎯 Rust-like APIs
+- 🔒 Type-safe implementations
+- 🦀 Rust-like APIs
 - 🔄 Option-based value handling
 - ⚡ Efficient hash-based storage
 - 🧰 Standard interface compatibility
@@ -20,67 +20,50 @@ yarn add @rustable/coll
 pnpm add @rustable/coll
 ```
 
-## Collections
+## Usage
 
 ### HashMap<K, V>
-
-A type-safe hash map implementation similar to Rust's HashMap.
 
 ```typescript
 import { HashMap } from '@rustable/coll';
 
 const map = new HashMap<string, number>();
-map.set('one', 1);
+map.insert('key', 1);
+const value = map.get('key').unwrapOr(0);
 
-const value = map.get('one')
-  .map(n => n * 2)
-  .unwrapOr(0); // 2
-
-// Iteration
-for (const [key, value] of map) {
-  console.log(`${key}: ${value}`);
+for (const [k, v] of map) {
+  console.log(`${k}: ${v}`);
 }
 ```
 
-### HashSet<T>
-
-A type-safe hash set implementation for unique value storage.
+### HashSet\<T>
 
 ```typescript
 import { HashSet } from '@rustable/coll';
 
 const set = new HashSet<string>();
-set.add('one');
-set.add('two');
+set.insert('value');
+console.log(set.contains('value')); // true
 
-console.log(set.has('one')); // true
-console.log(set.size); // 2
-
-// Iteration
-for (const value of set) {
-  console.log(value);
+for (const item of set) {
+  console.log(item);
 }
 ```
 
-### Vec<T>
-
-A dynamic array implementation with Rust-like methods.
+### Vec\<T>
 
 ```typescript
 import { Vec } from '@rustable/coll';
 
-const vec = new Vec<number>();
-vec.push(1);
-vec.push(2);
+const vec = Vec.from([1, 2, 3]);
+vec.push(4);
+const last = vec.pop(); // Some(4)
 
-// Array-like operations
-vec.pop(); // Some(2)
-vec[0]; // 1
-
-// Iteration and transformations
-vec.map(x => x * 2)
-   .filter(x => x > 0)
-   .forEach(x => console.log(x));
+vec
+  .iter()
+  .map((x) => x * 2)
+  .filter((x) => x > 2)
+  .forEach(console.log);
 ```
 
 ## License

@@ -68,29 +68,6 @@ describe('Option', () => {
       expect(some.unwrapOrElse(() => 0)).toBe(42);
     });
 
-    test('should handle null and undefined values', () => {
-      const nullOpt = Some(null);
-      const undefOpt = Some(undefined);
-
-      expect(nullOpt.isNone()).toBe(true);
-      expect(undefOpt.isNone()).toBe(true);
-
-      expect(() => nullOpt.unwrap()).toThrow(ReferenceError);
-      expect(() => undefOpt.unwrap()).toThrow(ReferenceError);
-
-      const nullResult = nullOpt.match({
-        Some: (val) => val,
-        None: 'default',
-      });
-      expect(nullResult).toBe('default');
-
-      const undefResult = undefOpt.match({
-        Some: (val) => val,
-        None: 'default',
-      });
-      expect(undefResult).toBe('default');
-    });
-
     describe('xor', () => {
       test('Some xor None should return Some', () => {
         const some = Some(42);
@@ -253,16 +230,6 @@ describe('Option', () => {
       expect(opt.isNone()).toBe(true);
       expect(() => opt.unwrap()).toThrow(ReferenceError);
     });
-
-    test('Option.Some should handle null/undefined', () => {
-      const nullOpt = Option.Some(null);
-      const undefOpt = Option.Some(undefined);
-
-      expect(nullOpt.isNone()).toBe(true);
-      expect(undefOpt.isNone()).toBe(true);
-      expect(nullOpt).toBe(None);
-      expect(undefOpt).toBe(None);
-    });
   });
 
   describe('Type Guards', () => {
@@ -323,24 +290,8 @@ describe('Option', () => {
       const nullOpt = Some(null);
       const undefOpt = Some(undefined);
 
-      expect(nullOpt.isSomeAnd((val) => val === null)).toBe(false);
-      expect(undefOpt.isSomeAnd((val) => val === undefined)).toBe(false);
-    });
-
-    test('should handle unwrapOr with null/undefined', () => {
-      const nullOpt = Some(null);
-      const undefOpt = Some(undefined);
-
-      expect(nullOpt.unwrapOr('default')).toBe('default');
-      expect(undefOpt.unwrapOr('default')).toBe('default');
-    });
-
-    test('should handle unwrapOrElse with null/undefined', () => {
-      const nullOpt = Some(null);
-      const undefOpt = Some(undefined);
-
-      expect(nullOpt.unwrapOrElse(() => 'computed')).toBe('computed');
-      expect(undefOpt.unwrapOrElse(() => 'computed')).toBe('computed');
+      expect(nullOpt.isSomeAnd((val) => val === null)).toBe(true);
+      expect(undefOpt.isSomeAnd((val) => val === undefined)).toBe(true);
     });
   });
 });

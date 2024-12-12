@@ -1,162 +1,168 @@
-import { Vec } from '../src/vec';
 import { None, Some } from '@rustable/enum';
+import { Vec } from '../src/vec';
 
 describe('Vec', () => {
-  describe('construction', () => {
-    test('new() creates empty Vec', () => {
-      const vec = Vec.new<number>();
-      expect(vec.length).toBe(0);
-      expect(vec.capacity).toBe(0);
-      expect(vec.isEmpty()).toBe(true);
-    });
+  let vec: Vec<number>;
 
-    test('withCapacity() creates Vec with initial capacity', () => {
-      const vec = Vec.withCapacity<number>(5);
-      expect(vec.length).toBe(0);
-      expect(vec.capacity).toBe(5);
-      expect(vec.isEmpty()).toBe(true);
-    });
-
-    test('fromArray() creates Vec from array', () => {
-      const arr = [1, 2, 3];
-      const vec = Vec.fromArray(arr);
-      expect(vec.length).toBe(3);
-      expect(vec.capacity).toBe(3);
-      expect(vec.toArray()).toEqual(arr);
-    });
+  beforeEach(() => {
+    vec = Vec.new<number>();
   });
 
-  describe('basic operations', () => {
-    test('push() adds elements', () => {
-      const vec = Vec.new<number>();
-      vec.push(1);
-      vec.push(2);
-      expect(vec.length).toBe(2);
-      expect(vec.toArray()).toEqual([1, 2]);
-    });
+  test('creation and basic operations', () => {
+    expect(vec.len()).toBe(0);
+    expect(vec.isEmpty()).toBe(true);
 
-    test('pop() removes and returns last element', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      expect(vec.pop()).toEqual(Some(3));
-      expect(vec.length).toBe(2);
-      expect(vec.pop()).toEqual(Some(2));
-      expect(vec.pop()).toEqual(Some(1));
-      expect(vec.pop()).toEqual(None);
-    });
+    vec.push(1);
+    vec.push(2);
+    expect(vec.len()).toBe(2);
+    expect(vec.get(0)).toEqual(Some(1));
+    expect(vec.get(1)).toEqual(Some(2));
 
-    test('get() retrieves elements', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      expect(vec.get(0)).toEqual(Some(1));
-      expect(vec.get(2)).toEqual(Some(3));
-      expect(vec.get(3)).toEqual(None);
-    });
-
-    test('set() modifies elements', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      expect(vec.set(1, 5)).toEqual(Some(2));
-      expect(vec.toArray()).toEqual([1, 5, 3]);
-      expect(vec.set(3, 4)).toEqual(None);
-    });
+    const last = vec.pop();
+    expect(last).toEqual(Some(2));
+    expect(vec.len()).toBe(1);
   });
 
-  describe('capacity management', () => {
-    test('reserve() increases capacity', () => {
-      const vec = Vec.new<number>();
-      vec.reserve(5);
-      expect(vec.capacity).toBeGreaterThanOrEqual(5);
-      expect(vec.length).toBe(0);
-    });
+  test('resizing and capacity', () => {
+    vec.push(1);
+    vec.push(2);
+    vec.resize(4, 0);
+    expect(vec.len()).toBe(4);
+    expect(vec.get(2)).toEqual(Some(0));
+    expect(vec.get(3)).toEqual(Some(0));
 
-    test('reserveExact() sets exact capacity', () => {
-      const vec = Vec.new<number>();
-      vec.reserveExact(5);
-      expect(vec.capacity).toBe(5);
-    });
-
-    test('shrinkToFit() reduces capacity', () => {
-      const vec = Vec.withCapacity(10);
-      vec.push(1);
-      vec.push(2);
-      vec.shrinkToFit();
-      expect(vec.capacity).toBe(2);
-    });
+    vec.shrinkToFit();
+    expect(vec.capacity).toBe(vec.len());
   });
 
-  describe('modification operations', () => {
-    test('clear() removes all elements', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      vec.clear();
-      expect(vec.length).toBe(0);
-      expect(vec.isEmpty()).toBe(true);
-    });
+  test('element access and manipulation', () => {
+    expect(vec.get(0)).toEqual(None);
 
-    test('truncate() shortens Vec', () => {
-      const vec = Vec.fromArray([1, 2, 3, 4, 5]);
-      vec.truncate(3);
-      expect(vec.length).toBe(3);
-      expect(vec.toArray()).toEqual([1, 2, 3]);
-    });
+    vec.push(1);
+    vec.push(3);
+    vec.insert(1, 2);
+    expect(vec.get(1)).toEqual(Some(2));
+    expect(vec.len()).toBe(3);
 
-    test('remove() removes element at index', () => {
-      const vec = Vec.fromArray([1, 2, 3, 4]);
-      expect(vec.remove(1)).toEqual(Some(2));
-      expect(vec.toArray()).toEqual([1, 3, 4]);
-      expect(vec.remove(5)).toEqual(None);
-    });
-
-    test('swapRemove() removes element efficiently', () => {
-      const vec = Vec.fromArray([1, 2, 3, 4]);
-      expect(vec.swapRemove(1)).toEqual(Some(2));
-      expect(vec.length).toBe(3);
-      // Last element should be moved to removed position
-      expect(vec.get(1)).toEqual(Some(4));
-    });
-
-    test('insert() adds element at position', () => {
-      const vec = Vec.fromArray([1, 2, 4]);
-      vec.insert(2, 3);
-      expect(vec.toArray()).toEqual([1, 2, 3, 4]);
-      expect(() => vec.insert(5, 6)).toThrow();
-    });
+    const removed = vec.remove(1);
+    expect(removed).toEqual(Some(2));
+    expect(vec.len()).toBe(2);
+    expect(vec.get(1)).toEqual(Some(3));
   });
 
-  describe('iteration and conversion', () => {
-    test('implements iterator protocol', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      const result = [];
-      for (const item of vec) {
-        result.push(item);
-      }
-      expect(result).toEqual([1, 2, 3]);
-    });
-
-    test('extend() adds elements from iterable', () => {
-      const vec = Vec.fromArray([1, 2]);
-      vec.extend([3, 4]);
-      expect(vec.toArray()).toEqual([1, 2, 3, 4]);
-    });
-
-    test('slice() returns array portion', () => {
-      const vec = Vec.fromArray([1, 2, 3, 4, 5]);
-      expect(vec.slice(1, 4)).toEqual([2, 3, 4]);
-      expect(vec.slice()).toEqual([1, 2, 3, 4, 5]);
-      expect(vec.slice(2)).toEqual([3, 4, 5]);
-    });
+  test('performance with large number of elements', () => {
+    for (let i = 0; i < 1000; i++) {
+      vec.push(i);
+    }
+    expect(vec.len()).toBe(1000);
+    expect(vec.get(999)).toEqual(Some(999));
   });
 
-  describe('resizing', () => {
-    test('resize() with growth', () => {
-      const vec = Vec.fromArray([1, 2, 3]);
-      vec.resize(5, 0);
-      expect(vec.length).toBe(5);
-      expect(vec.toArray()).toEqual([1, 2, 3, 0, 0]);
-    });
+  test('clearing and shrinking', () => {
+    vec.push(1);
+    vec.push(2);
+    vec.clear();
+    expect(vec.len()).toBe(0);
+    expect(vec.isEmpty()).toBe(true);
 
-    test('resize() with shrink', () => {
-      const vec = Vec.fromArray([1, 2, 3, 4, 5]);
-      vec.resize(3, 0);
-      expect(vec.length).toBe(3);
-      expect(vec.toArray()).toEqual([1, 2, 3]);
-    });
+    vec.push(1);
+    vec.push(2);
+    vec.resize(1, 0);
+    expect(vec.len()).toBe(1);
+    expect(vec.get(0)).toEqual(Some(1));
+  });
+
+  test('static creation methods', () => {
+    const vec1 = Vec.withCapacity<number>(5);
+    expect(vec1.capacity).toBeGreaterThanOrEqual(5);
+
+    const vec2 = Vec.from([1, 2, 3]);
+    expect(vec2.len()).toBe(3);
+    expect(vec2.get(1)).toEqual(Some(2));
+  });
+
+  test('iteration', () => {
+    vec.push(1);
+    vec.push(2);
+    vec.push(3);
+    const result = [...vec];
+    expect(result).toEqual([1, 2, 3]);
+  });
+
+  test('extend', () => {
+    vec.push(1);
+    vec.extend([2, 3, 4]);
+    expect(vec.len()).toBe(4);
+    expect(vec.get(3)).toEqual(Some(4));
+  });
+
+  test('slice', () => {
+    vec.extend([1, 2, 3, 4, 5]);
+    const slice = vec.slice(1, 4);
+    expect(slice).toEqual([2, 3, 4]);
+  });
+
+  test('popIf functionality', () => {
+    vec.extend([1, 2, 3, 4, 5]);
+
+    // Test popIf with matching predicate
+    const popped = vec.popIf((x) => x === 5);
+    expect(popped).toEqual(Some(5));
+    expect(vec.len()).toBe(4);
+
+    // Test popIf with non-matching predicate
+    const notPopped = vec.popIf((x) => x === 10);
+    expect(notPopped).toEqual(None);
+    expect(vec.len()).toBe(4);
+
+    // Test popIf on empty vec
+    vec.clear();
+    const emptyPopped = vec.popIf((x) => x === 1);
+    expect(emptyPopped).toEqual(None);
+  });
+
+  test('error handling and edge cases', () => {
+    // Test invalid index access
+    expect(vec.getUnchecked(0)).toBeUndefined();
+    expect(() => vec.insert(-1, 1)).toThrow();
+
+    // Test with negative capacity
+    const negVec = Vec.withCapacity(-5);
+    expect(negVec.capacity).toBe(0);
+
+    // Test truncate with various values
+    vec.extend([1, 2, 3]);
+    vec.truncate(5); // Larger than length
+    expect(vec.len()).toBe(3);
+
+    vec.truncate(2); // Valid truncate
+    expect(vec.len()).toBe(2);
+    expect(vec.get(2)).toEqual(None);
+
+    // Test swapRemove
+    vec.extend([3, 4, 5]);
+    const swapped = vec.swapRemove(1);
+    expect(swapped).toEqual(Some(2));
+    expect(vec.len()).toBe(4);
+
+    // Test invalid swapRemove
+    expect(vec.swapRemove(10)).toEqual(None);
+  });
+
+  test('reserve and capacity management', () => {
+    const initialCap = vec.capacity;
+    vec.reserve(10);
+    expect(vec.capacity).toBeGreaterThanOrEqual(initialCap + 10);
+
+    vec.reserveExact(20);
+    expect(vec.capacity).toBe(20);
+
+    // Test with zero and negative values
+    vec.reserve(0);
+    vec.reserveExact(0);
+    expect(vec.capacity).toBe(20);
+
+    vec.shrinkToFit();
+    expect(vec.capacity).toBe(vec.len());
   });
 });

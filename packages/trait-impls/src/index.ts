@@ -11,3 +11,4 @@ declare global {
 export * from './clone';
 export * from './eq';
 export * from './from';
+export * from './iter';

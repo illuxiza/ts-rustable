@@ -1,4 +1,4 @@
-# Utils Package
+# @rustable/utils
 
 This is the utilities package of the Rustable project, providing fundamental utilities and type management functionalities. The package implements essential features like type identification, object cloning, hashing, and string manipulation.
 
