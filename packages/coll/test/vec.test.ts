@@ -23,18 +23,6 @@ describe('Vec', () => {
     expect(vec.len()).toBe(1);
   });
 
-  test('resizing and capacity', () => {
-    vec.push(1);
-    vec.push(2);
-    vec.resize(4, 0);
-    expect(vec.len()).toBe(4);
-    expect(vec.get(2)).toEqual(Some(0));
-    expect(vec.get(3)).toEqual(Some(0));
-
-    vec.shrinkToFit();
-    expect(vec.capacity).toBe(vec.len());
-  });
-
   test('element access and manipulation', () => {
     expect(vec.get(0)).toEqual(None);
 
@@ -45,7 +33,7 @@ describe('Vec', () => {
     expect(vec.len()).toBe(3);
 
     const removed = vec.remove(1);
-    expect(removed).toEqual(Some(2));
+    expect(removed).toEqual(2);
     expect(vec.len()).toBe(2);
     expect(vec.get(1)).toEqual(Some(3));
   });
@@ -70,15 +58,6 @@ describe('Vec', () => {
     vec.resize(1, 0);
     expect(vec.len()).toBe(1);
     expect(vec.get(0)).toEqual(Some(1));
-  });
-
-  test('static creation methods', () => {
-    const vec1 = Vec.withCapacity<number>(5);
-    expect(vec1.capacity).toBeGreaterThanOrEqual(5);
-
-    const vec2 = Vec.from([1, 2, 3]);
-    expect(vec2.len()).toBe(3);
-    expect(vec2.get(1)).toEqual(Some(2));
   });
 
   test('iteration', () => {
@@ -126,10 +105,6 @@ describe('Vec', () => {
     expect(vec.getUnchecked(0)).toBeUndefined();
     expect(() => vec.insert(-1, 1)).toThrow();
 
-    // Test with negative capacity
-    const negVec = Vec.withCapacity(-5);
-    expect(negVec.capacity).toBe(0);
-
     // Test truncate with various values
     vec.extend([1, 2, 3]);
     vec.truncate(5); // Larger than length
@@ -142,27 +117,10 @@ describe('Vec', () => {
     // Test swapRemove
     vec.extend([3, 4, 5]);
     const swapped = vec.swapRemove(1);
-    expect(swapped).toEqual(Some(2));
+    expect(swapped).toEqual(2);
     expect(vec.len()).toBe(4);
 
     // Test invalid swapRemove
-    expect(vec.swapRemove(10)).toEqual(None);
-  });
-
-  test('reserve and capacity management', () => {
-    const initialCap = vec.capacity;
-    vec.reserve(10);
-    expect(vec.capacity).toBeGreaterThanOrEqual(initialCap + 10);
-
-    vec.reserveExact(20);
-    expect(vec.capacity).toBe(20);
-
-    // Test with zero and negative values
-    vec.reserve(0);
-    vec.reserveExact(0);
-    expect(vec.capacity).toBe(20);
-
-    vec.shrinkToFit();
-    expect(vec.capacity).toBe(vec.len());
+    expect(() => vec.swapRemove(10)).toThrow();
   });
 });

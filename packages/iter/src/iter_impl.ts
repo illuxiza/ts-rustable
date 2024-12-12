@@ -686,7 +686,7 @@ export class IterImpl<T> implements Iterable<T> {
    *   )) // Map { 'a' => 1, 'b' => 2, 'c' => 3 }
    * ```
    */
-  collectInto<U>(f: (value: Iterable<T>) => Iterable<U>): Iterable<U> {
+  collectInto<U extends Iterable<any>>(f: (value: Iterable<T>) => U): U {
     return f(this);
   }
 

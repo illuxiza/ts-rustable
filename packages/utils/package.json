@@ -1,6 +1,6 @@
 {
   "name": "@rustable/utils",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Utility TypeScript utilities inspired by Rust, providing type-safe implementations of HashMap, TypeId, deep cloning, hashing, and equality comparison",
   "keywords": [
     "typescript",
