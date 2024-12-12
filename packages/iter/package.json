@@ -2,29 +2,6 @@
   "name": "@rustable/iter",
   "version": "0.1.2",
   "description": "Rust-style iterator adapters for TypeScript, providing a rich set of functional operations for iterating over collections",
-  "main": "./lib/index.js",
-  "module": "./lib/index.mjs",
-  "types": "./lib/index.d.ts",
-  "exports": {
-    ".": {
-      "require": "./lib/index.js",
-      "import": "./lib/index.mjs"
-    }
-  },
-  "scripts": {
-    "build": "monoup build",
-    "test": "jest",
-    "clean": "monoup clean"
-  },
-  "dependencies": {
-    "@rustable/utils": "workspace:*",
-    "@rustable/enum": "workspace:*"
-  },
-  "files": [
-    "lib",
-    "LICENSE",
-    "README.md"
-  ],
   "keywords": [
     "iterator",
     "rust",
@@ -38,6 +15,36 @@
     "reduce",
     "typescript"
   ],
-  "author": "",
-  "license": "MIT"
+  "main": "./lib/index.js",
+  "source": "./src/index.ts",
+  "module": "./lib/index.mjs",
+  "types": "./lib/index.d.ts",
+  "exports": {
+    ".": {
+      "require": "./lib/index.js",
+      "import": "./lib/index.mjs"
+    }
+  },
+  "files": [
+    "lib",
+    "LICENSE",
+    "README.md"
+  ],
+  "dependencies": {
+    "@rustable/utils": "workspace:*",
+    "@rustable/enum": "workspace:*"
+  },
+  "author": "illuxiza",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/illuxiza/ts-rustable"
+  },
+  "bugs": {
+    "url": "https://github.com/illuxiza/ts-rustable/issues"
+  },
+  "homepage": "https://github.com/illuxiza/ts-rustable#readme",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

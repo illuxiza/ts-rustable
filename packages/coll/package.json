@@ -23,10 +23,6 @@
       "import": "./lib/index.mjs"
     }
   },
-  "scripts": {
-    "test": "jest",
-    "clean": "rimraf lib"
-  },
   "files": [
     "lib",
     "LICENSE",

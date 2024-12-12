@@ -19,6 +19,7 @@ pnpm add rustable
 - 🎭 Pattern matching and error handling
 - 📦 Efficient collections
 - 🧩 Common trait implementations
+- 🔁 Iterator utilities
 
 ## Packages
 
@@ -39,6 +40,16 @@ pnpm add rustable
 - Result\<T, E> for error handling
 - Enum support with pattern matching
 - Rich combinators (map, andThen, unwrapOr)
+
+### [@rustable/iter](https://github.com/illuxiza/ts-rustable/tree/main/packages/iter#readme)
+
+🔁 Iterator utilities and lazy evaluation
+
+- Rust-like iterator methods
+- Lazy evaluation of collections
+- Powerful transformation and filtering
+- Chaining and composition of iterators
+- Performance-optimized iterator operations
 
 ### [@rustable/trait](https://github.com/illuxiza/ts-rustable/tree/main/packages/trait#readme)
 
