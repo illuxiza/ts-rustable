@@ -2,11 +2,48 @@ import { None, Option, Some } from '@rustable/enum';
 import { Mut } from '@rustable/utils';
 
 /**
+ * Creates a proxy for the Vec that allows array-like access to elements.
+ * @returns A proxy object that wraps the Vec
+ */
+function indexVec<T>(vec: Vec<T>): Vec<T> {
+  return new Proxy(vec, {
+    get: (_, index) => {
+      if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
+        const numIndex = parseInt(index, 10);
+        return vec.get(numIndex).unwrapOrElse(() => {
+          throw new Error('Index out of bounds');
+        });
+      }
+      const prop = index as keyof typeof vec;
+      return typeof vec[prop] === 'function' ? (vec[prop] as Function).bind(vec) : vec[prop];
+    },
+    set: (_, index, value) => {
+      if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
+        const numIndex = parseInt(index, 10);
+        vec.set(numIndex, value);
+        return true;
+      }
+      return false;
+    },
+  });
+}
+
+/**
+ * Creates a new Vec from an optional iterable.
+ * @param iterable Optional iterable to initialize the Vec
+ * @returns A new Vec instance
+ */
+export function vec<T>(iterable: Iterable<T>): Vec<T> {
+  return Vec.from(iterable);
+}
+
+/**
  * A growable array implementation similar to Rust's Vec<T>.
  * Provides efficient array operations with dynamic size management.
  * @template T The type of elements stored in the Vec
  */
 export class Vec<T> implements Iterable<T> {
+  [index: number]: T;
   #buffer: T[];
   #length: number;
 
@@ -19,7 +56,7 @@ export class Vec<T> implements Iterable<T> {
     let length = 0;
     if (iterable) {
       for (const item of iterable) {
-        this.push(item);
+        this.#buffer.push(item);
         length++;
       }
     }
@@ -34,7 +71,7 @@ export class Vec<T> implements Iterable<T> {
    * const vec = Vec.new<number>();
    */
   static new<T>(): Vec<T> {
-    return new Vec<T>();
+    return indexVec(new Vec<T>());
   }
 
   /**
@@ -46,7 +83,7 @@ export class Vec<T> implements Iterable<T> {
    * const vec = Vec.from([1, 2, 3]);
    */
   static from<T>(iterable: Iterable<T>): Vec<T> {
-    return new Vec<T>(iterable);
+    return indexVec(new Vec<T>(iterable));
   }
 
   /**
@@ -74,7 +111,7 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.get(1); // Some(2)
    */
   get(index: number): Option<T> {
-    if (index >= this.#length) {
+    if (index >= this.#length || index < 0) {
       return None;
     }
     return Some(this.#buffer[index]);
@@ -89,7 +126,7 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.getMut(1).unwrap().value; // Some(2)
    */
   getMut(index: number): Option<Mut<T>> {
-    if (index >= this.#length) {
+    if (index >= this.#length || index < 0) {
       return None;
     }
     return Some(
@@ -110,7 +147,7 @@ export class Vec<T> implements Iterable<T> {
    * vec.set(1, 4); // vec is now [1, 4, 3]
    */
   set(index: number, value: T) {
-    if (index >= this.#length) {
+    if (index >= this.#length || index < 0) {
       throw new Error(`Index (is ${index}) should be < len (is ${this.#length})`);
     }
     this.#buffer[index] = value;
@@ -124,6 +161,24 @@ export class Vec<T> implements Iterable<T> {
    */
   getUnchecked(index: number): T {
     return this.#buffer[index];
+  }
+
+  /**
+   * Checks if the Vec contains a given element.
+   * @param value The value to search for
+   * @returns true if the Vec contains the value, false otherwise
+   * @example
+   * const vec = Vec.from([1, 2, 3]);
+   * vec.contains(2); // true
+   * vec.contains(4); // false
+   */
+  contains(value: T): boolean {
+    for (let i = 0; i < this.#length; i++) {
+      if (this.#buffer[i] === value) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -192,6 +247,9 @@ export class Vec<T> implements Iterable<T> {
    * @param length New length to truncate to
    */
   truncate(length: number) {
+    if (length < 0) {
+      throw new Error('Index out of bounds');
+    }
     if (length < this.#length) {
       this.#length = length;
     }
@@ -227,7 +285,7 @@ export class Vec<T> implements Iterable<T> {
    * vec.remove(1); // Some(2), vec is now [1, 3]
    */
   remove(index: number): T {
-    if (index >= this.#length) {
+    if (index >= this.#length || index < 0) {
       throw new Error(`Removal index (is ${index}) should be < len (is ${this.#length})`);
     }
     const value = this.#buffer[index];
@@ -248,7 +306,7 @@ export class Vec<T> implements Iterable<T> {
    * vec.swapRemove(1); // Some(2), vec is now [1, 4, 3]
    */
   swapRemove(index: number): T {
-    if (index >= this.#length) {
+    if (index >= this.#length || index < 0) {
       throw new Error(`swap_remove index (is ${index}) should be < len (is ${this.#length})`);
     }
     const value = this.#buffer[index];
@@ -313,7 +371,7 @@ export class Vec<T> implements Iterable<T> {
         this.#buffer[i] = value;
       }
     }
-    this.#length = newLength;
+    this.truncate(newLength);
   }
 
   /**
@@ -331,6 +389,7 @@ export class Vec<T> implements Iterable<T> {
         this.#buffer[i] = callback(i);
       }
     }
-    this.#length = newLength;
+    this.truncate(newLength);
   }
 }
+
