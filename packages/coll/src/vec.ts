@@ -1,4 +1,5 @@
 import { None, Option, Some } from '@rustable/enum';
+import { Mut } from '@rustable/utils';
 
 /**
  * A growable array implementation similar to Rust's Vec<T>.
@@ -69,7 +70,7 @@ export class Vec<T> implements Iterable<T> {
    * @param index Zero-based index of element to retrieve
    * @returns Some(element) if index is valid, None if out of bounds
    * @example
-   * const vec = Vec.fromArray([1, 2, 3]);
+   * const vec = Vec.from([1, 2, 3]);
    * const element = vec.get(1); // Some(2)
    */
   get(index: number): Option<T> {
@@ -77,6 +78,42 @@ export class Vec<T> implements Iterable<T> {
       return None;
     }
     return Some(this.#buffer[index]);
+  }
+
+  /**
+   * Gets a mutable reference to the element at the specified index.
+   * @param index Zero-based index of element to retrieve
+   * @returns Some(element) if index is valid, None if out of bounds
+   * @example
+   * const vec = Vec.from([1, 2, 3]);
+   * const element = vec.getMut(1).unwrap().value; // Some(2)
+   */
+  getMut(index: number): Option<Mut<T>> {
+    if (index >= this.#length) {
+      return None;
+    }
+    return Some(
+      new Mut(
+        () => this.#buffer[index],
+        (value: T) => (this.#buffer[index] = value),
+      ),
+    );
+  }
+
+  /**
+   * Sets the element at the specified index.
+   * @param index Zero-based index of element to set
+   * @param value Element to set
+   * @throws Error if index is out of bounds
+   * @example
+   * const vec = Vec.from([1, 2, 3]);
+   * vec.set(1, 4); // vec is now [1, 4, 3]
+   */
+  set(index: number, value: T) {
+    if (index >= this.#length) {
+      throw new Error(`Index (is ${index}) should be < len (is ${this.#length})`);
+    }
+    this.#buffer[index] = value;
   }
 
   /**
@@ -106,7 +143,7 @@ export class Vec<T> implements Iterable<T> {
    * Removes and returns the last element.
    * @returns Some(element) if Vec was not empty, None if empty
    * @example
-   * const vec = Vec.fromArray([1, 2]);
+   * const vec = Vec.from([1, 2]);
    * const last = vec.pop(); // Some(2), vec is now [1]
    */
   pop(): Option<T> {
@@ -166,7 +203,7 @@ export class Vec<T> implements Iterable<T> {
    * @param value Element to insert
    * @throws Error if index is out of bounds
    * @example
-   * const vec = Vec.fromArray([1, 3]);
+   * const vec = Vec.from([1, 3]);
    * vec.insert(1, 2); // vec is now [1, 2, 3]
    */
   insert(index: number, value: T) {
@@ -186,7 +223,7 @@ export class Vec<T> implements Iterable<T> {
    * @param index Index of element to remove
    * @returns Some(element) if index was valid, None if out of bounds
    * @example
-   * const vec = Vec.fromArray([1, 2, 3]);
+   * const vec = Vec.from([1, 2, 3]);
    * vec.remove(1); // Some(2), vec is now [1, 3]
    */
   remove(index: number): T {
@@ -207,7 +244,7 @@ export class Vec<T> implements Iterable<T> {
    * @param index Index of element to remove
    * @returns Some(element) if index was valid, None if out of bounds
    * @example
-   * const vec = Vec.fromArray([1, 2, 3, 4]);
+   * const vec = Vec.from([1, 2, 3, 4]);
    * vec.swapRemove(1); // Some(2), vec is now [1, 4, 3]
    */
   swapRemove(index: number): T {
@@ -242,7 +279,7 @@ export class Vec<T> implements Iterable<T> {
    * Adds all elements from an iterable to the end of this Vec.
    * @param other Iterable containing elements to add
    * @example
-   * const vec = Vec.fromArray([1, 2]);
+   * const vec = Vec.from([1, 2]);
    * vec.extend([3, 4]); // vec is now [1, 2, 3, 4]
    */
   extend(other: Iterable<T>) {
@@ -267,13 +304,31 @@ export class Vec<T> implements Iterable<T> {
    * @param newLength New length for the Vec
    * @param value Value to use for new elements when growing
    * @example
-   * const vec = Vec.fromArray([1, 2]);
+   * const vec = Vec.from([1, 2]);
    * vec.resize(4, 0); // vec is now [1, 2, 0, 0]
    */
   resize(newLength: number, value: T) {
     if (newLength > this.#length) {
       for (let i = this.#length; i < newLength; i++) {
         this.#buffer[i] = value;
+      }
+    }
+    this.#length = newLength;
+  }
+
+  /**
+   * Resizes the Vec to the specified length.
+   * If growing, calls the provided callback to generate new elements.
+   * @param newLength New length for the Vec
+   * @param callback Callback to generate new elements
+   * @example
+   * const vec = Vec.from([1, 2]);
+   * vec.resizeWith(4, () => 0); // vec is now [1, 2, 0, 0]
+   */
+  resizeWith(newLength: number, callback: (index?: number) => T) {
+    if (newLength > this.#length) {
+      for (let i = this.#length; i < newLength; i++) {
+        this.#buffer[i] = callback(i);
       }
     }
     this.#length = newLength;

@@ -1,6 +1,6 @@
 # @rustable/utils
 
-This is the utilities package of the Rustable project, providing fundamental utilities and type management functionalities. The package implements essential features like type identification, object cloning, hashing, and string manipulation.
+This is the utilities package of the Rustable project, providing fundamental utilities and type management functionalities. The package implements essential features like type identification, object cloning, hashing, string manipulation, and mutable references.
 
 ## Installation
 
@@ -41,12 +41,17 @@ pnpm add @rustable/utils
 - Implements equality comparison functionality
 - Supports deep equality checks
 
+### Mutable Reference (`mut.ts`)
+
+- Provides a mutable reference with getter and setter functions
+- Supports generic types for flexible usage
+
 ## Usage
 
 Import the required utilities from the package:
 
 ```typescript
-import { typeId, clone, hash, stringify } from '@rustable/utils';
+import { typeId, clone, hash, stringify, Mut } from '@rustable/utils';
 ```
 
 ### Example: Using Type ID
@@ -107,11 +112,38 @@ const obj2 = { x: 1, y: [1, 2, 3] };
 console.log(equals(obj1, obj2)); // true
 ```
 
+### Example: Using Mutable Reference
+
+```typescript
+import { Mut } from '@rustable/utils';
+
+let value = 10;
+const mutRef = new Mut(
+  () => value,
+  (newValue) => {
+    value = newValue;
+  },
+);
+
+console.log(mutRef.value); // Output: 10
+mutRef.value = 20;
+console.log(mutRef.value); // Output: 20
+
+// Using Mut.of static method
+const anotherMutRef = Mut.of(
+  () => value,
+  (newValue) => {
+    value = newValue;
+  },
+);
+```
+
 ## Notes
 
 - All utilities are designed with TypeScript's type system in mind
 - The package uses WeakMap for efficient memory management
 - Generic type support is available where applicable
+- The `Mut` class provides a way to create mutable references with custom getter and setter functions
 
 ## License
 
