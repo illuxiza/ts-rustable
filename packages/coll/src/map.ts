@@ -1,5 +1,6 @@
 import { None, Option, Some } from '@rustable/enum';
 import { equals, hash } from '@rustable/utils';
+import { Entry, OccupiedEntry, VacantEntry } from './entry';
 
 /**
  * A hash map implementation similar to Rust's HashMap.
@@ -29,7 +30,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * Internal storage using a Map with hashed keys.
    * Each bucket stores an array of entries to handle hash collisions.
    */
-  #entries = new Map<number, Array<{ key: K; value: V }>>();
+  __entries = new Map<number, Array<{ key: K; value: V }>>();
 
   /**
    * Creates an empty HashMap or one populated with the given entries.
@@ -66,7 +67,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns An iterator that yields key-value pairs
    */
   [Symbol.iterator](): IterableIterator<[K, V]> {
-    const entriesIterator = this.#entries.values();
+    const entriesIterator = this.__entries.values();
     let bucketsIterator = entriesIterator.next();
     return {
       [Symbol.iterator]() {
@@ -112,7 +113,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   len(): number {
     let size = 0;
-    for (const bucket of this.#entries.values()) {
+    for (const bucket of this.__entries.values()) {
       size += bucket.length;
     }
     return size;
@@ -129,7 +130,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * ```
    */
   clear(): void {
-    this.#entries.clear();
+    this.__entries.clear();
   }
 
   /**
@@ -160,7 +161,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   removeEntry(key: K): Option<[K, V]> {
     const hashKey = hash(key);
-    const bucket = this.#entries.get(hashKey);
+    const bucket = this.__entries.get(hashKey);
     if (!bucket) return None;
 
     const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
@@ -168,7 +169,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
 
     const [entry] = bucket.splice(index, 1);
     if (bucket.length === 0) {
-      this.#entries.delete(hashKey);
+      this.__entries.delete(hashKey);
     }
 
     return Some([entry.key, entry.value]);
@@ -186,7 +187,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   get(key: K): Option<V> {
     const hashKey = hash(key);
-    const bucket = this.#entries.get(hashKey);
+    const bucket = this.__entries.get(hashKey);
     if (!bucket) return None;
 
     const entry = bucket.find((entry) => this.#keysEqual(entry.key, key));
@@ -195,7 +196,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
 
   getUnchecked(key: K): V {
     const hashKey = hash(key);
-    const bucket = this.#entries.get(hashKey);
+    const bucket = this.__entries.get(hashKey);
     if (!bucket) throw new Error('Key not found');
     return bucket.find((entry) => this.#keysEqual(entry.key, key))!.value;
   }
@@ -212,7 +213,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   containsKey(key: K): boolean {
     const hashKey = hash(key);
-    const bucket = this.#entries.get(hashKey);
+    const bucket = this.__entries.get(hashKey);
     if (!bucket) return false;
 
     return bucket.some((entry) => this.#keysEqual(entry.key, key));
@@ -234,11 +235,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   insert(key: K, value: V): Option<V> {
     const hashKey = hash(key);
-    let bucket = this.#entries.get(hashKey);
+    let bucket = this.__entries.get(hashKey);
 
     if (!bucket) {
       bucket = [];
-      this.#entries.set(hashKey, bucket);
+      this.__entries.set(hashKey, bucket);
     }
 
     const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
@@ -274,7 +275,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns An iterator that yields only the keys
    */
   keys(): IterableIterator<K> {
-    const entriesIterator = this.#entries.values();
+    const entriesIterator = this.__entries.values();
     return {
       [Symbol.iterator]() {
         return this;
@@ -302,7 +303,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * @returns An iterator that yields only the values
    */
   values(): IterableIterator<V> {
-    const entriesIterator = this.#entries.values();
+    const entriesIterator = this.__entries.values();
     return {
       [Symbol.iterator]() {
         return this;
@@ -321,16 +322,29 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
 
   /**
    * Retains only the elements specified by the predicate.
+   * The predicate function receives both key and value.
    *
    * # Examples
    * ```ts
-   * let map = new HashMap([["a", 1], ["b", 2], ["c", 3]]);
+   * let map = new HashMap([
+   *   ["a", 1],
+   *   ["b", 2],
+   *   ["c", 3]
+   * ]);
+   *
+   * // Keep only entries where value is even
    * map.retain((_, v) => v % 2 === 0);
-   * assert(map.len === 1);
+   * assert(map.len() === 1);
+   * assert(map.get("b").unwrap() === 2);
+   *
+   * // Keep only entries where key length equals value
+   * let map = new HashMap([["a", 1], ["bb", 2], ["ccc", 3]]);
+   * map.retain((k, v) => k.length === v);
+   * assert(map.get("bb").unwrap() === 2);
    * ```
    */
   retain(predicate: (key: K, value: V) => boolean): void {
-    for (const bucket of this.#entries.values()) {
+    for (const bucket of this.__entries.values()) {
       let i = 0;
       while (i < bucket.length) {
         const { key, value } = bucket[i];
@@ -350,12 +364,91 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * ```ts
    * let map = new HashMap([["a", 1], ["b", 2]]);
    * let entries = [...map.drain()];
-   * assert(map.len === 0);
+   * assert(map.len() === 0);
+   * assert.deepEqual(entries, [["a", 1], ["b", 2]]);
+   *
    * ```
    */
   drain(): IterableIterator<[K, V]> {
     const entries = [...this.entries()];
     this.clear();
     return entries[Symbol.iterator]();
+  }
+
+  /**
+   * Gets the entry for the given key for in-place manipulation.
+   */
+  entry(key: K): Entry<K, V> {
+    if (this.containsKey(key)) {
+      const occupied = new OccupiedEntry(key, this.getUnchecked(key), this);
+      return Entry.Occupied(occupied);
+    }
+    const vacant = new VacantEntry(key, this);
+    return Entry.Vacant(vacant);
+  }
+
+  /**
+   * Tries to insert a value if the key is not present, otherwise applies the function to the existing value.
+   */
+  insertWith(key: K, value: V, f: (currentValue: V) => V): Option<V> {
+    return this.entry(key).match({
+      Occupied: (map, key, oldValue) => {
+        map.insert(key, f(oldValue));
+        return Some(oldValue);
+      },
+      Vacant: (map, key) => {
+        map.insert(key, value);
+        return None;
+      },
+    });
+  }
+
+  /**
+   * Creates a HashMap with the specified key using the given function.
+   *
+   * # Examples
+   * ```ts
+   * let map = HashMap.fromKey("key", (k) => k.length);
+   * assert(map.get("key").unwrap() === 3);
+   * ```
+   */
+  static fromKey<K, V>(key: K, f: (key: K) => V): HashMap<K, V> {
+    const map = new HashMap<K, V>();
+    map.insert(key, f(key));
+    return map;
+  }
+
+  /**
+   * Returns true if the map contains no elements.
+   *
+   * # Examples
+   * ```ts
+   * let map = new HashMap<string, number>();
+   * assert(map.isEmpty());
+   *
+   * map.insert("a", 1);
+   * assert(!map.isEmpty());
+   * ```
+   */
+  isEmpty(): boolean {
+    return this.len() === 0;
+  }
+
+  /**
+   * Extends the map with the contents of another map.
+   *
+   * # Examples
+   * ```ts
+   * let map1 = new HashMap([["a", 1], ["b", 2]]);
+   * let map2 = new HashMap([["b", 3], ["c", 4]]);
+   * map1.extend(map2);
+   * assert(map1.get("b").unwrap() === 3);
+   * assert(map1.get("c").unwrap() === 4);
+   * ```
+   */
+  extend(other: HashMap<K, V>): void {
+    for (const [key, value] of other) {
+      this.insert(key, value);
+    }
   }
 }

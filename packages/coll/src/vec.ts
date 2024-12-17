@@ -1,5 +1,6 @@
 import { None, Option, Some } from '@rustable/enum';
 import { Mut } from '@rustable/utils';
+import { HashMap } from './map';
 
 /**
  * Creates a proxy for the Vec that allows array-like access to elements.
@@ -44,23 +45,24 @@ export function vec<T>(iterable: Iterable<T>): Vec<T> {
  */
 export class Vec<T> implements Iterable<T> {
   [index: number]: T;
-  #buffer: T[];
-  #length: number;
+
+  private readonly __buffer: T[];
+  private __length: number;
 
   /**
    * Creates a new Vec with the specified initial capacity.
-   * @param capacity Initial capacity of the Vec (default: 0)
+   * @param iterable
    */
   constructor(iterable?: Iterable<T>) {
-    this.#buffer = [];
+    this.__buffer = [];
     let length = 0;
     if (iterable) {
       for (const item of iterable) {
-        this.#buffer.push(item);
+        this.__buffer.push(item);
         length++;
       }
     }
-    this.#length = length;
+    this.__length = length;
   }
 
   /**
@@ -91,7 +93,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns The number of elements
    */
   len(): number {
-    return this.#length;
+    return this.__length;
   }
 
   /**
@@ -99,7 +101,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns true if the Vec contains no elements, false otherwise
    */
   isEmpty(): boolean {
-    return this.#length === 0;
+    return this.__length === 0;
   }
 
   /**
@@ -111,10 +113,10 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.get(1); // Some(2)
    */
   get(index: number): Option<T> {
-    if (index >= this.#length || index < 0) {
+    if (index >= this.__length || index < 0) {
       return None;
     }
-    return Some(this.#buffer[index]);
+    return Some(this.__buffer[index]);
   }
 
   /**
@@ -126,13 +128,13 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.getMut(1).unwrap().value; // Some(2)
    */
   getMut(index: number): Option<Mut<T>> {
-    if (index >= this.#length || index < 0) {
+    if (index >= this.__length || index < 0) {
       return None;
     }
     return Some(
       new Mut(
-        () => this.#buffer[index],
-        (value: T) => (this.#buffer[index] = value),
+        () => this.__buffer[index],
+        (value: T) => (this.__buffer[index] = value),
       ),
     );
   }
@@ -147,10 +149,10 @@ export class Vec<T> implements Iterable<T> {
    * vec.set(1, 4); // vec is now [1, 4, 3]
    */
   set(index: number, value: T) {
-    if (index >= this.#length || index < 0) {
-      throw new Error(`Index (is ${index}) should be < len (is ${this.#length})`);
+    if (index >= this.__length || index < 0) {
+      throw new Error(`Index (is ${index}) should be < len (is ${this.__length})`);
     }
-    this.#buffer[index] = value;
+    this.__buffer[index] = value;
   }
 
   /**
@@ -160,7 +162,7 @@ export class Vec<T> implements Iterable<T> {
    * @warning This method does not perform bounds checking
    */
   getUnchecked(index: number): T {
-    return this.#buffer[index];
+    return this.__buffer[index];
   }
 
   /**
@@ -173,8 +175,8 @@ export class Vec<T> implements Iterable<T> {
    * vec.contains(4); // false
    */
   contains(value: T): boolean {
-    for (let i = 0; i < this.#length; i++) {
-      if (this.#buffer[i] === value) {
+    for (let i = 0; i < this.__length; i++) {
+      if (this.__buffer[i] === value) {
         return true;
       }
     }
@@ -190,8 +192,8 @@ export class Vec<T> implements Iterable<T> {
    * vec.push(1); // vec is now [1]
    */
   push(value: T) {
-    this.#buffer[this.#length] = value;
-    this.#length++;
+    this.__buffer[this.__length] = value;
+    this.__length++;
   }
 
   /**
@@ -202,11 +204,11 @@ export class Vec<T> implements Iterable<T> {
    * const last = vec.pop(); // Some(2), vec is now [1]
    */
   pop(): Option<T> {
-    if (this.#length === 0) {
+    if (this.__length === 0) {
       return None;
     }
-    this.#length--;
-    return Some(this.#buffer[this.#length]);
+    this.__length--;
+    return Some(this.__buffer[this.__length]);
   }
 
   /**
@@ -227,10 +229,10 @@ export class Vec<T> implements Iterable<T> {
    * @returns Some(element) if Vec is not empty, None if empty
    */
   last(): Option<T> {
-    if (this.#length === 0) {
+    if (this.__length === 0) {
       return None;
     }
-    return Some(this.#buffer[this.#length - 1]);
+    return Some(this.__buffer[this.__length - 1]);
   }
 
   /**
@@ -238,7 +240,7 @@ export class Vec<T> implements Iterable<T> {
    * Does not affect capacity.
    */
   clear() {
-    this.#length = 0;
+    this.__length = 0;
   }
 
   /**
@@ -250,8 +252,8 @@ export class Vec<T> implements Iterable<T> {
     if (length < 0) {
       throw new Error('Index out of bounds');
     }
-    if (length < this.#length) {
-      this.#length = length;
+    if (length < this.__length) {
+      this.__length = length;
     }
   }
 
@@ -265,14 +267,14 @@ export class Vec<T> implements Iterable<T> {
    * vec.insert(1, 2); // vec is now [1, 2, 3]
    */
   insert(index: number, value: T) {
-    if (index > this.#length || index < 0) {
+    if (index > this.__length || index < 0) {
       throw new Error('Index out of bounds');
     }
-    for (let i = this.#length; i > index; i--) {
-      this.#buffer[i] = this.#buffer[i - 1];
+    for (let i = this.__length; i > index; i--) {
+      this.__buffer[i] = this.__buffer[i - 1];
     }
-    this.#buffer[index] = value;
-    this.#length++;
+    this.__buffer[index] = value;
+    this.__length++;
   }
 
   /**
@@ -285,14 +287,14 @@ export class Vec<T> implements Iterable<T> {
    * vec.remove(1); // Some(2), vec is now [1, 3]
    */
   remove(index: number): T {
-    if (index >= this.#length || index < 0) {
-      throw new Error(`Removal index (is ${index}) should be < len (is ${this.#length})`);
+    if (index >= this.__length || index < 0) {
+      throw new Error(`Removal index (is ${index}) should be < len (is ${this.__length})`);
     }
-    const value = this.#buffer[index];
-    for (let i = index; i < this.#length - 1; i++) {
-      this.#buffer[i] = this.#buffer[i + 1];
+    const value = this.__buffer[index];
+    for (let i = index; i < this.__length - 1; i++) {
+      this.__buffer[i] = this.__buffer[i + 1];
     }
-    this.#length--;
+    this.__length--;
     return value;
   }
 
@@ -306,13 +308,13 @@ export class Vec<T> implements Iterable<T> {
    * vec.swapRemove(1); // Some(2), vec is now [1, 4, 3]
    */
   swapRemove(index: number): T {
-    if (index >= this.#length || index < 0) {
-      throw new Error(`swap_remove index (is ${index}) should be < len (is ${this.#length})`);
+    if (index >= this.__length || index < 0) {
+      throw new Error(`swap_remove index (is ${index}) should be < len (is ${this.__length})`);
     }
-    const value = this.#buffer[index];
-    this.#length--;
-    if (index < this.#length) {
-      this.#buffer[index] = this.#buffer[this.#length];
+    const value = this.__buffer[index];
+    this.__length--;
+    if (index < this.__length) {
+      this.__buffer[index] = this.__buffer[this.__length];
     }
     return value;
   }
@@ -322,7 +324,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns A new array containing all elements
    */
   asSlice(): T[] {
-    return this.#buffer.slice(0, this.#length);
+    return this.__buffer.slice(0, this.__length);
   }
 
   /**
@@ -330,7 +332,7 @@ export class Vec<T> implements Iterable<T> {
    * @yields Each element in the Vec in order
    */
   [Symbol.iterator](): IterableIterator<T> {
-    return this.#buffer.slice(0, this.#length)[Symbol.iterator]();
+    return this.__buffer.slice(0, this.__length)[Symbol.iterator]();
   }
 
   /**
@@ -352,8 +354,8 @@ export class Vec<T> implements Iterable<T> {
    * @param end End index (default: length)
    * @returns Array containing elements from start to end
    */
-  slice(start: number = 0, end: number = this.#length): T[] {
-    return this.#buffer.slice(start, Math.min(end, this.#length));
+  slice(start: number = 0, end: number = this.__length): T[] {
+    return this.__buffer.slice(start, Math.min(end, this.__length));
   }
 
   /**
@@ -366,9 +368,9 @@ export class Vec<T> implements Iterable<T> {
    * vec.resize(4, 0); // vec is now [1, 2, 0, 0]
    */
   resize(newLength: number, value: T) {
-    if (newLength > this.#length) {
-      for (let i = this.#length; i < newLength; i++) {
-        this.#buffer[i] = value;
+    if (newLength > this.__length) {
+      for (let i = this.__length; i < newLength; i++) {
+        this.__buffer[i] = value;
       }
     }
     this.truncate(newLength);
@@ -384,12 +386,761 @@ export class Vec<T> implements Iterable<T> {
    * vec.resizeWith(4, () => 0); // vec is now [1, 2, 0, 0]
    */
   resizeWith(newLength: number, callback: (index?: number) => T) {
-    if (newLength > this.#length) {
-      for (let i = this.#length; i < newLength; i++) {
-        this.#buffer[i] = callback(i);
+    if (newLength > this.__length) {
+      for (let i = this.__length; i < newLength; i++) {
+        this.__buffer[i] = callback(i);
       }
     }
     this.truncate(newLength);
   }
-}
 
+  /**
+   * Retains only the elements specified by the predicate.
+   * Keeps elements for which the predicate returns true and removes those that return false.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5, 6]);
+   *
+   * // Keep only even numbers
+   * vec.retain(x => x % 2 === 0);
+   * assert.deepEqual([...vec], [2, 4, 6]);
+   *
+   * // Keep only elements less than 5
+   * let vec = Vec.from([1, 2, 3, 4, 5, 6]);
+   * vec.retain(x => x < 5);
+   * assert.deepEqual([...vec], [1, 2, 3, 4]);
+   * ```
+   *
+   * @param predicate Function that returns true for elements to keep
+   */
+  retain(predicate: (value: T, index: number) => boolean): void {
+    let writeIndex = 0;
+
+    for (let readIndex = 0; readIndex < this.__length; readIndex++) {
+      if (predicate(this.__buffer[readIndex], readIndex)) {
+        if (writeIndex !== readIndex) {
+          this.__buffer[writeIndex] = this.__buffer[readIndex];
+        }
+        writeIndex++;
+      }
+    }
+
+    this.__length = writeIndex;
+  }
+
+  /**
+   * Removes a range of elements from the Vec and returns an iterator over the removed elements.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   *
+   * // Drain elements from index 1 to 3
+   * let drained = [...vec.drain({ start: 1, end: 4 })];
+   * assert.deepEqual(drained, [2, 3, 4]);
+   * assert.deepEqual([...vec], [1, 5]);
+   *
+   * // Drain elements from start to index 2
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let drained = [...vec.drain({ end: 2 })];
+   * assert.deepEqual(drained, [1, 2]);
+   * assert.deepEqual([...vec], [3, 4, 5]);
+   *
+   * // Drain elements from index 3 to end
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let drained = [...vec.drain({ start: 3 })];
+   * assert.deepEqual(drained, [4, 5]);
+   * assert.deepEqual([...vec], [1, 2, 3]);
+   * ```
+   */
+  drain(range: { start?: number; end?: number } = {}): IterableIterator<T> {
+    const len = this.__length;
+    const start = range.start ?? 0;
+    const end = range.end ?? len;
+
+    if (start < 0 || end > len || start > end) {
+      throw new Error('Invalid range');
+    }
+
+    // Set the vector's length to start for safety in case Drain is leaked
+    this.__length = start;
+
+    const drainedElements = this.__buffer.slice(start, end);
+
+    // Create a Drain object
+    const drain = {
+      tailStart: end,
+      tailLen: len - end,
+      iter: drainedElements[Symbol.iterator](),
+      vec: this,
+      [Symbol.iterator]() {
+        return this;
+      },
+      next() {
+        const result = this.iter.next();
+        if (result.done && this.tailLen > 0) {
+          // Move remaining tail of the vec to cover the hole
+          for (let i = 0; i < this.tailLen; i++) {
+            this.vec.__buffer[this.vec.__length + i] = this.vec.__buffer[this.tailStart + i];
+          }
+          this.vec.__length += this.tailLen;
+          this.tailLen = 0;
+        }
+        return result;
+      },
+    };
+
+    return drain;
+  }
+
+  /**
+   * Removes all elements from the Vec and returns an iterator over the removed elements.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3]);
+   *
+   * // Drain all elements
+   * let drained = [...vec.drain()];
+   * assert(vec.isEmpty());
+   * assert.deepEqual(drained, [1, 2, 3]);
+   *
+   * // Drain with filtering
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let evens = [...vec.drain(x => x % 2 === 0)];
+   * assert.deepEqual(evens, [2, 4]);
+   * assert.deepEqual([...vec], [1, 3, 5]);
+   * ```
+   */
+  drainBy(predicate?: (value: T) => boolean): IterableIterator<T> {
+    if (!predicate) {
+      const elements = this.asSlice();
+      this.clear();
+      return elements[Symbol.iterator]();
+    }
+
+    const drained: T[] = [];
+    let writeIndex = 0;
+
+    for (let readIndex = 0; readIndex < this.__length; readIndex++) {
+      const value = this.__buffer[readIndex];
+      if (predicate(value)) {
+        drained.push(value);
+      } else {
+        if (writeIndex !== readIndex) {
+          this.__buffer[writeIndex] = value;
+        }
+        writeIndex++;
+      }
+    }
+
+    this.__length = writeIndex;
+    return drained[Symbol.iterator]();
+  }
+
+  /**
+   * Removes consecutive repeated elements in the vector according to the given equality function.
+   * If no equality function is provided, uses strict equality (===).
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 2, 3, 2, 1, 1]);
+   * vec.dedup();
+   * assert.deepEqual([...vec], [1, 2, 3, 2, 1]);
+   *
+   * // Using custom equality function
+   * let vec = Vec.from([1.0, 1.1, 1.2, 2.0, 2.1]);
+   * vec.dedup((a, b) => Math.floor(a) === Math.floor(b));
+   * assert.deepEqual([...vec], [1.0, 2.0]);
+   * ```
+   */
+  dedup(eq?: (a: T, b: T) => boolean): void {
+    if (this.__length <= 1) return;
+
+    const isEqual = eq || ((a, b) => a === b);
+    let writeIndex = 1;
+
+    for (let readIndex = 1; readIndex < this.__length; readIndex++) {
+      if (!isEqual(this.__buffer[writeIndex - 1], this.__buffer[readIndex])) {
+        if (writeIndex !== readIndex) {
+          this.__buffer[writeIndex] = this.__buffer[readIndex];
+        }
+        writeIndex++;
+      }
+    }
+
+    this.__length = writeIndex;
+  }
+  /**
+   * Removes all but the first of consecutive elements in the vector satisfying a given equality
+   * relation.
+   *
+   * The `sameBucket` function is passed references to two elements from the vector and
+   * must determine if the elements compare equal. The elements are passed in opposite order
+   * from their order in the slice, so if `sameBucket(a, b)` returns `true`, `a` is removed.
+   *
+   * If the vector is sorted, this removes all duplicates.
+   *
+   * # Examples
+   *
+   * ```ts
+   * let vec = Vec.from(["foo", "bar", "Bar", "baz", "bar"]);
+   *
+   * vec.dedupBy((a, b) => a.toLowerCase() === b.toLowerCase());
+   *
+   * assert.deepEqual([...vec], ["foo", "bar", "baz", "bar"]);
+   * ```
+   */
+  dedupBy(sameBucket: (a: T, b: T) => boolean): void {
+    const len = this.__length;
+    if (len <= 1) {
+      return;
+    }
+
+    let writeIndex = 1;
+
+    for (let readIndex = 1; readIndex < len; readIndex++) {
+      if (!sameBucket(this.__buffer[readIndex], this.__buffer[writeIndex - 1])) {
+        if (writeIndex !== readIndex) {
+          this.__buffer[writeIndex] = this.__buffer[readIndex];
+        }
+        writeIndex++;
+      }
+    }
+
+    this.__length = writeIndex;
+  }
+
+  /**
+   * Removes all but the first of consecutive elements in the vector that resolve to the same
+   * key.
+   *
+   * If the vector is sorted, this removes all duplicates.
+   *
+   * # Examples
+   *
+   * ```ts
+   * let vec = Vec.from([10, 20, 21, 30, 20]);
+   *
+   * vec.dedupByKey(i => Math.floor(i / 10));
+   *
+   * assert.deepEqual([...vec], [10, 20, 30, 20]);
+   * ```
+   */
+  dedupByKey<K>(key: (value: T) => K): void {
+    this.dedupBy((a, b) => key(a) === key(b));
+  }
+  /**
+   * Divides one slice into two at an index, without doing bounds checking.
+   *
+   * The first will contain all indices from `[0, mid)` (excluding
+   * the index `mid` itself) and the second will contain all
+   * indices from `[mid, len)` (excluding the index `len` itself).
+   *
+   * # Safety
+   *
+   * Calling this method with an out-of-bounds index is undefined behavior
+   * even if the resulting reference is not used. The caller has to ensure that
+   * `0 <= mid <= this.length`.
+   *
+   * # Examples
+   *
+   * ```ts
+   * const vec = Vec.from([1, 2, 3, 4, 5, 6]);
+   *
+   * const [left, right] = vec.splitAtUnchecked(0);
+   * assert.deepEqual([...left], []);
+   * assert.deepEqual([...right], [1, 2, 3, 4, 5, 6]);
+   *
+   * const [left2, right2] = vec.splitAtUnchecked(2);
+   * assert.deepEqual([...left2], [1, 2]);
+   * assert.deepEqual([...right2], [3, 4, 5, 6]);
+   *
+   * const [left3, right3] = vec.splitAtUnchecked(6);
+   * assert.deepEqual([...left3], [1, 2, 3, 4, 5, 6]);
+   * assert.deepEqual([...right3], []);
+   * ```
+   */
+  splitAtUnchecked(mid: number): [Vec<T>, Vec<T>] {
+    const left = Vec.from(this.__buffer.slice(0, mid));
+    const right = Vec.from(this.__buffer.slice(mid));
+    return [left, right];
+  }
+
+  /**
+   * Divides one slice into two at an index, returning `None` if the slice is
+   * too short.
+   *
+   * If `mid ≤ len` returns a pair of slices where the first will contain all
+   * indices from `[0, mid)` (excluding the index `mid` itself) and the
+   * second will contain all indices from `[mid, len)` (excluding the index
+   * `len` itself).
+   *
+   * Otherwise, if `mid > len`, returns `None`.
+   *
+   * # Examples
+   *
+   * ```ts
+   * let v = Vec.from([1, -2, 3, -4, 5, -6]);
+   *
+   * {
+   *   let [left, right] = v.splitAt(0).unwrap();
+   *   assert.deepEqual([...left], []);
+   *   assert.deepEqual([...right], [1, -2, 3, -4, 5, -6]);
+   * }
+   *
+   * {
+   *   let [left, right] = v.splitAt(2).unwrap();
+   *   assert.deepEqual([...left], [1, -2]);
+   *   assert.deepEqual([...right], [3, -4, 5, -6]);
+   * }
+   *
+   * {
+   *   let [left, right] = v.splitAt(6).unwrap();
+   *   assert.deepEqual([...left], [1, -2, 3, -4, 5, -6]);
+   *   assert.deepEqual([...right], []);
+   * }
+   *
+   * assert.deepEqual(v.splitAt(7), None);
+   * ```
+   */
+  splitAtChecked(mid: number): Option<[Vec<T>, Vec<T>]> {
+    if (mid <= this.__length) {
+      return Some(this.splitAtUnchecked(mid));
+    } else {
+      return None;
+    }
+  }
+
+  /**
+   * Divides one slice into two at an index.
+   *
+   * The first will contain all indices from `[0, mid)` (excluding
+   * the index `mid` itself) and the second will contain all
+   * indices from `[mid, len)` (excluding the index `len` itself).
+   *
+   * # Panics
+   *
+   * Panics if `mid > len`. For a non-panicking alternative see
+   * `splitAtChecked`.
+   *
+   * # Examples
+   *
+   * ```ts
+   * let v = Vec.from([1, 2, 3, 4, 5, 6]);
+   *
+   * {
+   *   let [left, right] = v.splitAt(0);
+   *   assert.deepEqual([...left], []);
+   *   assert.deepEqual([...right], [1, 2, 3, 4, 5, 6]);
+   * }
+   *
+   * {
+   *   let [left, right] = v.splitAt(2);
+   *   assert.deepEqual([...left], [1, 2]);
+   *   assert.deepEqual([...right], [3, 4, 5, 6]);
+   * }
+   *
+   * {
+   *   let [left, right] = v.splitAt(6);
+   *   assert.deepEqual([...left], [1, 2, 3, 4, 5, 6]);
+   *   assert.deepEqual([...right], []);
+   * }
+   * ```
+   */
+  splitAt(mid: number): [Vec<T>, Vec<T>] {
+    const result = this.splitAtChecked(mid);
+    if (result.isNone()) {
+      throw new Error('mid > len');
+    }
+    return result.unwrap();
+  }
+
+  splitFirst(): Option<[T, Vec<T>]> {
+    if (this.__length > 0) {
+      const first = this.__buffer[0];
+      const rest = Vec.from(this.__buffer.slice(1));
+      return Some([first, rest]);
+    }
+    return None;
+  }
+
+  splitLast(): Option<[T, Vec<T>]> {
+    if (this.__length > 0) {
+      const last = this.__buffer[this.__length - 1];
+      const init = Vec.from(this.__buffer.slice(0, -1));
+      return Some([last, init]);
+    }
+    return None;
+  }
+
+  /**
+   * Splits the vector into two at the given index.
+   * Returns a new vector containing the elements from index onwards.
+   * The original vector will contain elements [0, index).
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let right = vec.splitOff(3);
+   * assert.deepEqual([...vec], [1, 2, 3]);      // left part
+   * assert.deepEqual([...right], [4, 5]);       // right part
+   * ```
+   *
+   * @throws If index is out of bounds
+   */
+  splitOff(index: number): Vec<T> {
+    if (index > this.__length) {
+      throw new Error('Index out of bounds');
+    }
+
+    const rightPart = Vec.new<T>();
+    for (let i = index; i < this.__length; i++) {
+      rightPart.push(this.__buffer[i]);
+    }
+    this.__length = index;
+    return rightPart;
+  }
+
+  /**
+   * Splits the vector into two at the given index, keeping the capacity of both parts.
+   * Returns a new vector containing the elements from index onwards.
+   * The original vector will contain elements [0, index).
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let right = vec.splitOffReserving(3);
+   * assert.deepEqual([...vec], [1, 2, 3]);
+   * assert.deepEqual([...right], [4, 5]);
+   * assert(vec.capacity >= 3);
+   * assert(right.capacity >= 2);
+   * ```
+   *
+   * @throws If index is out of bounds
+   */
+  splitOffReserving(index: number): Vec<T> {
+    if (index > this.__length) {
+      throw new Error('Index out of bounds');
+    }
+
+    const rightPart = Vec.new<T>();
+    for (let i = index; i < this.__length; i++) {
+      rightPart.push(this.__buffer[i]);
+    }
+    this.__length = index;
+    return rightPart;
+  }
+
+  /**
+   * Splits the vector into two parts based on a predicate.
+   * Returns a new vector containing elements that satisfy the predicate.
+   * The original vector will contain elements that don't satisfy the predicate.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let evens = vec.splitBy(x => x % 2 === 0);
+   * assert.deepEqual([...vec], [1, 3, 5]);      // odds
+   * assert.deepEqual([...evens], [2, 4]);       // evens
+   * ```
+   */
+  splitBy(predicate: (value: T) => boolean): Vec<T> {
+    const matching = Vec.new<T>();
+    let writeIndex = 0;
+
+    for (let readIndex = 0; readIndex < this.__length; readIndex++) {
+      const value = this.__buffer[readIndex];
+      if (predicate(value)) {
+        matching.push(value);
+      } else {
+        if (writeIndex !== readIndex) {
+          this.__buffer[writeIndex] = value;
+        }
+        writeIndex++;
+      }
+    }
+
+    this.__length = writeIndex;
+    return matching;
+  }
+
+  /**
+   * Splits the vector into multiple parts based on a key function.
+   * Returns a Map where keys are the results of the key function and values are Vecs of elements.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5, 6]);
+   * let groups = vec.splitByKey(x => x % 3);  // Group by remainder when divided by 3
+   * assert.deepEqual([...groups.get(0)!], [3, 6]);
+   * assert.deepEqual([...groups.get(1)!], [1, 4]);
+   * assert.deepEqual([...groups.get(2)!], [2, 5]);
+   *
+   * // Group strings by length
+   * let vec = Vec.from(['a', 'bb', 'c', 'dd', 'eee']);
+   * let groups = vec.splitByKey(s => s.length);
+   * assert.deepEqual([...groups.get(1)!], ['a', 'c']);
+   * assert.deepEqual([...groups.get(2)!], ['bb', 'dd']);
+   * assert.deepEqual([...groups.get(3)!], ['eee']);
+   * ```
+   */
+  splitByKey<K>(keyFn: (value: T) => K): HashMap<K, Vec<T>> {
+    const groups = new HashMap<K, Vec<T>>();
+
+    for (let i = 0; i < this.__length; i++) {
+      const value = this.__buffer[i];
+      const key = keyFn(value);
+      groups.entry(key).orInsert(Vec.new<T>()).push(value);
+    }
+
+    this.clear();
+    return groups;
+  }
+
+  /**
+   * Splits the vector into chunks of the specified size.
+   * Returns an array of Vecs, where each Vec (except possibly the last) has length size.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * let chunks = vec.splitIntoChunks(2);
+   * assert.deepEqual([...chunks[0]], [1, 2]);
+   * assert.deepEqual([...chunks[1]], [3, 4]);
+   * assert.deepEqual([...chunks[2]], [5]);
+   * assert(vec.isEmpty());
+   * ```
+   *
+   * @throws If size is less than or equal to 0
+   */
+  splitIntoChunks(size: number): Vec<T>[] {
+    if (size <= 0) {
+      throw new Error('Chunk size must be positive');
+    }
+
+    const chunks: Vec<T>[] = [];
+    while (this.__length > 0) {
+      const chunk = new Vec<T>();
+      const chunkSize = Math.min(size, this.__length);
+
+      for (let i = 0; i < chunkSize; i++) {
+        chunk.push(this.__buffer[i]);
+      }
+
+      // Remove the elements we just copied
+      for (let i = chunkSize; i < this.__length; i++) {
+        this.__buffer[i - chunkSize] = this.__buffer[i];
+      }
+      this.__length -= chunkSize;
+
+      chunks.push(chunk);
+    }
+
+    return chunks;
+  }
+
+  /**
+   * Sorts the vector in-place.
+   * Uses the provided comparison function, or the default comparison if none is provided.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([3, 1, 4, 1, 5]);
+   * vec.sort();
+   * assert.deepEqual([...vec], [1, 1, 3, 4, 5]);
+   *
+   * // Custom comparison
+   * vec.sort((a, b) => b - a);  // Sort in reverse
+   * assert.deepEqual([...vec], [5, 4, 3, 1, 1]);
+   * ```
+   */
+  sort(compare?: (a: T, b: T) => number): void {
+    if (this.__length <= 1) return;
+
+    this.__buffer
+      .slice(0, this.__length)
+      .sort(compare)
+      .forEach((value, i) => (this.__buffer[i] = value));
+  }
+
+  /**
+   * Sorts the vector in-place by the specified key function.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from(['hello', 'a', 'world']);
+   * vec.sortBy(s => s.length);
+   * assert.deepEqual([...vec], ['a', 'hello', 'world']);
+   *
+   * // Sort objects by property
+   * let vec = Vec.from([
+   *   { id: 3, name: 'c' },
+   *   { id: 1, name: 'a' },
+   *   { id: 2, name: 'b' }
+   * ]);
+   * vec.sortBy(x => x.id);
+   * assert.deepEqual([...vec], [
+   *   { id: 1, name: 'a' },
+   *   { id: 2, name: 'b' },
+   *   { id: 3, name: 'c' }
+   * ]);
+   * ```
+   */
+  sortBy<K>(keyFn: (value: T) => K): void {
+    this.sort((a, b) => {
+      const keyA = keyFn(a);
+      const keyB = keyFn(b);
+      if (keyA < keyB) return -1;
+      if (keyA > keyB) return 1;
+      return 0;
+    });
+  }
+
+  /**
+   * Sorts the vector in-place, but may not preserve the order of equal elements.
+   * Generally faster than stable sort.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([3, 1, 4, 1, 5]);
+   * vec.unstableSort();
+   * assert.deepEqual([...vec], [1, 1, 3, 4, 5]);  // Order of equal elements (1, 1) may vary
+   * ```
+   */
+  unstableSort(compare?: (a: T, b: T) => number): void {
+    if (this.__length <= 1) return;
+
+    const compareFn =
+      compare ||
+      ((a: T, b: T) => {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      });
+
+    // Quick sort implementation
+    const partition = (low: number, high: number): number => {
+      const pivot = this.__buffer[high];
+      let i = low - 1;
+
+      for (let j = low; j < high; j++) {
+        if (compareFn(this.__buffer[j], pivot) <= 0) {
+          i++;
+          [this.__buffer[i], this.__buffer[j]] = [this.__buffer[j], this.__buffer[i]];
+        }
+      }
+
+      [this.__buffer[i + 1], this.__buffer[high]] = [this.__buffer[high], this.__buffer[i + 1]];
+      return i + 1;
+    };
+
+    const quickSort = (low: number, high: number): void => {
+      if (low < high) {
+        const pi = partition(low, high);
+        quickSort(low, pi - 1);
+        quickSort(pi + 1, high);
+      }
+    };
+
+    quickSort(0, this.__length - 1);
+  }
+
+  /**
+   * Returns true if the vector is sorted according to the given comparison function,
+   * or the default ordering if none is provided.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3, 4, 5]);
+   * assert(vec.isSorted());
+   *
+   * let vec = Vec.from([5, 4, 3, 2, 1]);
+   * assert(vec.isSorted((a, b) => b - a));  // Sorted in reverse
+   * ```
+   */
+  isSorted(compare?: (a: T, b: T) => number): boolean {
+    if (this.__length <= 1) return true;
+
+    const compareFn =
+      compare ||
+      ((a: T, b: T) => {
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      });
+
+    for (let i = 1; i < this.__length; i++) {
+      if (compareFn(this.__buffer[i - 1], this.__buffer[i]) > 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns true if the vector is sorted according to the given key function.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from(['a', 'hello', 'world']);
+   * assert(vec.isSortedBy(s => s.length));
+   *
+   * let vec = Vec.from([
+   *   { id: 1, name: 'a' },
+   *   { id: 2, name: 'b' },
+   *   { id: 3, name: 'c' }
+   * ]);
+   * assert(vec.isSortedBy(x => x.id));
+   * ```
+   */
+  isSortedBy<K>(keyFn: (value: T) => K): boolean {
+    return this.isSorted((a, b) => {
+      const keyA = keyFn(a);
+      const keyB = keyFn(b);
+      if (keyA < keyB) return -1;
+      if (keyA > keyB) return 1;
+      return 0;
+    });
+  }
+
+  /**
+   * Fills the vector with the given value.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3]);
+   * vec.fill(0);
+   * assert.deepEqual([...vec], [0, 0, 0]);
+   * ```
+   */
+  fill(value: T): void {
+    for (let i = 0; i < this.__length; i++) {
+      this.__buffer[i] = value;
+    }
+  }
+
+  /**
+   * Fills the vector with values returned by the function.
+   * The function receives the index as its argument.
+   *
+   * # Examples
+   * ```ts
+   * let vec = Vec.from([1, 2, 3]);
+   * vec.fillWith(i => i * 2);
+   * assert.deepEqual([...vec], [0, 2, 4]);
+   *
+   * // Fill with repeated sequence
+   * let vec = Vec.withCapacity(5);
+   * vec.resize(5, 0);
+   * vec.fillWith(i => i % 2);
+   * assert.deepEqual([...vec], [0, 1, 0, 1, 0]);
+   * ```
+   */
+  fillWith(f: (index: number) => T): void {
+    for (let i = 0; i < this.__length; i++) {
+      this.__buffer[i] = f(i);
+    }
+  }
+}

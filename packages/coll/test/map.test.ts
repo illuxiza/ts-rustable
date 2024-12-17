@@ -12,6 +12,13 @@ describe('HashMap', () => {
     expect(map.len()).toBe(0);
   });
 
+  test('isEmpty', () => {
+    const map = new HashMap<string, number>();
+    expect(map.isEmpty()).toBe(true);
+    map.insert('a', 1);
+    expect(map.isEmpty()).toBe(false);
+  });
+
   test('should insert and retrieve key-value pairs', () => {
     expect(map.insert('a', 1)).toEqual(Option.None());
     expect(map.len()).toBe(1);
@@ -135,5 +142,84 @@ describe('HashMap', () => {
     nullMap.insert(undefined, 2);
     expect(nullMap.get(null).unwrapOr(0)).toBe(1);
     expect(nullMap.get(undefined).unwrapOr(0)).toBe(2);
+  });
+
+  describe('entry methods', () => {
+    test('entry API with occupied entry', () => {
+      const map = new HashMap<string, number>();
+      map.insert('key', 1);
+
+      const entry = map.entry('key');
+      expect(entry.isOccupied()).toBe(true);
+
+      entry.occupied().map((occupied) => {
+        expect(occupied.get()).toBe(1);
+        occupied.modify((v) => v * 2);
+        expect(occupied.get()).toBe(2);
+        expect(occupied.getKey()).toBe('key');
+      });
+    });
+
+    test('entry API with vacant entry', () => {
+      const map = new HashMap<string, number>();
+      const entry = map.entry('key');
+
+      expect(entry.isVacant()).toBe(true);
+      entry.vacant().map((vacant) => {
+        expect(vacant.getKey()).toBe('key');
+        expect(vacant.insert(1)).toBe(1);
+      });
+      expect(map.get('key').unwrap()).toBe(1);
+    });
+
+    test('orInsert methods', () => {
+      const map = new HashMap<string, number>();
+
+      // Test orInsert
+      expect(map.entry('a').orInsert(1)).toBe(1);
+      expect(map.entry('a').orInsert(2)).toBe(1); // Already exists
+
+      // Test orInsertWith
+      expect(map.entry('b').orInsertWith(() => 2)).toBe(2);
+      expect(map.entry('b').orInsertWith(() => 3)).toBe(2); // Already exists
+
+      // Test orInsertWithKey
+      expect(map.entry('abc').orInsertWithKey((k) => k.length)).toBe(3);
+      expect(map.entry('abc').orInsertWithKey((_k) => 0)).toBe(3); // Already exists
+    });
+
+    test('andModify and andReplaceEntryWith', () => {
+      const map = new HashMap<string, number>();
+      map.insert('key', 1);
+
+      // Test andModify
+      map.entry('key').andModify((v) => (v *= 2));
+      expect(map.get('key').unwrap()).toBe(2);
+
+      // Test andReplaceEntryWith
+      const oldValue = map.entry('key').andReplaceEntryWith(() => 3);
+      expect(oldValue.unwrap()).toBe(2);
+      expect(map.get('key').unwrap()).toBe(3);
+
+      // Test on vacant entry
+      map.entry('nonexistent').andModify((v) => (v *= 2)); // Should do nothing
+      expect(map.containsKey('nonexistent')).toBe(false);
+    });
+  });
+});
+
+describe('query methods', () => {});
+
+describe('error cases', () => {
+  test('getUnchecked on non-existent key', () => {
+    const map = new HashMap<string, number>();
+    expect(() => map.getUnchecked('nonexistent')).toThrow('Key not found');
+  });
+});
+
+describe('static methods', () => {
+  test('fromKey', () => {
+    const map = HashMap.fromKey('hello', (k) => k.length);
+    expect(map.get('hello').unwrap()).toBe(5);
   });
 });

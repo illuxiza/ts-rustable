@@ -24,7 +24,7 @@ import { HashMap } from './map';
  */
 export class HashSet<T> implements Iterable<T> {
   /** Internal storage using HashMap */
-  #map: HashMap<T, void>;
+  __map: HashMap<T, void>;
 
   /**
    * Creates an empty HashSet or one populated with the given values.
@@ -39,7 +39,7 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   constructor(values?: readonly T[]) {
-    this.#map = new HashMap();
+    this.__map = new HashMap();
     if (values) {
       for (const value of values) {
         this.insert(value);
@@ -57,7 +57,7 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   len(): number {
-    return this.#map.len();
+    return this.__map.len();
   }
 
   /**
@@ -71,7 +71,7 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   clear(): void {
-    this.#map.clear();
+    this.__map.clear();
   }
 
   /**
@@ -85,7 +85,7 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   contains(value: T): boolean {
-    return this.#map.containsKey(value);
+    return this.__map.containsKey(value);
   }
 
   /**
@@ -102,7 +102,7 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   insert(value: T): boolean {
-    return this.#map.insert(value, void 0).isNone();
+    return this.__map.insert(value, void 0).isNone();
   }
 
   /**
@@ -119,14 +119,14 @@ export class HashSet<T> implements Iterable<T> {
    * ```
    */
   remove(value: T): boolean {
-    return this.#map.remove(value).isSome();
+    return this.__map.remove(value).isSome();
   }
 
   /**
    * Returns an iterator over the set's values.
    */
   [Symbol.iterator](): IterableIterator<T> {
-    return this.#map.keys();
+    return this.__map.keys();
   }
 
   /**
