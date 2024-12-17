@@ -353,4 +353,179 @@ describe('Vec', () => {
       expect(() => vec.splitIntoChunks(-1)).toThrow('Chunk size must be positive');
     });
   });
+
+  describe('additional test cases', () => {
+    test('resize with default value', () => {
+      const v = Vec.new<number>();
+      v.resize(3, 0);
+      expect([...v]).toEqual([0, 0, 0]);
+      v.resize(1, 0);
+      expect([...v]).toEqual([0]);
+    });
+
+    test('truncate', () => {
+      const v = Vec.from([1, 2, 3, 4, 5]);
+      v.truncate(3);
+      expect([...v]).toEqual([1, 2, 3]);
+      v.truncate(5); // Should not affect the vector
+      expect([...v]).toEqual([1, 2, 3]);
+    });
+
+    test('splitOff with invalid index', () => {
+      const v = Vec.from([1, 2, 3]);
+      expect(() => v.splitOff(4)).toThrow();
+    });
+
+    test('complex splitByKey scenarios', () => {
+      const v = Vec.from(['a', 'bb', 'ccc', 'dd', 'e', 'fff']);
+      const groups = v.splitByKey((s) => s.length);
+      expect([...groups.get(1).unwrapOr([])]).toEqual(['a', 'e']);
+      expect([...groups.get(2).unwrapOr([])]).toEqual(['bb', 'dd']);
+      expect([...groups.get(3).unwrapOr([])]).toEqual(['ccc', 'fff']);
+      expect(v.isEmpty()).toBe(true);
+    });
+
+    test('sort edge cases', () => {
+      const v = Vec.from([1]);
+      v.sort(); // Should handle single element
+      expect([...v]).toEqual([1]);
+
+      const empty = Vec.new<number>();
+      empty.sort(); // Should handle empty vector
+      expect([...empty]).toEqual([]);
+    });
+
+    test('unstableSort edge cases', () => {
+      const v = Vec.from([1]);
+      v.unstableSort(); // Should handle single element
+      expect([...v]).toEqual([1]);
+
+      const empty = Vec.new<number>();
+      empty.unstableSort(); // Should handle empty vector
+      expect([...empty]).toEqual([]);
+    });
+
+    test('isSorted edge cases', () => {
+      const empty = Vec.new<number>();
+      expect(empty.isSorted()).toBe(true);
+
+      const single = Vec.from([1]);
+      expect(single.isSorted()).toBe(true);
+    });
+  });
+
+  it('should handle vector operations correctly', () => {
+    const vec = Vec.new<number>();
+    vec.push(1);
+    vec.push(2);
+
+    expect(vec.pop().unwrap()).toBe(2);
+    expect(vec.last().unwrap()).toBe(1);
+  });
+
+  it('should handle slicing operations', () => {
+    const vec = Vec.from([1, 2, 3, 4, 5]);
+    const slice = vec.slice(1, 3);
+
+    expect([...slice]).toEqual([2, 3]);
+  });
+
+  it('should implement advanced operations', () => {
+    const vec = Vec.from([1, 2, 3, 4, 5]);
+
+    vec.sort((a: number, b: number) => b - a);
+    expect([...vec]).toEqual([5, 4, 3, 2, 1]);
+
+    const filtered = Vec.from([...vec].filter((x) => x > 3));
+    expect([...filtered]).toEqual([5, 4]);
+
+    const mapped = Vec.from([...vec].map((x) => x * 2));
+    expect([...mapped]).toEqual([10, 8, 6, 4, 2]);
+  });
+
+  describe('Vec advanced operations', () => {
+    test('advanced vector operations', () => {
+      const vec = Vec.from([1, 2, 3, 4, 5]);
+      vec.retain((x) => x % 2 === 0);
+      expect([...vec]).toEqual([2, 4]);
+
+      const vec3 = Vec.from([1, 2, 3, 4, 5]);
+      vec3.truncate(3);
+      expect([...vec3]).toEqual([1, 2, 3]);
+
+      const vec4 = Vec.from([1, 2]);
+      vec4.resize(4, 0);
+      expect([...vec4]).toEqual([1, 2, 0, 0]);
+      vec4.resize(1, 0);
+      expect([...vec4]).toEqual([1]);
+
+      const vec5 = Vec.from([1, 2]);
+      vec5.extend([3, 4, 5]);
+      expect([...vec5]).toEqual([1, 2, 3, 4, 5]);
+
+      const vec7 = Vec.from([1, 2, 3, 4, 5]);
+      const drained = [...vec7.drain()];
+      expect(drained).toEqual([1, 2, 3, 4, 5]);
+      expect(vec7.isEmpty()).toBe(true);
+
+      const vec8 = Vec.from([1, 2, 3, 4, 5]);
+      const drainedEven = [...vec8.drainBy((x) => x % 2 === 0)];
+      expect(drainedEven).toEqual([2, 4]);
+      expect([...vec8]).toEqual([1, 3, 5]);
+
+      const vec9 = Vec.from([1, 2, 3]);
+      vec9.clear();
+      expect(vec9.isEmpty()).toBe(true);
+
+      const vec10 = Vec.from([1, 2]);
+      const other = Vec.from([3, 4]);
+      vec10.extend(other);
+      expect([...vec10]).toEqual([1, 2, 3, 4]);
+    });
+
+    test('split operations', () => {
+      const vec = Vec.from([1, 2, 3, 4, 5]);
+
+      const right = vec.splitOff(3);
+      expect([...vec]).toEqual([1, 2, 3]);
+      expect([...right]).toEqual([4, 5]);
+
+      const vec2 = Vec.from([1, 2, 3, 4, 5]);
+      const [left, right2] = vec2.splitAt(2);
+      expect([...left]).toEqual([1, 2]);
+      expect([...right2]).toEqual([3, 4, 5]);
+    });
+
+    test('insertion and removal operations', () => {
+      const vec = Vec.from([1, 2, 3]);
+
+      vec.insert(1, 10);
+      expect([...vec]).toEqual([1, 10, 2, 3]);
+
+      const removed = vec.remove(1);
+      expect(removed).toBe(10);
+      expect([...vec]).toEqual([1, 2, 3]);
+      vec.swapRemove(1);
+      expect([...vec]).toEqual([1, 3]);
+    });
+  });
+
+  test('splice operations', () => {
+    const vec = Vec.from([1, 2, 3, 4, 5]);
+
+    const removed = vec.splice(1, 2, [10, 20]);
+    expect([...removed]).toEqual([2, 3]);
+    expect([...vec]).toEqual([1, 10, 20, 4, 5]);
+
+    const removedEnd = vec.splice(3, 2);
+    expect([...removedEnd]).toEqual([4, 5]);
+    expect([...vec]).toEqual([1, 10, 20]);
+
+    vec.splice(1, 0, [30, 40]);
+    expect([...vec]).toEqual([1, 30, 40, 10, 20]);
+
+    const removedAll = vec.splice(0, vec.len());
+    expect([...removedAll]).toEqual([1, 30, 40, 10, 20]);
+    expect(vec.isEmpty()).toBe(true);
+  });
 });

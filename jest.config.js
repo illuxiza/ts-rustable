@@ -9,6 +9,7 @@ module.exports = {
   roots: ["<rootDir>"],
   modulePaths: ["<rootDir>", "<rootDir>/node_modules"],
   moduleNameMapper: {
+    "^@rustable/coll$": "<rootDir>/packages/coll/src",
     "^@rustable/utils$": "<rootDir>/packages/utils/src",
     "^@rustable/iter$": "<rootDir>/packages/iter/src",
     "^@rustable/enum$": "<rootDir>/packages/enum/src",

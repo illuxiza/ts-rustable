@@ -359,6 +359,47 @@ export class Vec<T> implements Iterable<T> {
   }
 
   /**
+   * Changes the contents of the Vec by removing or replacing existing elements and/or adding new elements in place.
+   * @param start The index at which to begin changing the Vec
+   * @param deleteCount An integer indicating the number of elements to remove
+   * @param items The elements to add to the Vec, beginning from start
+   * @returns An array containing the deleted elements
+   * @example
+   * const vec = Vec.from([1, 2, 3, 4]);
+   * vec.splice(1, 2, 5, 6); // Returns [2, 3], vec is now [1, 5, 6, 4]
+   */
+  splice(start: number, deleteCount: number, items?: Iterable<T>): T[] {
+    const actualStart = Math.max(0, start < 0 ? this.__length + start : start);
+    const actualDeleteCount = Math.min(deleteCount, this.__length - actualStart);
+    const deleted = this.slice(actualStart, actualStart + actualDeleteCount);
+
+    if (items) {
+      const itemsArray = [...items];
+      const newLength = this.__length - actualDeleteCount + itemsArray.length;
+
+      // Shift existing elements
+      for (let i = this.__length - 1; i >= actualStart + actualDeleteCount; i--) {
+        this.__buffer[i + itemsArray.length - actualDeleteCount] = this.__buffer[i];
+      }
+
+      // Insert new items
+      for (let i = 0; i < itemsArray.length; i++) {
+        this.__buffer[actualStart + i] = itemsArray[i];
+      }
+
+      this.__length = newLength;
+    } else {
+      // Remove elements if no items to insert
+      for (let i = actualStart + actualDeleteCount; i < this.__length; i++) {
+        this.__buffer[i - actualDeleteCount] = this.__buffer[i];
+      }
+      this.__length -= actualDeleteCount;
+    }
+
+    return deleted;
+  }
+
+  /**
    * Resizes the Vec to the specified length.
    * If growing, fills new elements with the provided value.
    * @param newLength New length for the Vec
@@ -368,12 +409,15 @@ export class Vec<T> implements Iterable<T> {
    * vec.resize(4, 0); // vec is now [1, 2, 0, 0]
    */
   resize(newLength: number, value: T) {
+    if (newLength < 0) {
+      throw new Error('Index out of bounds');
+    }
     if (newLength > this.__length) {
       for (let i = this.__length; i < newLength; i++) {
         this.__buffer[i] = value;
       }
     }
-    this.truncate(newLength);
+    this.__length = newLength;
   }
 
   /**
@@ -386,12 +430,15 @@ export class Vec<T> implements Iterable<T> {
    * vec.resizeWith(4, () => 0); // vec is now [1, 2, 0, 0]
    */
   resizeWith(newLength: number, callback: (index?: number) => T) {
+    if (newLength < 0) {
+      throw new Error('Index out of bounds');
+    }
     if (newLength > this.__length) {
       for (let i = this.__length; i < newLength; i++) {
         this.__buffer[i] = callback(i);
       }
     }
-    this.truncate(newLength);
+    this.__length = newLength;
   }
 
   /**
@@ -454,7 +501,7 @@ export class Vec<T> implements Iterable<T> {
    * assert.deepEqual([...vec], [1, 2, 3]);
    * ```
    */
-  drain(range: { start?: number; end?: number } = {}): IterableIterator<T> {
+  drain(range: { start?: number; end?: number } = {}): Vec<T> {
     const len = this.__length;
     const start = range.start ?? 0;
     const end = range.end ?? len;
@@ -463,35 +510,14 @@ export class Vec<T> implements Iterable<T> {
       throw new Error('Invalid range');
     }
 
-    // Set the vector's length to start for safety in case Drain is leaked
-    this.__length = start;
-
     const drainedElements = this.__buffer.slice(start, end);
+    const drainedVec = Vec.from(drainedElements);
 
-    // Create a Drain object
-    const drain = {
-      tailStart: end,
-      tailLen: len - end,
-      iter: drainedElements[Symbol.iterator](),
-      vec: this,
-      [Symbol.iterator]() {
-        return this;
-      },
-      next() {
-        const result = this.iter.next();
-        if (result.done && this.tailLen > 0) {
-          // Move remaining tail of the vec to cover the hole
-          for (let i = 0; i < this.tailLen; i++) {
-            this.vec.__buffer[this.vec.__length + i] = this.vec.__buffer[this.tailStart + i];
-          }
-          this.vec.__length += this.tailLen;
-          this.tailLen = 0;
-        }
-        return result;
-      },
-    };
+    // Remove drained elements from the original Vec
+    this.__buffer.splice(start, end - start);
+    this.__length -= drainedElements.length;
 
-    return drain;
+    return drainedVec;
   }
 
   /**
@@ -513,14 +539,8 @@ export class Vec<T> implements Iterable<T> {
    * assert.deepEqual([...vec], [1, 3, 5]);
    * ```
    */
-  drainBy(predicate?: (value: T) => boolean): IterableIterator<T> {
-    if (!predicate) {
-      const elements = this.asSlice();
-      this.clear();
-      return elements[Symbol.iterator]();
-    }
-
-    const drained: T[] = [];
+  drainBy(predicate: (value: T) => boolean): Vec<T> {
+    const drained = Vec.new<T>();
     let writeIndex = 0;
 
     for (let readIndex = 0; readIndex < this.__length; readIndex++) {
@@ -536,7 +556,7 @@ export class Vec<T> implements Iterable<T> {
     }
 
     this.__length = writeIndex;
-    return drained[Symbol.iterator]();
+    return drained;
   }
 
   /**

@@ -206,6 +206,28 @@ describe('HashMap', () => {
       expect(map.containsKey('nonexistent')).toBe(false);
     });
   });
+
+  it('should handle edge cases for deletion', () => {
+    const map = new HashMap<string, number>();
+    map.insert('key1', 1);
+    map.insert('key2', 2);
+
+    expect(map.remove('nonexistent').isNone()).toBe(true);
+    expect(map.len()).toBe(2);
+
+    expect(map.remove('key1').isSome()).toBe(true);
+    expect(map.len()).toBe(1);
+  });
+
+  it('should clear map correctly', () => {
+    const map = new HashMap<string, number>();
+    map.insert('key1', 1);
+    map.insert('key2', 2);
+
+    map.clear();
+    expect(map.len()).toBe(0);
+    expect(map.isEmpty()).toBe(true);
+  });
 });
 
 describe('query methods', () => {});
