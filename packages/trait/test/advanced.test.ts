@@ -1,4 +1,4 @@
-import { derive, implTrait, trait, useTrait } from '../src/trait';
+import { derive, implTrait, trait, useTrait, useTraitStatic } from '../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
@@ -170,6 +170,35 @@ describe('Advanced Trait Features', () => {
       const target = new Target();
       expect(useTrait(target, Printable)?.print()).toBe('custom print');
       expect(useTrait(target, Displayable)?.display()).toBe('custom display');
+    });
+  });
+  describe('Mixed Instance and Static Methods', () => {
+    @trait
+    class MixedTrait {
+      static staticMethod(): string {
+        return 'default static method';
+      }
+
+      instanceMethod(): string {
+        return 'default instance method';
+      }
+    }
+
+    test('should implement both static and instance methods', () => {
+      class Target {
+        static staticMethod(): string {
+          return 'custom static method';
+        }
+      }
+      implTrait(Target, MixedTrait, {
+        instanceMethod(): string {
+          return 'custom instance method';
+        },
+      });
+
+      const target = new Target();
+      expect(useTraitStatic(Target, MixedTrait).staticMethod()).toBe('custom static method');
+      expect(useTrait(target, MixedTrait).instanceMethod()).toBe('custom instance method');
     });
   });
 });

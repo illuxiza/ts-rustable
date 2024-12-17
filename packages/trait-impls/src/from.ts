@@ -64,16 +64,16 @@ export class From<T = any> {
  * @template T The type to convert into
  */
 @trait
-export class Into {
+export class Into<T> {
   /**
    * Converts this value into the target type.
    *
-   * @param value The value to convert
    * @returns The converted value
    * @throws {Error} If conversion is not implemented
+   * @param targetType
    */
-  into<T>(this: any, targetType: Constructor<T>): T {
-    return from(this, targetType as any) as T;
+  into<U extends object>(this: T, targetType: Constructor<U>): U {
+    return from(this, targetType) as U;
   }
 }
 

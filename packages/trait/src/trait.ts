@@ -11,6 +11,12 @@ import { Constructor, typeId, TypeId } from '@rustable/utils';
 const traitRegistry = new WeakMap<object, Map<TypeId, any>>();
 
 /**
+ * Registry for storing static trait implementations.
+ * Uses WeakMap to allow garbage collection of unused implementations.
+ */
+const staticTraitRegistry = new WeakMap<Constructor<any>, Map<TypeId, any>>();
+
+/**
  * Cache for parent trait-impls to optimize inheritance chain lookups.
  */
 const parentTraitsCache = new WeakMap<object, TraitConstructor<any>[]>();
@@ -104,14 +110,13 @@ function collectParentTraits(
  * }
  * ```
  */
-export function trait(traitClass: TraitConstructor<any>) {
+export function trait<T extends object, TC extends Constructor<T>>(traitClass: TC): TC {
   Object.defineProperty(traitClass, traitSymbol, {
     value: typeId(traitClass),
     enumerable: false,
     configurable: false,
     writable: false,
   });
-
   return traitClass;
 }
 
@@ -121,6 +126,7 @@ export function trait(traitClass: TraitConstructor<any>) {
  * @param target The class to implement the trait for
  * @param trait The trait to implement
  * @param implementation The trait implementation
+ * @param staticImplementation Optional static trait implementation
  *
  * @example
  * ```typescript
@@ -131,6 +137,12 @@ export function trait(traitClass: TraitConstructor<any>) {
  * implTrait(Point, Display, {
  *   display() {
  *     return `Point(${this.x}, ${this.y})`;
+ *   }
+ * }, {
+ *   fromString(s: string): Point {
+ *     // Static method implementation
+ *     const [x, y] = s.split(',').map(Number);
+ *     return new Point(x, y);
  *   }
  * });
  * ```
@@ -149,105 +161,45 @@ export function implTrait<Class extends object, Trait extends object>(
 export function implTrait<Class extends object, Trait extends object>(
   target: Constructor<Class>,
   trait: TraitConstructor<Trait>,
-  generic: Constructor<any>[],
+  generics: Constructor<any>[],
   implementation?: TraitImplementation<Class, Trait>,
 ): void;
 export function implTrait<Class extends object, Trait extends object>(
   target: Constructor<Class>,
   trait: TraitConstructor<Trait>,
-  generic?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
-  implementation?: TraitImplementation<Class, Trait>,
+  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
+  arg4?: TraitImplementation<Class, Trait>,
 ): void {
   if (!trait[traitSymbol]) {
     throw new Error('Trait must be implemented using the trait function');
   }
 
   // Handle generic parameters
-  let genericParams: any | undefined;
-  let actualImplementation: TraitImplementation<Class, Trait> | undefined;
+  let { generics, implementation } = parseParams(arg3, arg4);
 
-  if (implementation) {
-    genericParams = generic;
-    if (Array.isArray(generic) && generic.length === 0) {
-      throw new ReferenceError('At least one generic type of array parameter is required');
-    } else if (!Array.isArray(generic) && typeof generic !== 'function') {
-      throw new Error('Invalid generic parameter');
-    }
-    actualImplementation = implementation;
-  } else if (generic && (typeof generic === 'function' || Array.isArray(generic))) {
-    if (Array.isArray(generic) && generic.length === 0) {
-      throw new ReferenceError('At least one generic type of array parameter is required');
-    }
-    genericParams = generic;
-  } else if (generic && typeof generic === 'object') {
-    actualImplementation = generic;
-  }
-
-  const traitId = typeId(trait, genericParams);
+  const traitId = typeId(trait, generics);
   const targetProto = target.prototype;
 
-  let selfBoundImpl: Record<string, any>;
-  if (!traitRegistry.has(targetProto)) {
-    const implMap = new Map<TypeId, any>();
-    traitRegistry.set(targetProto, implMap);
-    // Create implementation that binds 'this' correctly
-    selfBoundImpl = {};
-    Object.getOwnPropertyNames(targetProto).forEach((name) => {
-      try {
-        const method = targetProto[name];
-        if (typeof method === 'function') {
-          selfBoundImpl[name] = method;
-        }
-      } catch (_) {
-        /* empty */
-      }
-    });
-    implMap.set(typeId(target), selfBoundImpl);
-  } else {
-    selfBoundImpl = traitRegistry.get(targetProto)!.get(typeId(target))!;
-  }
+  const selfBoundImpl = getSelfBound(targetProto, target);
 
   // Get or create implementation map for target
-  let implMap = traitRegistry.get(targetProto)!;
+  const implMap = traitRegistry.get(targetProto)!;
 
   if (implMap.has(traitId)) {
     throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
   }
 
   // Check parent trait-impls
-  const parents = collectParentTraits(trait, new Set(), true, genericParams);
+  const parents = collectParentTraits(trait, new Set(), true, generics);
   parents.forEach((parent) => {
-    const parentId = typeId(parent, genericParams);
+    const parentId = typeId(parent, generics);
     if (!implMap.has(parentId)) {
       throw new Error(`Parent trait ${parent.name} not implemented for ${target.name}`);
     }
   });
 
   // Create implementation that binds 'this' correctly
-  const boundImpl: Record<string, any> = {};
-
-  // Add trait's own methods
-  let proto: any = new trait();
-  const protoObj = Object.getPrototypeOf(proto);
-  const methods = Object.getOwnPropertyNames(protoObj).filter((name) => name !== 'constructor');
-  methods.forEach((name) => {
-    const method = protoObj[name];
-    if (typeof method === 'function') {
-      boundImpl[name] = method;
-    }
-  });
-
-  // Add custom implementation methods
-  if (actualImplementation) {
-    Object.entries(actualImplementation).forEach(([key, method]) => {
-      if (!(key in boundImpl)) {
-        throw new Error(`Method ${key} not defined in trait`);
-      }
-      if (typeof method === 'function') {
-        boundImpl[key] = method;
-      }
-    });
-  }
+  const boundImpl: Record<string, any> = getTraitBound(trait, implementation);
 
   // Store the implementation
   implMap.set(traitId, boundImpl);
@@ -277,6 +229,136 @@ export function implTrait<Class extends object, Trait extends object>(
       });
     }
   });
+
+  // Add static trait methods to target class
+  const staticImpl = getStaticTraitBound(target, trait);
+  Object.keys(staticImpl).forEach((name) => {
+    if (!(name in target)) {
+      Object.defineProperty(target, name, {
+        value: function (...args: any[]) {
+          if (typeof staticImpl[name] === 'function') {
+            return staticImpl[name].call(target, ...args);
+          }
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  // Store static implementation
+  const staticImplMap = staticTraitRegistry.get(target) || new Map<TypeId, any>();
+  staticImplMap.set(traitId, staticImpl);
+  staticTraitRegistry.set(target, staticImplMap);
+
+  // Check if all methods in implementation exist in trait
+  if (implementation) {
+    Object.keys(implementation).forEach((key) => {
+      if (!(key in boundImpl) && !(key in staticImpl)) {
+        throw new Error(`Method ${key} not defined in trait`);
+      }
+    });
+  }
+}
+
+function getStaticTraitBound<Class extends object, Trait extends object>(
+  target: Constructor<Class>,
+  trait: TraitConstructor<Trait>,
+) {
+  const boundImpl: Record<string, any> = {};
+  // Add trait's static methods
+  const staticMethods = Object.getOwnPropertyNames(trait).filter(
+    (name) => name !== 'prototype' && typeof trait.prototype.constructor[name] === 'function',
+  );
+  staticMethods.forEach((name) => {
+    if (name in target && typeof target.prototype.constructor[name] === 'function') {
+      boundImpl[name] = target.prototype.constructor[name];
+    } else {
+      boundImpl[name] = trait.prototype.constructor[name];
+    }
+  });
+  return boundImpl;
+}
+
+function getTraitBound<Class extends object, Trait extends object>(
+  trait: TraitConstructor<Trait>,
+  implementation?: TraitImplementation<Class, Trait>,
+) {
+  const boundImpl: Record<string, any> = {};
+  // Add trait's own methods
+  let proto: any = new trait();
+  const protoObj = Object.getPrototypeOf(proto);
+  const methods = Object.getOwnPropertyNames(protoObj).filter((name) => name !== 'constructor');
+  methods.forEach((name) => {
+    const method = protoObj[name];
+    if (typeof method === 'function') {
+      boundImpl[name] = method;
+    }
+  });
+
+  // Add custom implementation methods
+  if (implementation) {
+    Object.entries(implementation).forEach(([key, method]) => {
+      if (!(key in boundImpl)) {
+        return;
+      }
+      if (typeof method === 'function') {
+        boundImpl[key] = method;
+      }
+    });
+  }
+  return boundImpl;
+}
+
+function parseParams<Class extends object, Trait extends object>(
+  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
+  arg4?: TraitImplementation<Class, Trait>,
+) {
+  let generics: any;
+  let implementation: TraitImplementation<Class, Trait> | undefined;
+
+  if (arg4) {
+    generics = arg3;
+    if (Array.isArray(arg3) && arg3.length === 0) {
+      throw new ReferenceError('At least one generic type of array parameter is required');
+    } else if (!Array.isArray(arg3) && typeof arg3 !== 'function') {
+      throw new Error('Invalid generic parameter');
+    }
+    implementation = arg4;
+  } else if (arg3 && (typeof arg3 === 'function' || Array.isArray(arg3))) {
+    if (Array.isArray(arg3) && arg3.length === 0) {
+      throw new ReferenceError('At least one generic type of array parameter is required');
+    }
+    generics = arg3;
+  } else if (arg3 && typeof arg3 === 'object') {
+    implementation = arg3;
+  }
+  return { generics, implementation };
+}
+
+function getSelfBound<Class extends object>(targetProto: any, target: Constructor<Class>) {
+  let selfBoundImpl: Record<string, any>;
+  if (!traitRegistry.has(targetProto)) {
+    const implMap = new Map<TypeId, any>();
+    traitRegistry.set(targetProto, implMap);
+    // Create implementation that binds 'this' correctly
+    selfBoundImpl = {};
+    Object.getOwnPropertyNames(targetProto).forEach((name) => {
+      try {
+        const method = targetProto[name];
+        if (typeof method === 'function') {
+          selfBoundImpl[name] = method;
+        }
+      } catch (_) {
+        /* empty */
+      }
+    });
+    implMap.set(typeId(target), selfBoundImpl);
+  } else {
+    selfBoundImpl = traitRegistry.get(targetProto)!.get(typeId(target))!;
+  }
+  return selfBoundImpl;
 }
 
 /**
@@ -318,6 +400,7 @@ export function hasTrait<Class extends object, Trait extends object>(
   const implMap = traitRegistry.get(proto);
   return implMap?.has(traitId) ?? false;
 }
+
 /**
  * Gets the trait implementation for a value.
  *
@@ -370,6 +453,49 @@ export function useTrait<Class extends object, Trait extends object>(
 }
 
 /**
+ * Gets the static trait implementation for a class.
+ *
+ * @param target The class to get the static trait implementation from
+ * @param trait The trait to get
+ * @param generic Optional generic type parameter
+ * @returns The static trait implementation or undefined if not implemented
+ *
+ * @example
+ * ```typescript
+ * const pointStatic = useStaticTrait(Point, Display);
+ * if (pointStatic) {
+ *   const point = pointStatic.fromString("1,2");
+ * }
+ * ```
+ */
+export function useTraitStatic<Class extends Constructor<any>, Trait extends TraitConstructor<any>>(
+  target: Class,
+  trait: Trait,
+  generic?: Constructor<any> | Constructor<any>[],
+): typeof trait {
+  const traitId = typeId(trait, generic);
+
+  const staticImpls = staticTraitRegistry.get(target);
+  if (!staticImpls) {
+    throw new Error(`Trait ${trait.name} not implemented for ${target.name}`);
+  }
+
+  // return staticImpls.get(traitId).bind(target);
+  const impl = staticImpls.get(traitId);
+  return new Proxy(
+    {},
+    {
+      get(_, prop) {
+        if (typeof prop === 'string' && prop in impl) {
+          return impl[prop].bind(target);
+        }
+        throw new Error(`Method ${String(prop)} not implemented for trait`);
+      },
+    },
+  ) as Trait;
+}
+
+/**
  * Decorator for implementing trait-impls at runtime.
  * Supports single trait or array of trait-impls.
  *
@@ -386,6 +512,9 @@ export function derive<T extends Constructor<any>>(traits: Constructor<any> | Co
   return function (target: T): T & Constructor<any> {
     const traitArray = Array.isArray(traits) ? traits : [traits];
     traitArray.forEach((trait) => {
+      collectParentTraits(trait).forEach((parent) => {
+        implTrait(target, parent);
+      });
       implTrait(target, trait);
     });
     return target as T & Constructor<any>;
