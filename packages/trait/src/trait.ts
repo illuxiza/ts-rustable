@@ -30,14 +30,13 @@ const traitSymbol = Symbol('TRAIT');
  * Type representing a trait implementation for a class.
  * Maps trait methods to their implementations.
  *
- * @template Class The class type implementing the trait
- * @template Trait The trait being implemented
+ * @template C The class type implementing the trait
+ * @template T The trait being implemented
  */
-export type TraitImplementation<Class, Trait> = {
-  [K in keyof Trait]?: (
-    this: Class,
-    ...args: any[]
-  ) => Trait[K] extends (...args: any[]) => any ? ReturnType<Trait[K]> : never;
+export type TraitImplementation<C, T, TC extends TraitConstructor<T>> = {
+  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => any ? ReturnType<T[K]> : never;
+} & {
+  [K in keyof TC]?: (...args: any[]) => TC[K] extends (...args: any[]) => any ? ReturnType<TC[K]> : never;
 };
 
 /**
@@ -147,28 +146,28 @@ export function trait<T extends object, TC extends Constructor<T>>(traitClass: T
  * });
  * ```
  */
-export function implTrait<Class extends object, Trait extends object>(
-  target: Constructor<Class>,
-  trait: TraitConstructor<Trait>,
-  implementation?: TraitImplementation<Class, Trait>,
+export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
+  implementation?: TraitImplementation<C, T, TC>,
 ): void;
-export function implTrait<Class extends object, Trait extends object>(
-  target: Constructor<Class>,
-  trait: TraitConstructor<Trait>,
+export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
   generic: Constructor<any>,
-  implementation?: TraitImplementation<Class, Trait>,
+  implementation?: TraitImplementation<C, T, TC>,
 ): void;
-export function implTrait<Class extends object, Trait extends object>(
-  target: Constructor<Class>,
-  trait: TraitConstructor<Trait>,
+export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
   generics: Constructor<any>[],
-  implementation?: TraitImplementation<Class, Trait>,
+  implementation?: TraitImplementation<C, T, TC>,
 ): void;
-export function implTrait<Class extends object, Trait extends object>(
-  target: Constructor<Class>,
-  trait: TraitConstructor<Trait>,
-  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
-  arg4?: TraitImplementation<Class, Trait>,
+export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
+  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<C, T, TC>,
+  arg4?: TraitImplementation<C, T, TC>,
 ): void {
   if (!trait[traitSymbol]) {
     throw new Error('Trait must be implemented using the trait function');
@@ -209,7 +208,7 @@ export function implTrait<Class extends object, Trait extends object>(
   Object.keys(boundImpl).forEach((name) => {
     if (!(name in targetProto)) {
       Object.defineProperty(targetProto, name, {
-        value: function (this: Class, ...args: any[]) {
+        value: function (this: C, ...args: any[]) {
           if (typeof boundImpl[name] === 'function') {
             return boundImpl[name].call(this, ...args);
           }
@@ -220,7 +219,7 @@ export function implTrait<Class extends object, Trait extends object>(
       });
     } else if (!(name in selfBoundImpl)) {
       Object.defineProperty(targetProto, name, {
-        value: function (this: Class, ..._args: any[]) {
+        value: function (this: C, ..._args: any[]) {
           throw new Error(`Multiple implementations of method ${name} for ${target.name}, please use useTrait`);
         },
         enumerable: false,
@@ -231,7 +230,7 @@ export function implTrait<Class extends object, Trait extends object>(
   });
 
   // Add static trait methods to target class
-  const staticImpl = getStaticTraitBound(target, trait);
+  const staticImpl = getStaticTraitBound(target, trait, implementation);
   Object.keys(staticImpl).forEach((name) => {
     if (!(name in target)) {
       Object.defineProperty(target, name, {
@@ -262,9 +261,10 @@ export function implTrait<Class extends object, Trait extends object>(
   }
 }
 
-function getStaticTraitBound<Class extends object, Trait extends object>(
-  target: Constructor<Class>,
-  trait: TraitConstructor<Trait>,
+function getStaticTraitBound<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
+  implementation?: TraitImplementation<C, T, TC>,
 ) {
   const boundImpl: Record<string, any> = {};
   // Add trait's static methods
@@ -278,12 +278,24 @@ function getStaticTraitBound<Class extends object, Trait extends object>(
       boundImpl[name] = trait.prototype.constructor[name];
     }
   });
+
+  // Add custom implementation methods
+  if (implementation) {
+    Object.entries(implementation).forEach(([key, method]) => {
+      if (!(key in boundImpl)) {
+        return;
+      }
+      if (typeof method === 'function') {
+        boundImpl[key] = method;
+      }
+    });
+  }
   return boundImpl;
 }
 
-function getTraitBound<Class extends object, Trait extends object>(
-  trait: TraitConstructor<Trait>,
-  implementation?: TraitImplementation<Class, Trait>,
+function getTraitBound<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  trait: TC,
+  implementation?: TraitImplementation<C, T, TC>,
 ) {
   const boundImpl: Record<string, any> = {};
   // Add trait's own methods
@@ -311,12 +323,12 @@ function getTraitBound<Class extends object, Trait extends object>(
   return boundImpl;
 }
 
-function parseParams<Class extends object, Trait extends object>(
-  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<Class, Trait>,
-  arg4?: TraitImplementation<Class, Trait>,
+function parseParams<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  arg3?: Constructor<any> | Constructor<any>[] | TraitImplementation<C, T, TC>,
+  arg4?: TraitImplementation<C, T, TC>,
 ) {
   let generics: any;
-  let implementation: TraitImplementation<Class, Trait> | undefined;
+  let implementation: TraitImplementation<C, T, TC> | undefined;
 
   if (arg4) {
     generics = arg3;
@@ -418,13 +430,35 @@ export function hasTrait<Class extends object, Trait extends object>(
  * }
  * ```
  */
-export function useTrait<Class extends object, Trait extends object>(
-  target: Class,
-  trait: Constructor<Trait>,
+export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
   generic?: Constructor<any> | Constructor<any>[],
-): Trait {
-  const traitId = typeId(trait, generic);
+): TC;
+export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: C,
+  trait: TC & TraitConstructor<T>,
+  generic?: Constructor<any> | Constructor<any>[],
+): T;
+export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: C | Constructor<C>,
+  trait: TC & TraitConstructor<T>,
+  generic?: Constructor<any> | Constructor<any>[],
+): TC | T {
+  if (typeof target === 'function') {
+    return useStatic<C, T, TC>(target, trait, generic);
+  } else if (typeof target === 'object') {
+    return useNormal<C, T, TC>(target, trait, generic);
+  }
+  throw new Error('Invalid target type');
+}
 
+function useNormal<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: C,
+  trait: TC & TraitConstructor<T>,
+  generic: Constructor<any> | Constructor<any>[] | undefined,
+): T {
+  const traitId = typeId(trait, generic);
   const implMap = traitRegistry.get(Object.getPrototypeOf(target));
   if (!implMap?.has(traitId)) {
     let traitName = trait.name;
@@ -449,38 +483,28 @@ export function useTrait<Class extends object, Trait extends object>(
         throw new Error(`Method ${String(prop)} not implemented for trait`);
       },
     },
-  ) as Trait;
+  ) as T;
 }
 
-/**
- * Gets the static trait implementation for a class.
- *
- * @param target The class to get the static trait implementation from
- * @param trait The trait to get
- * @param generic Optional generic type parameter
- * @returns The static trait implementation or undefined if not implemented
- *
- * @example
- * ```typescript
- * const pointStatic = useStaticTrait(Point, Display);
- * if (pointStatic) {
- *   const point = pointStatic.fromString("1,2");
- * }
- * ```
- */
-export function useTraitStatic<Class extends Constructor<any>, Trait extends TraitConstructor<any>>(
-  target: Class,
-  trait: Trait,
-  generic?: Constructor<any> | Constructor<any>[],
-): typeof trait {
+function useStatic<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  target: Constructor<C>,
+  trait: TC & TraitConstructor<T>,
+  generic: Constructor<any> | Constructor<any>[] | undefined,
+): TC {
   const traitId = typeId(trait, generic);
-
   const staticImpls = staticTraitRegistry.get(target);
-  if (!staticImpls) {
-    throw new Error(`Trait ${trait.name} not implemented for ${target.name}`);
+  if (!staticImpls?.has(traitId)) {
+    let traitName = trait.name;
+    if (generic) {
+      if (Array.isArray(generic)) {
+        traitName += `<${generic.map((g) => g.name).join(', ')}>`;
+      } else {
+        traitName += `<${generic.name}>`;
+      }
+    }
+    throw new Error(`Trait ${traitName} not implemented for ${target.constructor.name}`);
   }
 
-  // return staticImpls.get(traitId).bind(target);
   const impl = staticImpls.get(traitId);
   return new Proxy(
     {},
@@ -492,7 +516,7 @@ export function useTraitStatic<Class extends Constructor<any>, Trait extends Tra
         throw new Error(`Method ${String(prop)} not implemented for trait`);
       },
     },
-  ) as Trait;
+  ) as TC;
 }
 
 /**

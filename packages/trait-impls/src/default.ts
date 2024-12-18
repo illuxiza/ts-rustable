@@ -1,5 +1,5 @@
+import { trait, useTrait } from '@rustable/trait';
 import { Constructor } from '@rustable/utils';
-import { trait } from '@rustable/trait';
 
 /**
  * Default trait for default value initialization.
@@ -24,9 +24,13 @@ import { trait } from '@rustable/trait';
 @trait
 export class Default {
   static default<T>(): T {
-    if (typeof this !== 'function') {
-      throw new Error('Invalid target type');
-    }
     return new this() as T;
   }
+}
+
+export function defaultVal<T extends object>(
+  target: Constructor<T>,
+  generic?: Constructor<any> | Constructor<any>[],
+): T {
+  return useTrait(target, Default, generic).default<T>();
 }

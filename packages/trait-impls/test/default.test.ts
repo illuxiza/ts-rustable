@@ -1,5 +1,5 @@
-import { Default } from '../src/default';
-import { derive, useTraitStatic } from '@rustable/trait';
+import { derive } from '@rustable/trait';
+import { Default, defaultVal } from '../src/default';
 
 describe('Default trait', () => {
   test('should create default instance for primitive types', () => {
@@ -8,7 +8,7 @@ describe('Default trait', () => {
       constructor(public value: number = 0) {}
     }
 
-    const defaultInstance = useTraitStatic(PrimitiveWrapper, Default).default<PrimitiveWrapper>();
+    const defaultInstance = defaultVal(PrimitiveWrapper);
     expect(defaultInstance.value).toBe(0);
   });
 
@@ -22,7 +22,7 @@ describe('Default trait', () => {
       }
     }
 
-    const defaultInstance = useTraitStatic(CustomDefault, Default).default<CustomDefault>();
+    const defaultInstance = defaultVal(CustomDefault);
     expect(defaultInstance.name).toBe('Default Name');
   });
 
@@ -37,7 +37,7 @@ describe('Default trait', () => {
       ) {}
     }
 
-    const defaultInstance = useTraitStatic(ComplexType, Default).default<ComplexType>();
+    const defaultInstance = defaultVal(ComplexType);
     expect(defaultInstance.str).toBe('');
     expect(defaultInstance.num).toBe(0);
     expect(defaultInstance.bool).toBe(false);
