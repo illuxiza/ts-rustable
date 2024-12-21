@@ -1,4 +1,6 @@
+import { implTrait } from 'src';
 import { derive, trait } from '../src/trait';
+import { Constructor } from '@rustable/utils';
 
 @trait
 class Debug {
@@ -7,9 +9,15 @@ class Debug {
   }
 }
 
+function implDebug(target: Constructor<any>) {
+  implTrait(target, Debug);
+  return target;
+}
+
 describe('derive decorator', () => {
   test('should derive single trait', () => {
     @derive(Debug)
+    @implDebug
     class Point {
       constructor(
         public x: number,

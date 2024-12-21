@@ -17,6 +17,22 @@ const traitRegistry = new WeakMap<object, Map<TypeId, any>>();
 const staticTraitRegistry = new WeakMap<Constructor<any>, Map<TypeId, any>>();
 
 /**
+ * Registry for storing trait-to-trait implementations.
+ * When a trait implements another trait, this registry keeps track of it.
+ */
+const traitToTraitRegistry = new WeakMap<
+  TraitConstructor<any>,
+  Map<
+    TypeId,
+    {
+      trait: TraitConstructor<any>;
+      generics?: Constructor<any> | Constructor<any>[];
+      implementation?: any;
+    }
+  >
+>();
+
+/**
  * Cache for parent trait-impls to optimize inheritance chain lookups.
  */
 const parentTraitsCache = new WeakMap<object, TraitConstructor<any>[]>();
@@ -179,6 +195,20 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   const traitId = typeId(trait, generics);
   const targetProto = target.prototype;
 
+  // Check if target is a trait
+  const isTargetTrait = traitSymbol in target;
+  if (isTargetTrait) {
+    // Record trait-to-trait implementation
+    let implMap = traitToTraitRegistry.get(target as TraitConstructor<any>);
+    if (!implMap) {
+      implMap = new Map();
+      traitToTraitRegistry.set(target as TraitConstructor<any>, implMap);
+    }
+    implMap.set(traitId, { trait, generics, implementation });
+    // If target is a trait, we only need to record the relationship
+    return;
+  }
+
   const selfBoundImpl = getSelfBound(targetProto, target);
 
   // Get or create implementation map for target
@@ -258,6 +288,25 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
         throw new Error(`Method ${key} not defined in trait`);
       }
     });
+  }
+
+  // Auto-implement traits that this trait implements
+  if (!isTargetTrait) {
+    const traitImplMap = traitToTraitRegistry.get(trait);
+    if (traitImplMap) {
+      for (const [_implTraitId, implInfo] of traitImplMap) {
+        if (!hasTrait(target, implInfo.trait, implInfo.generics)) {
+          // Recursively call implTrait for the implemented trait
+          if (Array.isArray(implInfo.generics)) {
+            implTrait(target, implInfo.trait, implInfo.generics, implInfo.implementation);
+          } else if (implInfo.generics) {
+            implTrait(target, implInfo.trait, implInfo.generics, implInfo.implementation);
+          } else {
+            implTrait(target, implInfo.trait, implInfo.implementation);
+          }
+        }
+      }
+    }
   }
 }
 
@@ -405,6 +454,14 @@ export function hasTrait<Class extends object, Trait extends object>(
   generic?: Constructor<any> | Constructor<any>[],
 ): boolean {
   const traitId = typeId(trait, generic);
+
+  // If target is a trait (checking trait-to-trait implementation)
+  if (traitSymbol in target) {
+    const traitImplMap = traitToTraitRegistry.get(target as TraitConstructor<any>);
+    return traitImplMap?.has(traitId) ?? false;
+  }
+
+  // For normal class implementation
   let proto = Object.getPrototypeOf(target);
   if (typeof target === 'function') {
     proto = target.prototype;
@@ -518,29 +575,40 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
     },
   ) as TC;
 }
-
 /**
- * Decorator for implementing trait-impls at runtime.
- * Supports single trait or array of trait-impls.
+ * Decorator for implementing traits at runtime.
+ * Supports a single trait or an array of traits.
+ *
+ * @param traits - A single trait or an array of traits to be implemented.
+ * @returns A decorator function that applies the specified traits to the target class.
  *
  * @example
+ * Implementing a single trait:
  * ```typescript
  * @derive(Debug)
  * class Point { }
+ * ```
  *
+ * @example
+ * Implementing multiple traits:
+ * ```typescript
  * @derive([Debug, Clone])
  * class Rectangle { }
  * ```
  */
-export function derive<T extends Constructor<any>>(traits: Constructor<any> | Constructor<any>[]) {
-  return function (target: T): T & Constructor<any> {
+export function derive<C extends object, CC extends Constructor<C>>(traits: Constructor<any> | Constructor<any>[]) {
+  function tryImpl(target: CC, trait: Constructor<any>) {
+    if (!hasTrait(target, trait)) {
+      implTrait(target, trait);
+    }
+  }
+
+  return function (target: CC): CC {
     const traitArray = Array.isArray(traits) ? traits : [traits];
     traitArray.forEach((trait) => {
-      collectParentTraits(trait).forEach((parent) => {
-        implTrait(target, parent);
-      });
-      implTrait(target, trait);
+      collectParentTraits(trait).forEach((parent) => tryImpl(target, parent));
+      tryImpl(target, trait);
     });
-    return target as T & Constructor<any>;
+    return target as CC;
   };
 }

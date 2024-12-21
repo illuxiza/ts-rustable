@@ -74,12 +74,12 @@ const defaultMatchResult: MatchResult<any, any, any> = {
  *   .unwrapOr(0);       // Default if Err
  * ```
  */
-export class Result<T, E extends Error> extends Enum {
-  static Ok<T, E extends Error>(value: T): Result<T, E> {
+export class Result<T, E> extends Enum {
+  static Ok<T, E>(value: T): Result<T, E> {
     return new Result('Ok', value);
   }
 
-  static Err<T, E extends Error>(error: E): Result<T, E> {
+  static Err<T, E>(error: E): Result<T, E> {
     return new Result('Err', error);
   }
 
@@ -212,11 +212,21 @@ export class Result<T, E extends Error> extends Enum {
   }
 
   /**
+   * Maps the Ok value using the provided function, or returns the default value if Err
+   * @param defaultValue Default value to return if Err
+   * @param fn Function to map the Ok value
+   * @returns U mapped value or default
+   */
+  mapOr<U>(defaultValue: U, fn: (val: T) => U): U {
+    return this.isOk() ? fn(this.unwrap()) : defaultValue;
+  }
+
+  /**
    * Maps the Err value using the provided function
    * @param fn Function to map the Err value
    * @returns Result<T, U> mapped Result
    */
-  mapErr<F extends Error>(fn: (err: E) => F): Result<T, F> {
+  mapErr<F>(fn: (err: E) => F): Result<T, F> {
     return this.isOk() ? Result.Ok(this.unwrap()) : Result.Err(fn(this.unwrapErr()));
   }
 
@@ -234,7 +244,7 @@ export class Result<T, E extends Error> extends Enum {
    * @param fn Function to compute a new Result if Err
    * @returns Result<T, E> or Result<U, E> computed Result
    */
-  orElse<F extends Error>(fn: (err: E) => Result<T, F>): Result<T, F> {
+  orElse<F>(fn: (err: E) => Result<T, F>): Result<T, F> {
     return this.isOk() ? Result.Ok(this.unwrap()) : fn(this.unwrapErr());
   }
 }
@@ -253,7 +263,7 @@ export class Result<T, E extends Error> extends Enum {
  *   .unwrapOr("error");
  * ```
  */
-export function Ok<T, E extends Error>(val: T): Result<T, E> {
+export function Ok<T, E>(val: T): Result<T, E> {
   return Result.Ok(val);
 }
 
@@ -271,6 +281,6 @@ export function Ok<T, E extends Error>(val: T): Result<T, E> {
  *   .unwrapOr(0);
  * ```
  */
-export function Err<T, E extends Error>(err: E): Result<T, E> {
+export function Err<T, E>(err: E): Result<T, E> {
   return Result.Err(err);
 }

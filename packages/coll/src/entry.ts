@@ -1,4 +1,4 @@
-import { Enum, None, Some, variant, Option } from '@rustable/enum';
+import { Enum, None, Option, Some, variant } from '@rustable/enum';
 import type { HashMap } from './map';
 
 /**

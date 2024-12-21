@@ -135,4 +135,22 @@ export class HashSet<T> implements Iterable<T> {
   values(): IterableIterator<T> {
     return this[Symbol.iterator]();
   }
+
+  /**
+   * Extends the set with the contents of an iterator.
+   *
+   * # Examples
+   * ```ts
+   * let set = new HashSet<string>();
+   * set.extend(["a", "b", "c"]);
+   * assert(set.has("a"));
+   * assert(set.has("b"));
+   * assert(set.has("c"));
+   * ```
+   */
+  extend(iter: Iterable<T>): void {
+    for (const value of iter) {
+      this.insert(value);
+    }
+  }
 }
