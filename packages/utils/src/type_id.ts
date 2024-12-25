@@ -71,7 +71,7 @@ function generateTypeId(): TypeId {
  * @returns The type's unique ID
  * @throws {Error} If target is null or undefined
  */
-export function typeId(target: any, genericParams?: any | any[]): TypeId {
+export function typeId(target: any, genericParams?: any[]): TypeId {
   if (target === null || target === undefined) {
     throw new Error('Cannot get typeId of null or undefined');
   }
@@ -88,7 +88,7 @@ export function typeId(target: any, genericParams?: any | any[]): TypeId {
   }
 
   // If no generic parameters, use simple type ID
-  if (genericParams === undefined) {
+  if (genericParams === undefined || genericParams.length === 0) {
     // Return existing ID if available
     const existingId = typeIdMap.get(constructor);
     if (existingId !== undefined) {

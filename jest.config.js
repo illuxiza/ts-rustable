@@ -14,7 +14,7 @@ module.exports = {
     "^@rustable/iter$": "<rootDir>/packages/iter/src",
     "^@rustable/enum$": "<rootDir>/packages/enum/src",
     "^@rustable/trait$": "<rootDir>/packages/trait/src",
-    "^@rustable/trait-impls$": "<rootDir>/packages/trait-impls/src",
+    "^@rustable/commons$": "<rootDir>/packages/commons/src",
   },
   testMatch: ['**/test/**/*.test.ts'],
   collectCoverage: true

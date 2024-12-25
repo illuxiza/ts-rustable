@@ -31,10 +31,18 @@ export class Eq {
    * @param other Object to compare with
    * @returns true if objects are equal, false otherwise
    */
-  equals(other: any): boolean {
+  eq(other: any): boolean {
     if (!(other instanceof Object)) {
       return false;
     }
     return equals(this, other);
   }
+}
+
+Object.prototype.eq = function (other: any) {
+  return this === other;
+};
+
+declare global {
+  interface Object extends Eq {}
 }

@@ -75,20 +75,20 @@ describe('Trait to Trait Implementation', () => {
     }
 
     // Implement ToString<number> for Debug<number>
-    implTrait(Debug, ToString, Number);
+    implTrait(Debug, ToString, [Number]);
 
     // Create a class and implement Debug<number>
     class NumberClass {}
-    implTrait(NumberClass, Debug, Number);
+    implTrait(NumberClass, Debug, [Number]);
 
     // NumberClass should have both Debug<number> and ToString<number> traits
-    expect(hasTrait(NumberClass, Debug, Number)).toBe(true);
-    expect(hasTrait(NumberClass, ToString, Number)).toBe(true);
+    expect(hasTrait(NumberClass, Debug, [Number])).toBe(true);
+    expect(hasTrait(NumberClass, ToString, [Number])).toBe(true);
 
     // Should be able to use both traits
     const instance = new NumberClass();
-    const debugTrait = useTrait(instance, Debug, Number);
-    const toStringTrait = useTrait(instance, ToString, Number);
+    const debugTrait = useTrait(instance, Debug, [Number]);
+    const toStringTrait = useTrait(instance, ToString, [Number]);
 
     expect(debugTrait.debug(42)).toBe('Debug(42)');
     expect(toStringTrait.toString(42)).toBe('42');
@@ -182,39 +182,44 @@ describe('Trait to Trait Implementation', () => {
   test('trait implementing generic trait with custom implementation', () => {
     @trait
     class ToString<T> {
-      toString(value: T): string {
-        return String(value);
+      value!: T;
+      toString(): string {
+        return String(this.value);
       }
     }
 
     @trait
     class Debug<T> {
-      debug(value: T): string {
-        return `Debug(${value})`;
+      value!: T;
+      debug(): string {
+        return `Debug(${this.value})`;
       }
     }
 
     // Implement ToString<number> for Debug<number> with custom implementation
-    implTrait(Debug, ToString, Number, {
-      toString(value: number) {
-        return this.debug(value);
+    implTrait(Debug<Number>, ToString, [Number], {
+      toString(this: Debug<Number>) {
+        return this.debug();
       },
     });
 
     // Create a class and implement Debug<number>
-    class NumberClass {}
-    implTrait(NumberClass, Debug, Number);
+    class NumberClass {
+      constructor(public value: number) {}
+    }
+    implTrait(NumberClass, Debug, [Number]);
 
     // NumberClass should have both Debug<number> and ToString<number> traits
-    expect(hasTrait(NumberClass, Debug, Number)).toBe(true);
-    expect(hasTrait(NumberClass, ToString, Number)).toBe(true);
+    expect(hasTrait(NumberClass, Debug, [Number])).toBe(true);
+    expect(hasTrait(NumberClass, ToString, [Number])).toBe(true);
 
     // Should be able to use both traits with the custom implementation
-    const instance = new NumberClass();
-    const debugTrait = useTrait(instance, Debug, Number);
-    const toStringTrait = useTrait(instance, ToString, Number);
+    const instance = new NumberClass(42);
+    const debugTrait = useTrait(instance, Debug, [Number]);
+    const toStringTrait = useTrait(instance, ToString, [Number]);
 
-    expect(debugTrait.debug(42)).toBe('Debug(42)');
-    expect(toStringTrait.toString(42)).toBe('Debug(42)'); // Custom implementation uses debug()
+    expect(instance.toString()).toBe('Debug(42)');
+    expect(debugTrait.debug()).toBe('Debug(42)');
+    expect(toStringTrait.toString()).toBe('Debug(42)'); // Custom implementation uses debug()
   });
 });

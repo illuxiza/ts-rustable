@@ -60,7 +60,7 @@ pnpm add rustable
 - Decorator-based API
 - Default implementations
 
-### [@rustable/trait-impls](https://github.com/illuxiza/ts-rustable/tree/main/packages/trait-impls#readme)
+### [@rustable/commons](https://github.com/illuxiza/ts-rustable/tree/main/packages/commons#readme)
 
 🧩 Common trait implementations
 

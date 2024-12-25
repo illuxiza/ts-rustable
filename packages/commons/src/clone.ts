@@ -30,3 +30,7 @@ export class Clone {
     return deepClone(this);
   }
 }
+
+declare global {
+  interface Object extends Clone {}
+}

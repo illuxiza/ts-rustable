@@ -1,4 +1,4 @@
-# @rustable/trait-impls
+# @rustable/commons
 
 Common trait implementations for the Rustable trait system, providing ready-to-use implementations of standard traits like Clone, Eq, From, and Iter.
 
@@ -12,11 +12,11 @@ Common trait implementations for the Rustable trait system, providing ready-to-u
 ## Installation
 
 ```bash
-npm install @rustable/trait-impls
+npm install @rustable/commons
 # or
-yarn add @rustable/trait-impls
+yarn add @rustable/commons
 # or
-pnpm add @rustable/trait-impls
+pnpm add @rustable/commons
 ```
 
 ### Clone Trait
@@ -33,7 +33,7 @@ Provides deep cloning capability with full support for:
 
 ```typescript
 import { derive } from '@rustable/trait';
-import { Clone } from '@rustable/trait-impls';
+import { Clone } from '@rustable/commons';
 
 @derive([Clone])
 class ComplexObject {
@@ -60,7 +60,7 @@ Type conversion system supporting:
 - Temperature conversion example:
 
 ```typescript
-import { from, implFrom } from '@rustable/trait-impls';
+import { from, implFrom } from '@rustable/commons';
 
 class Celsius {
   constructor(public value: number) {}
@@ -91,7 +91,7 @@ Equality comparison with support for:
 
 ```typescript
 import { derive } from '@rustable/trait';
-import { Eq } from '@rustable/trait-impls';
+import { Eq } from '@rustable/commons';
 
 @derive([Eq])
 class Point {
@@ -118,7 +118,7 @@ Provides a powerful iteration interface inspired by Rust's Iterator trait:
 
 ```typescript
 import { derive } from '@rustable/trait';
-import { Iter } from '@rustable/trait-impls';
+import { Iter } from '@rustable/commons';
 
 @derive([Iter])
 class NumberRange {

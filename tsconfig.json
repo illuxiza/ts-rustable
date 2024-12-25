@@ -26,7 +26,7 @@
       "@rustable/enum": ["packages/enum"],
       "@rustable/iter": ["packages/iter"],
       "@rustable/trait": ["packages/trait"],
-      "@rustable/trait-impls": ["packages/trait-impls"],
+      "@rustable/commons": ["packages/commons"],
     }
   }
 }

@@ -72,9 +72,13 @@ export class Into<T> {
    * @throws {Error} If conversion is not implemented
    * @param targetType
    */
-  into<U extends object>(this: T, targetType: Constructor<U>): U {
-    return from(this, targetType) as U;
+  into<U extends object>(this: T, targetType: Constructor<U>, generic?: Constructor<any>[]): U {
+    return from(this, targetType, generic) as U;
   }
+}
+
+declare global {
+  interface Object extends Into<any> {}
 }
 
 /**
@@ -92,7 +96,7 @@ export class Into<T> {
  * @returns The converted value
  * @throws {Error} If no From implementation is found
  */
-export function from<T, U extends object>(source: T, targetType: Constructor<U>): U {
+export function from<T, U extends object>(source: T, targetType: Constructor<U>, generic?: Constructor<any>[]): U {
   if (source === null) {
     throw new Error('Cannot convert null');
   }
@@ -111,7 +115,7 @@ export function from<T, U extends object>(source: T, targetType: Constructor<U>)
     wrapped = Boolean(source);
   }
   const sourceType = wrapped.constructor as Constructor<T>;
-  const impl = useTrait(targetType, From, sourceType);
+  const impl = useTrait(targetType, From, [sourceType, ...(generic ?? [])]);
   return impl.from(source);
 }
 

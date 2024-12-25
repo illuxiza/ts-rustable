@@ -1,6 +1,6 @@
-import { equals } from '../../utils/src/eq';
+import { derive } from '@rustable/trait';
+import { equals } from '@rustable/utils';
 import { Eq } from '../src/eq';
-import { derive } from '../../trait/src/trait';
 
 describe('Eq trait and equals function', () => {
   @derive(Eq)
@@ -17,16 +17,16 @@ describe('Eq trait and equals function', () => {
       const point2 = new Point(1, 2);
       const point3 = new Point(3, 4);
 
-      expect(point1.equals(point2)).toBe(true);
-      expect(point1.equals(point3)).toBe(false);
+      expect(point1.eq(point2)).toBe(true);
+      expect(point1.eq(point3)).toBe(false);
     });
 
     test('should handle null and non-objects', () => {
       const point = new Point(1, 2);
-      expect(point.equals(null)).toBe(false);
-      expect(point.equals(undefined)).toBe(false);
-      expect(point.equals(5)).toBe(false);
-      expect(point.equals('test')).toBe(false);
+      expect(point.eq(null)).toBe(false);
+      expect(point.eq(undefined)).toBe(false);
+      expect(point.eq(5)).toBe(false);
+      expect(point.eq('test')).toBe(false);
     });
   });
 

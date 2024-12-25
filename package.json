@@ -29,7 +29,7 @@
     "@rustable/enum": "workspace:*",
     "@rustable/iter": "workspace:*",
     "@rustable/trait": "workspace:*",
-    "@rustable/trait-impls": "workspace:*",
+    "@rustable/commons": "workspace:*",
     "@rustable/utils": "workspace:*"
   },
   "files": [

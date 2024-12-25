@@ -28,9 +28,6 @@ export class Default {
   }
 }
 
-export function defaultVal<T extends object>(
-  target: Constructor<T>,
-  generic?: Constructor<any> | Constructor<any>[],
-): T {
+export function defaultVal<T extends object>(target: Constructor<T>, generic?: Constructor<any>[]): T {
   return useTrait(target, Default, generic).default<T>();
 }

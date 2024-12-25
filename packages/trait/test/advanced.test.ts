@@ -24,7 +24,7 @@ describe('Advanced Trait Features', () => {
       }
     }
 
-    test('should handle multiple method trait-impls', () => {
+    test('should handle multiple method commons', () => {
       class MathClass {
         constructor(private base: number = 0) {}
         getBase(): number {

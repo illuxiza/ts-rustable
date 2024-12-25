@@ -32,6 +32,14 @@ export function variant(target: any, propertyKey: string, descriptor: PropertyDe
   return descriptor;
 }
 
+export interface EnumMatch<U> {
+  [key: string]: ((...args: any[]) => U) | U;
+}
+
+export interface EnumModify {
+  [key: string]: (...args: any[]) => any[];
+}
+
 /**
  * Base class for implementing Rust-style enums with pattern matching.
  * Provides a type-safe way to handle multiple variants of a type.
@@ -114,10 +122,7 @@ export abstract class Enum {
    * })
    * ```
    */
-  match<U>(
-    patterns: Partial<{ [key: string]: ((...args: any[]) => U) | U }>,
-    defaultPatterns?: { [key: string]: ((...args: any[]) => U) | U },
-  ): U {
+  match<U>(patterns: Partial<EnumMatch<U>>, defaultPatterns?: EnumMatch<U>): U {
     const variantName = this.variant.name;
     const handler = patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
 
@@ -174,6 +179,45 @@ export abstract class Enum {
       // Handle primitive values and objects
       return equals(arg, otherArg);
     });
+  }
+
+  /**
+   * Replaces the current variant with a new one, returning the old variant
+   * @param newVariant The new variant to replace with
+   * @param ...args Arguments for the new variant
+   * @throws Error if the new variant is not a valid variant of this enum
+   * @returns The old variant instance
+   */
+  replace(newInstance: this): this {
+    if (!(newInstance instanceof this.constructor)) {
+      throw new Error('Invalid instance: must be of the same enum type');
+    }
+    const oldVariant = new (this.constructor as new (...args: any[]) => this)(
+      this.variant.name,
+      ...(this.variant.args || []),
+    );
+    this.variant = { ...newInstance.variant };
+    return oldVariant;
+  }
+
+  /**
+   * Modifies the arguments of the current variant based on the variant name
+   * @param patterns Object mapping variant names to modifier functions
+   * @throws Error if no matching pattern is found for the current variant
+   */
+  modify(patterns: EnumModify): void {
+    const variantName = this.variant.name;
+    const modifier = patterns[variantName];
+
+    if (!modifier) {
+      throw new Error(`No matching pattern found for variant '${variantName}'`);
+    }
+
+    if (!this.variant.args || this.variant.args.length === 0) {
+      throw new Error('Cannot modify arguments of a variant without arguments');
+    }
+
+    this.variant.args = modifier(...this.variant.args);
   }
 
   [Symbol('ENUM')]() {

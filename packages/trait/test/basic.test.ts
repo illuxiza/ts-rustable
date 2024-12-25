@@ -26,7 +26,7 @@ class Debug {
   }
 }
 
-// Basic class with trait-impls
+// Basic class with commons
 @derive([Print])
 class BasicClass {
   constructor(public value: string) {}

@@ -1,6 +1,5 @@
-import { implTrait } from 'src';
-import { derive, trait } from '../src/trait';
 import { Constructor } from '@rustable/utils';
+import { derive, implTrait, trait } from '../src/trait';
 
 @trait
 class Debug {
@@ -31,7 +30,7 @@ describe('derive decorator', () => {
     expect(point instanceof Point).toBeTruthy();
   });
 
-  test('should derive multiple trait-impls', () => {
+  test('should derive multiple commons', () => {
     @derive([Debug])
     class Rectangle {
       constructor(

@@ -1,7 +1,7 @@
 {
-  "name": "@rustable/trait-impls",
+  "name": "@rustable/commons",
   "version": "0.1.7",
-  "description": "A TypeScript implementation of Rust-like traits system, providing Clone, Eq, and From traits for type-safe operations. Zero dependencies, fully type-safe.",
+  "description": "Common trait implementations for the Rustable trait system, providing ready-to-use implementations of standard traits like Clone, Eq, From, and Iter.",
   "keywords": [
     "typescript",
     "rust",
@@ -9,6 +9,7 @@
     "clone",
     "eq",
     "from",
+    "iter",
     "type-safe",
     "interface"
   ],

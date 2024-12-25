@@ -202,28 +202,15 @@ describe('Trait Type System', () => {
 
       class Target {}
 
-      implTrait(Target, TestTrait, String);
+      implTrait(Target, TestTrait, [String]);
 
       const target = new Target();
-      const impl = useTrait(target, TestTrait, String);
+      const impl = useTrait(target, TestTrait, [String]);
       expect(impl?.test()).toBe('default');
     });
   });
 
   describe('Trait Implementation Edge Cases', () => {
-    test('should throw error for empty generic array', () => {
-      class TestClass {}
-      @trait
-      class TestTrait {}
-
-      expect(() => {
-        implTrait(TestClass, TestTrait, []);
-      }).toThrow('At least one generic type of array parameter is required');
-      expect(() => {
-        implTrait(TestClass, TestTrait, [], {});
-      }).toThrow('At least one generic type of array parameter is required');
-    });
-
     test('should throw error for invalid generic parameter', () => {
       class TestClass {}
       @trait
