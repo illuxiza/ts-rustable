@@ -24,7 +24,7 @@ import { HashMap } from './map';
  */
 export class HashSet<T> implements Iterable<T> {
   /** Internal storage using HashMap */
-  __map: HashMap<T, void>;
+  private readonly __map: HashMap<T, void>;
 
   /**
    * Creates an empty HashSet or one populated with the given values.
@@ -38,7 +38,7 @@ export class HashSet<T> implements Iterable<T> {
    * let set2 = new HashSet(["a", "b", "c"]);
    * ```
    */
-  constructor(values?: readonly T[]) {
+  constructor(values?: Iterable<T>) {
     this.__map = new HashMap();
     if (values) {
       for (const value of values) {

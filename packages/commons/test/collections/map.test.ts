@@ -1,4 +1,4 @@
-import { HashMap } from '../src/map';
+import { HashMap } from '../../src/collections/map';
 import { Option } from '@rustable/enum';
 
 describe('HashMap', () => {

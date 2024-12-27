@@ -1,33 +1,7 @@
 import { None, Option, Some } from '@rustable/enum';
 import { Mut } from '@rustable/utils';
+import { indexColl } from './func';
 import { HashMap } from './map';
-
-/**
- * Creates a proxy for the Vec that allows array-like access to elements.
- * @returns A proxy object that wraps the Vec
- */
-function indexVec<T>(vec: Vec<T>): Vec<T> {
-  return new Proxy(vec, {
-    get: (_, index) => {
-      if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
-        const numIndex = parseInt(index, 10);
-        return vec.get(numIndex).unwrapOrElse(() => {
-          throw new Error('Index out of bounds');
-        });
-      }
-      const prop = index as keyof typeof vec;
-      return typeof vec[prop] === 'function' ? (vec[prop] as Function).bind(vec) : vec[prop];
-    },
-    set: (_, index, value) => {
-      if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
-        const numIndex = parseInt(index, 10);
-        vec.set(numIndex, value);
-        return true;
-      }
-      return false;
-    },
-  });
-}
 
 /**
  * Creates a new Vec from an optional iterable.
@@ -73,7 +47,7 @@ export class Vec<T> implements Iterable<T> {
    * const vec = Vec.new<number>();
    */
   static new<T>(): Vec<T> {
-    return indexVec(new Vec<T>());
+    return indexColl(new Vec<T>());
   }
 
   /**
@@ -85,7 +59,7 @@ export class Vec<T> implements Iterable<T> {
    * const vec = Vec.from([1, 2, 3]);
    */
   static from<T>(iterable: Iterable<T>): Vec<T> {
-    return indexVec(new Vec<T>(iterable));
+    return indexColl(new Vec<T>(iterable));
   }
 
   /**

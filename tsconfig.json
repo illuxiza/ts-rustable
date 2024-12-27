@@ -21,7 +21,6 @@
     "useDefineForClassFields": false,
     "types": ["node", "jest"],
     "paths": {
-      "@rustable/coll": ["packages/coll"],
       "@rustable/utils": ["packages/utils"],
       "@rustable/enum": ["packages/enum"],
       "@rustable/iter": ["packages/iter"],

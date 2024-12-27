@@ -1,4 +1,4 @@
-import { from, implFrom } from '../src/from';
+import { from, implFrom } from '../../src/traits/from';
 
 // Example classes for testing
 class Target {

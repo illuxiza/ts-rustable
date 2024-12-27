@@ -30,7 +30,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * Internal storage using a Map with hashed keys.
    * Each bucket stores an array of entries to handle hash collisions.
    */
-  __entries = new Map<number, Array<{ key: K; value: V }>>();
+  private readonly __entries = new Map<number, Array<{ key: K; value: V }>>();
 
   /**
    * Creates an empty HashMap or one populated with the given entries.
@@ -47,7 +47,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * ]);
    * ```
    */
-  constructor(entries?: readonly [K, V][]) {
+  constructor(entries?: Iterable<[K, V]>) {
     if (entries) {
       for (const [key, value] of entries) {
         this.insert(key, value);

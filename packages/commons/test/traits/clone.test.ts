@@ -1,5 +1,5 @@
 import { derive } from '@rustable/trait';
-import { Clone } from '../src/clone';
+import { Clone } from '../../src/traits/clone';
 
 describe('Clone trait', () => {
   // Test basic primitive types

@@ -1,4 +1,4 @@
-import { implFrom } from '../src/from';
+import { implFrom } from '../../src/traits/from';
 
 // Example classes for testing
 class Celsius {

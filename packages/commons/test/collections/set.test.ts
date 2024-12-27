@@ -1,4 +1,4 @@
-import { HashSet } from '../src/set';
+import { HashSet } from '../../src/collections/set';
 
 describe('HashSet', () => {
   let set: HashSet<string>;

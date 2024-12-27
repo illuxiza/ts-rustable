@@ -1,5 +1,5 @@
 import { Enum, None, Option, Some, variant } from '@rustable/enum';
-import type { HashMap } from './map';
+import type { HashMap } from '../collections/map';
 
 /**
  * Represents an occupied entry in the map, providing methods to access and modify the value.

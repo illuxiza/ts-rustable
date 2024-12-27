@@ -1,4 +1,4 @@
-import { HashMap, HashSet, Vec } from '@rustable/coll';
+import { HashMap, HashSet, Vec } from '@rustable/commons';
 import { iter, range } from '../src';
 
 describe('Collection Integration Tests', () => {

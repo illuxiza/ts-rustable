@@ -1,5 +1,5 @@
 import { derive } from '@rustable/trait';
-import { Default, defaultVal } from '../src/default';
+import { Default, defaultVal } from '../../src/traits/default';
 
 describe('Default trait', () => {
   test('should create default instance for primitive types', () => {

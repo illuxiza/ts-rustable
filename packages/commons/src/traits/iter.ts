@@ -1,6 +1,6 @@
-import { HashMap, HashSet, Vec } from '@rustable/coll';
 import { iter, RustIter } from '@rustable/iter';
 import { implTrait, trait } from '@rustable/trait';
+import { HashMap, HashSet, Vec } from '../collections';
 
 @trait
 export class Iter<T> implements Iterable<T> {
@@ -59,7 +59,7 @@ export class Iter<T> implements Iterable<T> {
   }
 }
 
-declare module '@rustable/coll' {
+declare module '../collections' {
   interface Vec<T> extends Iter<T> {}
   interface HashMap<K, V> extends Iter<[K, V]> {}
   interface HashSet<T> extends Iter<T> {}

@@ -1,7 +1,7 @@
 {
   "name": "@rustable/commons",
-  "version": "0.1.7",
-  "description": "Common trait implementations for the Rustable trait system, providing ready-to-use implementations of standard traits like Clone, Eq, From, and Iter.",
+  "version": "0.2.0",
+  "description": "A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.",
   "keywords": [
     "typescript",
     "rust",
@@ -40,9 +40,9 @@
   "license": "MIT",
   "dependencies": {
     "@rustable/trait": "workspace:*",
+    "@rustable/enum": "workspace:*",
     "@rustable/utils": "workspace:*",
-    "@rustable/iter": "workspace:*",
-    "@rustable/coll": "workspace:*"
+    "@rustable/iter": "workspace:*"
   },
   "publishConfig": {
     "access": "public"

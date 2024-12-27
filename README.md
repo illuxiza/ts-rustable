@@ -17,20 +17,23 @@ pnpm add rustable
 - 🎯 Complete Rust-like trait system
 - 🔒 Type-safe implementations
 - 🎭 Pattern matching and error handling
-- 📦 Efficient collections
-- 🧩 Common trait implementations
+- 🧩 Efficient collections and traits
 - 🔁 Iterator utilities
+- 📦 Zero dependencies
 
 ## Packages
 
-### [@rustable/coll](https://github.com/illuxiza/ts-rustable/tree/main/packages/coll#readme)
+### [@rustable/commons](https://github.com/illuxiza/ts-rustable/tree/main/packages/commons#readme)
 
-📦 Type-safe collections
+🧩 Type-safe collections and common traits
 
 - HashMap with efficient key-value storage
 - HashSet for unique value storage
 - Vec with Rust-like operations
-- Standard interface compatibility
+- Clone trait for deep cloning
+- Eq trait for equality comparison
+- From trait for type conversion
+- Entry API for safe map manipulation
 
 ### [@rustable/enum](https://github.com/illuxiza/ts-rustable/tree/main/packages/enum#readme)
 
@@ -59,14 +62,6 @@ pnpm add rustable
 - Runtime trait checking
 - Decorator-based API
 - Default implementations
-
-### [@rustable/commons](https://github.com/illuxiza/ts-rustable/tree/main/packages/commons#readme)
-
-🧩 Common trait implementations
-
-- Clone trait for deep cloning
-- Eq trait for equality comparison
-- From trait for type conversion
 
 ### [@rustable/utils](https://github.com/illuxiza/ts-rustable/tree/main/packages/utils#readme)
 

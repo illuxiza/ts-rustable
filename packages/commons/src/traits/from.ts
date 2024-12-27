@@ -1,10 +1,5 @@
-import { Constructor } from '@rustable/utils';
 import { hasTrait, implTrait, trait, TraitImplementation, useTrait } from '@rustable/trait';
-
-// // Add into method to Object.prototype
-// Object.prototype.into = function <T>(targetType: Constructor<T>): T {
-//   return from(this, targetType as any) as T;
-// };
+import { Constructor } from '@rustable/utils';
 
 /**
  * From trait for type conversion.

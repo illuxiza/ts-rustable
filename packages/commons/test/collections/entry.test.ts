@@ -1,4 +1,4 @@
-import { HashMap } from '../src/map';
+import { HashMap } from '../../src/collections/map';
 
 describe('Entry API', () => {
   describe('OccupiedEntry', () => {

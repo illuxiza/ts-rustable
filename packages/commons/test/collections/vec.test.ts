@@ -1,5 +1,5 @@
 import { None, Some } from '@rustable/enum';
-import { Vec, vec } from '../src/vec';
+import { Vec, vec } from '../../src/collections/vec';
 
 describe('Vec', () => {
   let array: Vec<number>;

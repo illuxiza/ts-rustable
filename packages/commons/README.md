@@ -1,13 +1,18 @@
 # @rustable/commons
 
-Common trait implementations for the Rustable trait system, providing ready-to-use implementations of standard traits like Clone, Eq, From, and Iter.
+A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.
 
 ## Features
 
-- 🧰 Decorator-based API
-- 🎨 Default implementations
-- 🔄 Runtime trait checking
+- 🧰 Decorator-based trait system
+- 🔒 Type-safe implementations
+- 🦀 Rust-like APIs
+- 🔄 Option-based value handling
+- ⚡ Efficient hash-based collections
+- 🎨 Default trait implementations
 - 🏷️ Trait metadata
+- 📦 Zero dependencies
+- 🔍 Type-safe entry API for maps
 
 ## Installation
 
@@ -18,6 +23,102 @@ yarn add @rustable/commons
 # or
 pnpm add @rustable/commons
 ```
+
+## Collections
+
+### HashMap<K, V>
+
+A hash map implementation similar to Rust's HashMap with efficient lookup and collision handling.
+
+```typescript
+import { HashMap } from '@rustable/commons';
+
+// Create a new map
+const map = new HashMap<string, number>();
+
+// Insert and get values
+map.insert('key', 1);
+const value = map.get('key').unwrapOr(0);
+
+// Entry API for safe insertion
+map.entry('key')
+   .and_modify(v => v + 1)
+   .or_insert(0);
+
+// Iterate over entries
+for (const [k, v] of map) {
+  console.log(`${k}: ${v}`);
+}
+
+// Other useful methods
+map.remove('key');
+map.contains_key('key');
+map.clear();
+map.len();
+```
+
+### HashSet\<T>
+
+A hash set implementation for storing unique values.
+
+```typescript
+import { HashSet } from '@rustable/commons';
+
+const set = new HashSet<string>();
+
+// Basic operations
+set.insert('value');
+set.remove('value');
+console.log(set.contains('value')); // false
+
+// Set operations
+const other = new HashSet(['a', 'b']);
+set.union(other);
+set.intersection(other);
+set.difference(other);
+
+// Iteration
+for (const item of set) {
+  console.log(item);
+}
+```
+
+### Vec\<T>
+
+A growable array implementation similar to Rust's Vec<T>.
+
+```typescript
+import { Vec } from '@rustable/commons';
+
+// Create a new vector
+const vec = Vec.new<number>();
+// Or from existing array
+const vec2 = Vec.from([1, 2, 3]);
+
+// Mutate vector
+vec.push(4);
+vec.extend([5, 6, 7]);
+const last = vec.pop(); // Some(7)
+
+// Access elements
+const first = vec.first(); // Option<T>
+const item = vec.get(1); // Option<T>
+vec.insert(0, 0);
+
+// Advanced operations
+vec.splice(1, 2); // Remove elements
+vec.drain(0, 2); // Remove and get elements
+vec.retain(x => x % 2 === 0); // Keep even numbers
+
+// Iterator methods
+vec
+  .iter()
+  .map(x => x * 2)
+  .filter(x => x > 2)
+  .collect(); // Create new Vec
+```
+
+## Traits
 
 ### Clone Trait
 
@@ -57,7 +158,6 @@ Type conversion system supporting:
 - Custom type conversions
 - Generic type parameters
 - Inheritance hierarchies
-- Temperature conversion example:
 
 ```typescript
 import { from, implFrom } from '@rustable/commons';
