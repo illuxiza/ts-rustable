@@ -1,11 +1,37 @@
-type Mut<T = object> = T & {
-  [Mut.ptr]: (newValue: T) => void;
+export type Mut<T = object> = T & {
+  [Mut.ptr]: T;
 };
 
+export interface MutAccessors<T> {
+  get: () => T;
+  set: (value: T) => void;
+}
+
+/**
+ * Namespace for Mut-related functionality.
+ */
 export namespace Mut {
+  /**
+   * Symbol used as a unique key for the pointer function.
+   */
   export const ptr = Symbol('mut.ptr');
-  export function replace<T>(this: Mut<T>, newValue: T) {
-    this[Mut.ptr](newValue);
+
+  /**
+   * Replaces the entire value of a Mut object.
+   * @param current The Mut object to modify.
+   * @param newValue The new value to set.
+   */
+  export function replace<T>(current: Mut<T>, newValue: T) {
+    current[Mut.ptr] = newValue;
+  }
+
+  /**
+   * Creates a mutable reference that behaves like the original object
+   * @param accessors Getter and setter functions
+   * @returns A Mut instance that behaves like the original object
+   */
+  export function of<T>(accessors: MutAccessors<T>): Mut<T> {
+    return mut(accessors);
   }
 }
 
@@ -14,26 +40,25 @@ export namespace Mut {
  * @param accessors Getter and setter functions
  * @returns A Mut instance that behaves like the original object
  */
-export function mut<T extends object>(accessors: { get: () => T; set: (value: T) => void }): Mut<T> {
+function mut<T>(accessors: MutAccessors<T>): Mut<T> {
   const { get, set } = accessors;
 
   const handler = {
-    get(target: any, prop: string | symbol) {
+    get(_: any, prop: string | symbol) {
+      const current = get();
       if (prop === Mut.ptr) {
-        return (newValue: T) => {
-          set(newValue);
-        };
+        return current;
       }
-      const current = get();
-      return Reflect.get(current, prop);
+      const target = current as any;
+      return typeof target[prop] === 'function' ? (target[prop] as Function).bind(target) : target[prop];
     },
-    set(target: any, prop: string | symbol, value: any) {
+    set(_: any, prop: string | symbol, value: any) {
       const current = get();
-      if (typeof current !== 'object' || current === null) {
-        throw new Error('Mut can only be used with objects');
+      if (prop === Mut.ptr) {
+        set(value);
+        return true;
       }
-      Reflect.set(current, prop, value);
-      set(current);
+      (current as any)[prop] = value;
       return true;
     },
   };

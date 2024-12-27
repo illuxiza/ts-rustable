@@ -105,11 +105,14 @@ export class Vec<T> implements Iterable<T> {
     if (index >= this.__length || index < 0) {
       return None;
     }
+
     return Some(
-      new Mut(
-        () => this.__buffer[index],
-        (value: T) => (this.__buffer[index] = value),
-      ),
+      Mut.of({
+        get: () => this.__buffer[index],
+        set: (value: T) => {
+          this.__buffer[index] = value;
+        },
+      }),
     );
   }
 

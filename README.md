@@ -71,6 +71,7 @@ pnpm add rustable
 - Object cloning utilities
 - Hash function implementations
 - Equality comparison
+- Mutable (Mut) and immutable (Ref) references
 
 ## Contributing
 

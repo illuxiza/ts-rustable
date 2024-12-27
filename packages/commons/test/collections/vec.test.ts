@@ -1,4 +1,5 @@
 import { None, Some } from '@rustable/enum';
+import { Mut } from '@rustable/utils';
 import { Vec, vec } from '../../src/collections/vec';
 
 describe('Vec', () => {
@@ -158,7 +159,7 @@ describe('Vec', () => {
     const mutRef = array.getMut(1);
     expect(mutRef.isSome()).toBe(true);
 
-    mutRef.unwrap().value = 10;
+    mutRef.unwrap()[Mut.ptr] = 10;
     expect(array.get(1)).toEqual(Some(10));
 
     const outOfBounds = array.getMut(5);

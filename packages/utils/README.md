@@ -46,12 +46,18 @@ pnpm add @rustable/utils
 - Provides a mutable reference with getter and setter functions
 - Supports generic types for flexible usage
 
+### Immutable Reference (`ref.ts`)
+
+- Provides an immutable reference to values
+- Creates a deep clone of the original value
+- Supports independent modifications without affecting the original
+
 ## Usage
 
 Import the required utilities from the package:
 
 ```typescript
-import { typeId, clone, hash, stringify, Mut } from '@rustable/utils';
+import { typeId, clone, hash, stringify, Mut, Ref } from '@rustable/utils';
 ```
 
 ### Example: Using Type ID
@@ -117,25 +123,159 @@ console.log(equals(obj1, obj2)); // true
 ```typescript
 import { Mut } from '@rustable/utils';
 
-let value = 10;
-const mutRef = new Mut(
-  () => value,
-  (newValue) => {
-    value = newValue;
+// Create a mutable object reference
+let obj = { name: 'Alice', age: 30 };
+const mutRef = Mut.of({
+  get: () => obj,
+  set: (newValue) => {
+    obj = newValue;
   },
-);
+});
 
-console.log(mutRef.value); // Output: 10
-mutRef.value = 20;
-console.log(mutRef.value); // Output: 20
+// Access and modify properties directly
+console.log(mutRef.name); // Output: 'Alice'
+mutRef.age = 31;
+console.log(obj.age); // Output: 31
 
-// Using Mut.of static method
-const anotherMutRef = Mut.of(
-  () => value,
-  (newValue) => {
-    value = newValue;
+// Replace entire object using Mut.ptr
+mutRef[Mut.ptr] = { name: 'Bob', age: 25 };
+console.log(obj); // Output: { name: 'Bob', age: 25 }
+
+// Get current value using Mut.ptr
+console.log(mutRef[Mut.ptr]); // Output: { name: 'Bob', age: 25 }
+
+// Replace using Mut.replace helper
+Mut.replace(mutRef, { name: 'Charlie', age: 20 });
+console.log(obj); // Output: { name: 'Charlie', age: 20 }
+
+// Working with nested objects
+let nested = {
+  info: {
+    name: 'Alice',
+    hobbies: ['reading'],
   },
-);
+};
+const nestedRef = Mut.of({
+  get: () => nested,
+  set: (newValue) => {
+    nested = newValue;
+  },
+});
+
+// Modify nested properties
+nestedRef.info.hobbies.push('coding');
+console.log(nested.info.hobbies); // Output: ['reading', 'coding']
+
+// Replace nested object
+Mut.replace(nestedRef, {
+  info: {
+    name: 'Bob',
+    hobbies: ['gaming'],
+  },
+});
+console.log(nested); // Output: { info: { name: 'Bob', hobbies: ['gaming'] } }
+```
+
+### Example: Using Immutable Reference
+
+```typescript
+import { Ref } from '@rustable/utils';
+
+// Create a reference
+const obj = { name: 'Alice', age: 30 };
+const ref = Ref.of(obj);
+
+// Modify the reference
+ref.name = 'Bob';
+console.log(ref.name); // 'Bob'
+
+// Original remains unchanged
+console.log(obj.name); // 'Alice'
+
+// Access original through ptr
+console.log(ref[Ref.ptr].name); // 'Alice'
+```
+
+## Ref
+
+The `Ref` type provides a way to create immutable references to values. Unlike `Mut`, which tracks mutations to the original value, `Ref` creates an independent copy that can be modified without affecting the original.
+
+### Usage
+
+```typescript
+import { Ref } from '@congeer/utils';
+
+// Create a reference
+const obj = { name: 'Alice', age: 30 };
+const ref = Ref.of(obj);
+
+// Modify the reference
+ref.name = 'Bob';
+console.log(ref.name); // 'Bob'
+
+// Original remains unchanged
+console.log(obj.name); // 'Alice'
+
+// Access original through ptr
+console.log(ref[Ref.ptr].name); // 'Alice'
+```
+
+### Features
+
+- **Deep Cloning**: Creates a deep clone of the original value, ensuring complete isolation
+- **Independent Modifications**: The reference can be freely modified without affecting the original
+- **Original Access**: The original value can be accessed through `Ref.ptr` symbol
+- **Method Support**: All methods work on the cloned value, preserving the original
+
+### Example with Complex Objects
+
+```typescript
+// Arrays
+const arr = [1, 2, 3];
+const arrRef = Ref.of(arr);
+
+arrRef.push(4);
+console.log([...arrRef]); // [1, 2, 3, 4]
+console.log(arr); // [1, 2, 3]
+
+// Objects with Methods
+class User {
+  constructor(public name: string) {}
+  setName(name: string) {
+    this.name = name;
+    return this;
+  }
+}
+
+const user = new User('Alice');
+const userRef = Ref.of(user);
+
+userRef.setName('Bob');
+console.log(userRef.name); // 'Bob'
+console.log(user.name); // 'Alice'
+```
+
+### When to Use
+
+- When you need to experiment with modifications without affecting the original
+- When you want to maintain a separate copy of a value
+- When you need to compare modified state with original state
+- In scenarios where immutability of the original value is critical
+
+### Comparison with Mut
+
+While `Mut` tracks and propagates changes to the original value, `Ref` provides isolation:
+
+```typescript
+// Mut modifies original
+const mut = Mut.of({ value: 1 });
+mut.value = 2;
+console.log(mut[Mut.ptr].value); // 2
+
+// Ref keeps original unchanged
+const ref = Ref.of({ value: 1 });
+ref.value = 2;
+console.log(ref[Ref.ptr].value); // 1
 ```
 
 ## Notes
@@ -143,8 +283,9 @@ const anotherMutRef = Mut.of(
 - All utilities are designed with TypeScript's type system in mind
 - The package uses WeakMap for efficient memory management
 - Generic type support is available where applicable
-- The `Mut` class provides a way to create mutable references with custom getter and setter functions
+- The `Mut` type provides a proxy-based mutable reference that allows direct property access and modification
+- The `Ref` type provides an immutable reference to values, creating a deep clone of the original value
 
 ## License
 
-MIT © illuxiza
+MIT  illuxiza
