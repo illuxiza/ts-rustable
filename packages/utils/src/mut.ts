@@ -1,42 +1,42 @@
+type Mut<T = object> = T & {
+  [Mut.ptr]: (newValue: T) => void;
+};
+
+export namespace Mut {
+  export const ptr = Symbol('mut.ptr');
+  export function replace<T>(this: Mut<T>, newValue: T) {
+    this[Mut.ptr](newValue);
+  }
+}
+
 /**
- * Represents a mutable reference with getter and setter functions.
- * @template T The type of the value being accessed.
- * @template S The type of the value being set, defaults to T.
+ * Creates a mutable reference that behaves like the original object
+ * @param accessors Getter and setter functions
+ * @returns A Mut instance that behaves like the original object
  */
-export class Mut<T, S = T> {
-  /**
-   * Creates a new Mut instance.
-   * @param get Function to retrieve the current value.
-   * @param set Function to set a new value.
-   */
-  constructor(
-    private get: () => T,
-    private set: (value: S) => void,
-  ) {}
+export function mut<T extends object>(accessors: { get: () => T; set: (value: T) => void }): Mut<T> {
+  const { get, set } = accessors;
 
-  /**
-   * Creates a new Mut instance.
-   * @param get Function to retrieve the current value.
-   * @param set Function to set a new value.
-   * @returns A new Mut instance.
-   */
-  static of<T, S = T>(get: () => T, set: (value: S) => void) {
-    return new Mut(get, set);
-  }
+  const handler = {
+    get(target: any, prop: string | symbol) {
+      if (prop === Mut.ptr) {
+        return (newValue: T) => {
+          set(newValue);
+        };
+      }
+      const current = get();
+      return Reflect.get(current, prop);
+    },
+    set(target: any, prop: string | symbol, value: any) {
+      const current = get();
+      if (typeof current !== 'object' || current === null) {
+        throw new Error('Mut can only be used with objects');
+      }
+      Reflect.set(current, prop, value);
+      set(current);
+      return true;
+    },
+  };
 
-  /**
-   * Gets the current value.
-   * @returns The current value of type T.
-   */
-  get value(): T {
-    return this.get();
-  }
-
-  /**
-   * Sets a new value.
-   * @param newValue The new value to set, of type S.
-   */
-  set value(newValue: S) {
-    this.set(newValue);
-  }
+  return new Proxy({} as Mut<T>, handler);
 }

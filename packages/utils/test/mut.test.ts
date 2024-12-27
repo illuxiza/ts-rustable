@@ -1,88 +1,79 @@
-import { Mut } from '../src/mut';
+import { mut, Mut } from '../src/mut';
 
-// Test cases for Ptr class
-describe('MutValue', () => {
-  it('should get and set values correctly', () => {
-    let value = 0;
-    const ptr = new Mut(
-      () => value,
-      (v) => {
-        value = v;
+describe('Mut', () => {
+  it('should get and set object properties through getter/setter', () => {
+    let obj = { name: 'Alice', age: 30 };
+    const m = mut({
+      get: () => obj,
+      set: (newValue) => {
+        obj = newValue;
       },
-    );
+    });
 
-    expect(ptr.value).toBe(0);
+    expect(m.name).toBe('Alice');
+    expect(m.age).toBe(30);
 
-    ptr.value = 42;
-    expect(ptr.value).toBe(42);
-    expect(value).toBe(42);
+    m.name = 'Bob';
+    expect(obj.name).toBe('Bob');
+    expect(m.name).toBe('Bob');
   });
 
-  it('should work with objects', () => {
-    let obj = { name: 'Alice' };
-    const ptr = new Mut(
-      () => obj,
-      (v) => {
-        obj = v;
+  it('should replace entire object using Symbol', () => {
+    let obj = { name: 'Alice', age: 30 };
+    const m = mut({
+      get: () => obj,
+      set: (newValue) => {
+        obj = newValue;
       },
-    );
+    });
 
-    expect(ptr.value).toEqual({ name: 'Alice' });
-
-    ptr.value = { name: 'Bob' };
-    expect(ptr.value).toEqual({ name: 'Bob' });
-    expect(obj).toEqual({ name: 'Bob' });
+    m[Mut.ptr]({ name: 'Charlie', age: 25 });
+    expect(obj).toEqual({ name: 'Charlie', age: 25 });
+    expect(m.name).toBe('Charlie');
+    expect(m.age).toBe(25);
   });
 
-  it('should handle undefined values', () => {
-    let value: number | undefined;
-    const ptr = new Mut(
-      () => value,
-      (v) => {
-        value = v;
-      },
-    );
-
-    expect(ptr.value).toBeUndefined();
-
-    ptr.value = 100;
-    expect(ptr.value).toBe(100);
-
-    ptr.value = undefined;
-    expect(ptr.value).toBeUndefined();
-  });
-
-  it('should handle complex nested objects', () => {
-    let complexObj = {
+  it('should work with nested objects through getter/setter', () => {
+    let obj = {
       id: 1,
       info: {
         name: 'Alice',
         age: 30,
         hobbies: ['reading', 'coding'],
       },
-      scores: [85, 92, 78],
     };
-    const ptr = new Mut(
-      () => complexObj.info,
-      (v) => {
-        complexObj.info = v;
+    const m = mut({
+      get: () => obj,
+      set: (newValue) => {
+        obj = newValue;
       },
-    );
-
-    expect(ptr.value).toEqual(complexObj.info);
-
-    ptr.value.age = 31;
-    expect(complexObj.info.age).toBe(31);
-
-    ptr.value = { ...ptr.value, name: 'Alicia' };
-    expect(complexObj).toEqual({
-      id: 1,
-      info: {
-        name: 'Alicia',
-        age: 31,
-        hobbies: ['reading', 'coding'],
-      },
-      scores: [85, 92, 78],
     });
+
+    expect(m.info.name).toBe('Alice');
+    m.info.age = 31;
+    expect(obj.info.age).toBe(31);
+
+    m.info.hobbies.push('swimming');
+    expect(obj.info.hobbies).toEqual(['reading', 'coding', 'swimming']);
+  });
+
+  it('should throw when accessing properties of non-object values', () => {
+    const numberMut = mut({
+      get: () => 42 as any,
+      set: () => {},
+    });
+    expect(() => (numberMut.toString = () => {})).toThrow('Mut can only be used with objects');
+
+    const nullMut = mut({
+      get: () => null as any,
+      set: () => {},
+    });
+    expect(() => (nullMut.toString = () => {})).toThrow('Mut can only be used with objects');
+
+    const undefinedMut = mut({
+      get: () => undefined as any,
+      set: () => {},
+    });
+    expect(() => (undefinedMut.toString = () => {})).toThrow('Mut can only be used with objects');
   });
 });
