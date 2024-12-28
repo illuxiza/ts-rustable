@@ -170,6 +170,28 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   const traitId = typeId(trait, generics);
   const targetProto = target.prototype;
 
+  // Add static trait methods to target class
+  const staticImpl = getStaticTraitBound(target, trait, implementation);
+  Object.keys(staticImpl).forEach((name) => {
+    if (!(name in target)) {
+      Object.defineProperty(target, name, {
+        value: function (...args: any[]) {
+          if (typeof staticImpl[name] === 'function') {
+            return staticImpl[name].call(target, ...args);
+          }
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+
+  // Store static implementation
+  const staticImplMap = staticTraitRegistry.get(target) || new Map<TypeId, any>();
+  staticImplMap.set(traitId, staticImpl);
+  staticTraitRegistry.set(target, staticImplMap);
+
   // Check if target is a trait
   const isTargetTrait = traitSymbol in target;
   if (isTargetTrait) {
@@ -233,28 +255,6 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
       });
     }
   });
-
-  // Add static trait methods to target class
-  const staticImpl = getStaticTraitBound(target, trait, implementation);
-  Object.keys(staticImpl).forEach((name) => {
-    if (!(name in target)) {
-      Object.defineProperty(target, name, {
-        value: function (...args: any[]) {
-          if (typeof staticImpl[name] === 'function') {
-            return staticImpl[name].call(target, ...args);
-          }
-        },
-        enumerable: false,
-        configurable: true,
-        writable: true,
-      });
-    }
-  });
-
-  // Store static implementation
-  const staticImplMap = staticTraitRegistry.get(target) || new Map<TypeId, any>();
-  staticImplMap.set(traitId, staticImpl);
-  staticTraitRegistry.set(target, staticImplMap);
 
   // Check if all methods in implementation exist in trait
   if (implementation) {
