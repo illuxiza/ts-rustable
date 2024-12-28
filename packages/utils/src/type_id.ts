@@ -108,11 +108,8 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
     genericTypeIdCache.set(constructor, genericCache);
   }
 
-  // Convert single parameter to array for consistent handling
-  const paramsArray = Array.isArray(genericParams) ? genericParams : [genericParams];
-
   // Create a unique key for the generic parameters
-  const genericKey = paramsArray.map((param) => typeId(param)).join(',');
+  const genericKey = genericParams.map((param) => typeId(param)).join(',');
 
   // Return existing generic ID if available
   const existingGenericId = genericCache.get(genericKey);

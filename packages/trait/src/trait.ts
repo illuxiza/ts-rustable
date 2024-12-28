@@ -50,9 +50,9 @@ const traitSymbol = Symbol('TRAIT');
  * @template T The trait being implemented
  */
 export type TraitImplementation<C, T, TC extends TraitConstructor<T>> = {
-  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => any ? ReturnType<T[K]> : never;
+  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
 } & {
-  [K in keyof TC]?: (...args: any[]) => TC[K] extends (...args: any[]) => any ? ReturnType<TC[K]> : never;
+  [K in keyof TC]?: (...args: any[]) => TC[K] extends (...args: any[]) => infer R ? R : never;
 };
 
 /**
@@ -67,25 +67,10 @@ interface TraitConstructor<T> extends Constructor<T> {
  * Internal function to collect all parent commons with caching
  *
  * @param trait The trait to collect parents for
- * @param visited Set of visited commons to prevent circular dependencies
- * @param cache Whether to use caching
- * @param genericParams Optional array of generic type parameters
  * @returns Array of parent trait constructors
  */
-function collectParentTraits(
-  trait: TraitConstructor<any>,
-  visited = new Set<TypeId>(),
-  cache = true,
-  genericParams?: any[],
-): TraitConstructor<any>[] {
-  const traitId = typeId(trait, genericParams);
-  if (visited.has(traitId)) {
-    // Return empty array for circular dependencies in inheritance chain
-    return [];
-  }
-  visited.add(traitId);
-
-  const cached = cache ? parentTraitsCache.get(trait) : undefined;
+function collectParentTraits(trait: TraitConstructor<any>): TraitConstructor<any>[] {
+  const cached = parentTraitsCache.get(trait);
   if (cached) {
     return cached;
   }
@@ -94,17 +79,13 @@ function collectParentTraits(
   let proto = Object.getPrototypeOf(trait.prototype);
   while (proto && proto !== Object.prototype) {
     const parentTrait = proto.constructor;
-    if (parentTrait && parentTrait !== Object) {
+    if (parentTrait && parentTrait !== Object && parentTrait[traitSymbol]) {
       parents.push(parentTrait);
-      const parentParents = collectParentTraits(parentTrait, visited, false, genericParams);
-      parents.push(...parentParents);
     }
     proto = Object.getPrototypeOf(proto);
   }
 
-  if (cache) {
-    parentTraitsCache.set(trait, parents);
-  }
+  parentTraitsCache.set(trait, parents);
   return parents;
 }
 
@@ -213,7 +194,7 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   }
 
   // Check parent commons
-  const parents = collectParentTraits(trait, new Set(), true, generics);
+  const parents = collectParentTraits(trait);
   parents.forEach((parent) => {
     const parentId = typeId(parent, generics);
     if (!implMap.has(parentId)) {

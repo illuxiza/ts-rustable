@@ -58,10 +58,6 @@ const defaultMatchOption: MatchOption<any, any> = {
 export class Option<T> extends Enum {
   protected static readonly NONE_INSTANCE = new Option<any>('None');
 
-  protected constructor(value: string, ...args: any[]) {
-    super(value, ...args);
-  }
-
   /**
    * Creates a Some variant containing a value.
    *

@@ -58,7 +58,7 @@ export interface EnumModify {
 export abstract class Enum {
   private variant: EnumVariant;
 
-  protected constructor(name: string, ...args: any[]) {
+  constructor(name: string, ...args: any[]) {
     this.variant = { name, args };
   }
 

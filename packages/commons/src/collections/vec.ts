@@ -326,6 +326,41 @@ export class Vec<T> implements Iterable<T> {
   }
 
   /**
+   * Moves all the elements of `other` into `self`, leaving `other` empty.
+   *
+   * # Examples
+   *
+   * ```typescript
+   * const vec = Vec.from([1, 2, 3]);
+   * const vec2 = Vec.from([4, 5, 6]);
+   * vec.append(vec2);
+   * assert.deepEqual([...vec], [1, 2, 3, 4, 5, 6]);
+   * assert.deepEqual([...vec2], []);
+   * ```
+   */
+  append(other: Vec<T>): void {
+    const otherSlice = other.asSlice();
+    const len = this.len();
+    for (let i = 0; i < otherSlice.length; i++) {
+      this.__buffer[len + i] = otherSlice[i];
+    }
+    this.__length += otherSlice.length;
+    other.clear();
+  }
+
+  /**
+   * Reverses the order of the elements in the Vec in-place.
+   */
+  reverse(): void {
+    const halfLen = Math.floor(this.__length / 2);
+    for (let i = 0; i < halfLen; i++) {
+      const temp = this.__buffer[i];
+      this.__buffer[i] = this.__buffer[this.__length - 1 - i];
+      this.__buffer[this.__length - 1 - i] = temp;
+    }
+  }
+
+  /**
    * Returns a portion of the Vec as an array.
    * @param start Start index (default: 0)
    * @param end End index (default: length)

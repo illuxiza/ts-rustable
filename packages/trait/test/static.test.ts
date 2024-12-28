@@ -1,5 +1,4 @@
-import { useTrait } from 'src';
-import { derive, hasTrait, implTrait, trait } from '../src';
+import { derive, hasTrait, implTrait, trait, useTrait } from '../src';
 
 describe('Static Trait Features', () => {
   @trait
