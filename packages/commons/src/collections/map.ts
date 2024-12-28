@@ -68,22 +68,30 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   [Symbol.iterator](): IterableIterator<[K, V]> {
     const entriesIterator = this.__entries.values();
-    let bucketsIterator = entriesIterator.next();
+    let currentBucket: Array<{ key: K; value: V }> | undefined;
+    let currentIndex = 0;
+
     return {
       [Symbol.iterator]() {
         return this;
       },
       next(): IteratorResult<[K, V]> {
-        if (bucketsIterator.done) {
-          return { done: true, value: undefined };
+        while (true) {
+          if (!currentBucket || currentIndex >= currentBucket.length) {
+            const nextBucket = entriesIterator.next();
+            if (nextBucket.done) {
+              return { done: true, value: undefined };
+            }
+            currentBucket = nextBucket.value;
+            currentIndex = 0;
+          }
+
+          if (currentIndex < currentBucket.length) {
+            const entry = currentBucket[currentIndex];
+            currentIndex++;
+            return { done: false, value: [entry.key, entry.value] };
+          }
         }
-        const bucket = bucketsIterator.value;
-        const entry = bucket.shift();
-        if (entry) {
-          return { done: false, value: [entry.key, entry.value] };
-        }
-        bucketsIterator = entriesIterator.next();
-        return this.next();
       },
     };
   }
@@ -164,7 +172,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     const bucket = this.__entries.get(hashKey);
     if (!bucket) return None;
 
-    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
+    const index = bucket.findIndex((entry) => this.keysEqual(entry.key, key));
     if (index === -1) return None;
 
     const [entry] = bucket.splice(index, 1);
@@ -190,7 +198,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     const bucket = this.__entries.get(hashKey);
     if (!bucket) return None;
 
-    const entry = bucket.find((entry) => this.#keysEqual(entry.key, key));
+    const entry = bucket.find((entry) => this.keysEqual(entry.key, key));
     return entry ? Some(entry.value) : None;
   }
 
@@ -198,7 +206,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     const hashKey = hash(key);
     const bucket = this.__entries.get(hashKey);
     if (!bucket) throw new Error('Key not found');
-    return bucket.find((entry) => this.#keysEqual(entry.key, key))!.value;
+    return bucket.find((entry) => this.keysEqual(entry.key, key))!.value;
   }
 
   /**
@@ -216,7 +224,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     const bucket = this.__entries.get(hashKey);
     if (!bucket) return false;
 
-    return bucket.some((entry) => this.#keysEqual(entry.key, key));
+    return bucket.some((entry) => this.keysEqual(entry.key, key));
   }
 
   /**
@@ -242,7 +250,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
       this.__entries.set(hashKey, bucket);
     }
 
-    const index = bucket.findIndex((entry) => this.#keysEqual(entry.key, key));
+    const index = bucket.findIndex((entry) => this.keysEqual(entry.key, key));
     if (index !== -1) {
       // Update existing entry
       const oldValue = bucket[index].value;
@@ -259,7 +267,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * Compare two keys for equality.
    * This is a private helper method used to handle key comparison.
    */
-  #keysEqual(a: K, b: K): boolean {
+  private keysEqual(a: K, b: K): boolean {
     if (a === b) return true;
     return equals(a, b);
   }
