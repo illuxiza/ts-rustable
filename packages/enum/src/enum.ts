@@ -40,6 +40,44 @@ export interface EnumModify {
   [key: string]: (...args: any[]) => any[];
 }
 
+export type CustomEnumParam = Record<string, (...args: any[]) => any>;
+
+export type VariantFunctions<T, U extends CustomEnumParam> = {
+  [K in keyof U]: ((...args: Parameters<U[K]>) => T) | T;
+};
+
+export type CustomEnum<U extends CustomEnumParam> = typeof Enum & {
+  [K in keyof U]: (...args: Parameters<U[K]>) => Omit<Enum, 'match'> & {
+    match<T>(patterns: Partial<VariantFunctions<T, U>>, defaultPatterns?: VariantFunctions<T, U>): T;
+  };
+};
+
+export namespace Enums {
+  /**
+   * Creates a simple Enum class with the given variant names.
+   * @param variants An array of variant names
+   * @returns A new Enum class with the specified variants
+   *
+   * @example
+   * const SimpleEnum = Enum.create(['A', 'B', 'C']);
+   * const instance = SimpleEnum.B();
+   * console.log(instance.is('B')); // true
+   */
+  export function create<U extends CustomEnumParam>(variants: U): CustomEnum<U> {
+    const AnonymousEnum = class extends Enum {};
+
+    for (const [variantName, _variantFunc] of Object.entries(variants)) {
+      Object.defineProperty(AnonymousEnum, variantName, {
+        value: (...args: Parameters<typeof _variantFunc>) => new AnonymousEnum(variantName, ...args),
+        writable: false,
+        configurable: false,
+      });
+    }
+
+    return AnonymousEnum as CustomEnum<U>;
+  }
+}
+
 /**
  * Base class for implementing Rust-style enums with pattern matching.
  * Provides a type-safe way to handle multiple variants of a type.
@@ -144,7 +182,7 @@ export abstract class Enum {
    * Checks if this enum instance equals another enum instance
    * Compares both variant names and their arguments
    */
-  equals(other: Enum): boolean {
+  eq(other: Enum): boolean {
     if (!(other instanceof Enum)) {
       return false;
     }
@@ -174,11 +212,19 @@ export abstract class Enum {
       const otherArg = other.variant.args![index];
       // Handle nested enums
       if (arg instanceof Enum && otherArg instanceof Enum) {
-        return arg.equals(otherArg);
+        return arg.eq(otherArg);
       }
       // Handle primitive values and objects
       return equals(arg, otherArg);
     });
+  }
+
+  /**
+   * Checks if this enum instance equals another enum instance
+   * Compares both variant names and their arguments
+   */
+  equals(other: any): boolean {
+    return this.eq(other);
   }
 
   /**
@@ -210,11 +256,11 @@ export abstract class Enum {
     const modifier = patterns[variantName];
 
     if (!modifier) {
-      throw new Error(`No matching pattern found for variant '${variantName}'`);
+      return;
     }
 
     if (!this.variant.args || this.variant.args.length === 0) {
-      throw new Error('Cannot modify arguments of a variant without arguments');
+      return;
     }
 
     this.variant.args = modifier(...this.variant.args);

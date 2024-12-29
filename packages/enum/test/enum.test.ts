@@ -1,4 +1,4 @@
-import { Enum, variant } from '../src/enum';
+import { Enum, Enums, variant } from '../src/enum';
 
 class TestEnum extends Enum {
   @variant
@@ -234,14 +234,37 @@ describe('Enum.modify', () => {
 
     expect(b.unwrap()).toBe(20);
   });
+});
 
-  it('should throw an error if no matching pattern is found', () => {
-    const a = TestEnum.A();
-    expect(() => a.modify({ B: (x) => [x * 2] })).toThrow("No matching pattern found for variant 'A'");
+describe('Enum.createEnum', () => {
+  it('should create a simple enum with given variants', () => {
+    const SimpleEnum = Enums.create({
+      A: () => {},
+      B: (_x: number) => {},
+      C: (_x: string, _y: number) => {},
+    });
+
+    const a = SimpleEnum.A();
+    const b = SimpleEnum.B(42);
+    const c = SimpleEnum.C('hello', 5);
+
+    c.match({
+      C: (x, y) => [x, y],
+    });
+
+    expect(a.is('A')).toBe(true);
+    expect(b.is('B')).toBe(true);
+    expect(c.is('C')).toBe(true);
+
+    expect(b.unwrap()).toBe(42);
+    expect(c.unwrapTuple()).toEqual(['hello', 5]);
   });
 
-  it('should throw an error if modifying a variant without arguments', () => {
-    const a = TestEnum.A();
-    expect(() => a.modify({ A: () => [] })).toThrow('Cannot modify arguments of a variant without arguments');
+  it('should throw when accessing non-existent variant', () => {
+    const SimpleEnum = Enums.create({
+      A: () => {},
+    });
+
+    expect(() => (SimpleEnum as any).B()).toThrow();
   });
 });
