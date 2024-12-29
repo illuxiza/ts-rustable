@@ -248,16 +248,20 @@ describe('Enum.createEnum', () => {
     const b = SimpleEnum.B(42);
     const c = SimpleEnum.C('hello', 5);
 
-    c.match({
-      C: (x, y) => [x, y],
-    });
-
-    expect(a.is('A')).toBe(true);
-    expect(b.is('B')).toBe(true);
-    expect(c.is('C')).toBe(true);
-
     expect(b.unwrap()).toBe(42);
     expect(c.unwrapTuple()).toEqual(['hello', 5]);
+
+    expect(a.isA()).toBe(true);
+    expect(a.isB()).toBe(false);
+    expect(a.isC()).toBe(false);
+
+    expect(b.isA()).toBe(false);
+    expect(b.isB()).toBe(true);
+    expect(b.isC()).toBe(false);
+
+    expect(c.isA()).toBe(false);
+    expect(c.isB()).toBe(false);
+    expect(c.isC()).toBe(true);
   });
 
   it('should throw when accessing non-existent variant', () => {
@@ -266,5 +270,6 @@ describe('Enum.createEnum', () => {
     });
 
     expect(() => (SimpleEnum as any).B()).toThrow();
+    expect(() => (SimpleEnum.A() as any).isB()).toThrow();
   });
 });

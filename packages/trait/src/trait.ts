@@ -380,32 +380,19 @@ function getSelfBound<Class extends object>(targetProto: any, target: Constructo
     traitRegistry.set(targetProto, implMap);
     // Create implementation that binds 'this' correctly
     selfBoundImpl = {};
-    for (const name in targetProto) {
-      try {
-        if ((Object.prototype as any)[name] === targetProto[name]) {
-          continue;
+    let currentProto = targetProto;
+    while (currentProto !== Object.prototype) {
+      Object.getOwnPropertyNames(currentProto).forEach((name) => {
+        try {
+          if (!(name in selfBoundImpl) && typeof currentProto[name] === 'function') {
+            selfBoundImpl[name] = currentProto[name];
+          }
+        } catch (_) {
+          /* empty */
         }
-        const method = targetProto[name];
-        if (typeof method === 'function') {
-          selfBoundImpl[name] = method;
-        }
-      } catch (_) {
-        /* empty */
-      }
+      });
+      currentProto = Object.getPrototypeOf(currentProto);
     }
-    Object.getOwnPropertyNames(targetProto).forEach((name) => {
-      try {
-        if ((Object.prototype as any)[name] === targetProto[name]) {
-          return;
-        }
-        const method = targetProto[name];
-        if (typeof method === 'function') {
-          selfBoundImpl[name] = method;
-        }
-      } catch (_) {
-        /* empty */
-      }
-    });
     implMap.set(typeId(target), selfBoundImpl);
   } else {
     selfBoundImpl = traitRegistry.get(targetProto)!.get(typeId(target))!;

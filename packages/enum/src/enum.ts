@@ -1,4 +1,4 @@
-import { equals, typeId } from '@rustable/utils';
+import { Constructor, deepClone, equals, typeId } from '@rustable/utils';
 
 /**
  * Represents a variant in an enumerated type.
@@ -42,33 +42,71 @@ export interface EnumModify {
 
 export type CustomEnumParam = Record<string, (...args: any[]) => any>;
 
-export type VariantFunctions<T, U extends CustomEnumParam> = {
+export type VariantMatchFunctions<T, U extends CustomEnumParam> = {
   [K in keyof U]: ((...args: Parameters<U[K]>) => T) | T;
 };
 
-export type CustomEnum<U extends CustomEnumParam> = typeof Enum & {
-  [K in keyof U]: (...args: Parameters<U[K]>) => Omit<Enum, 'match'> & {
-    match<T>(patterns: Partial<VariantFunctions<T, U>>, defaultPatterns?: VariantFunctions<T, U>): T;
-  };
+export type VariantModifyFunctions<U extends CustomEnumParam> = {
+  [K in keyof U]: (...args: Parameters<U[K]>) => Parameters<U[K]>;
 };
+
+export type CustomEnumInstance<U extends CustomEnumParam> = Omit<
+  Enum,
+  'match' | 'modify' | 'clone' | 'eq' | 'equals' | 'is'
+> & {
+  match<T>(patterns: Partial<VariantMatchFunctions<T, U>>, defaultPatterns?: VariantMatchFunctions<T, U>): T;
+  modify(patterns: Partial<VariantModifyFunctions<U>>): void;
+  clone(): CustomEnumInstance<U>;
+  eq(other: CustomEnumInstance<U>): boolean;
+  equals(other: CustomEnumInstance<U>): boolean;
+} & {
+  [P in keyof U as `is${Capitalize<string & P>}`]: () => boolean;
+};
+
+export type CustomEnum<U extends CustomEnumParam> = typeof Enum & {
+  [K in keyof U]: (...args: Parameters<U[K]>) => CustomEnumInstance<U>;
+} & Constructor<Enum>;
 
 export namespace Enums {
   /**
-   * Creates a simple Enum class with the given variant names.
-   * @param variants An array of variant names
-   * @returns A new Enum class with the specified variants
+   * Creates a custom Enum class with the given variant definitions.
+   * @param variants An object defining the variants and their parameters
+   * @param name Optional name for the created Enum class
+   * @returns A new custom Enum class with the specified variants
    *
    * @example
-   * const SimpleEnum = Enum.create(['A', 'B', 'C']);
-   * const instance = SimpleEnum.B();
-   * console.log(instance.is('B')); // true
+   * const SimpleEnum = Enums.create({
+   *   A: () => {},
+   *   B: (_x: number) => {},
+   *   C: (_x: string, _y: number) => {},
+   * });
+   * 
+   * const a = SimpleEnum.A();
+   * const b = SimpleEnum.B(42);
+   * const c = SimpleEnum.C('hello', 5);
    */
-  export function create<U extends CustomEnumParam>(variants: U): CustomEnum<U> {
+  export function create<U extends CustomEnumParam>(variants: U, name?: string): CustomEnum<U> {
     const AnonymousEnum = class extends Enum {};
+
+    if (name) {
+      Object.defineProperty(AnonymousEnum, 'name', {
+        value: name,
+        writable: false,
+        configurable: false,
+      });
+    }
 
     for (const [variantName, _variantFunc] of Object.entries(variants)) {
       Object.defineProperty(AnonymousEnum, variantName, {
         value: (...args: Parameters<typeof _variantFunc>) => new AnonymousEnum(variantName, ...args),
+        writable: false,
+        configurable: false,
+      });
+
+      Object.defineProperty(AnonymousEnum.prototype, `is${variantName}`, {
+        value: function () {
+          return this.is(variantName);
+        },
         writable: false,
         configurable: false,
       });
@@ -225,6 +263,19 @@ export abstract class Enum {
    */
   equals(other: any): boolean {
     return this.eq(other);
+  }
+
+  /**
+   * Creates a deep clone of the current enum instance
+   * @returns A new instance of the enum with the same variant and cloned arguments
+   */
+  clone(): this {
+    if (!this.variant.args || this.variant.args.length === 0) {
+      return this;
+    }
+    const Constructor = this.constructor as new (name: string, ...args: any[]) => this;
+    const clonedArgs = this.variant.args.map((v) => deepClone(v));
+    return new Constructor(this.variant.name, ...clonedArgs);
   }
 
   /**
