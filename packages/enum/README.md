@@ -37,6 +37,71 @@ value.match({
 });
 ```
 
+### Custom Enums (`Enums.create`)
+
+Create type-safe enums with custom variants and parameters using `Enums.create`. This provides a more concise and type-safe way to define enums compared to class extension.
+
+```typescript
+import { Enums } from '@rustable/enum';
+
+// Define enum with different variant signatures
+const UserState = Enums.create({
+  LoggedOut: () => {},
+  LoggedIn: (userId: string, role: string) => {},
+  Suspended: (reason: string) => {},
+}, 'UserState');
+
+// Create instances with type checking
+const state1 = UserState.LoggedOut();
+const state2 = UserState.LoggedIn('user123', 'admin');
+const state3 = UserState.Suspended('violation');
+
+// Type-safe pattern matching
+state2.match({
+  LoggedIn: (userId, role) => console.log(`User ${userId} is ${role}`),
+  Suspended: (reason) => console.log(`Account suspended: ${reason}`),
+  LoggedOut: () => console.log('Please log in'),
+});
+
+// Type-safe variant checking
+if (state2.isLoggedIn()) {
+  // TypeScript knows this is a LoggedIn variant
+  console.log(state2.unwrapTuple()); // ['user123', 'admin']
+}
+
+// Clone support
+const clonedState = state2.clone();
+```
+
+#### Type Definitions
+
+```typescript
+// Define variant signatures
+type UserStateVariants = {
+  LoggedOut: () => void;
+  LoggedIn: (userId: string, role: string) => void;
+  Suspended: (reason: string) => void;
+};
+
+// Create enum with type information
+const UserState = Enums.create<UserStateVariants>({
+  LoggedOut: () => {},
+  LoggedIn: (_userId: string, _role: string) => {},
+  Suspended: (_reason: string) => {},
+}, 'UserState');
+
+// Type information is preserved
+type UserStateEnum = ReturnType<typeof UserState.LoggedIn>;
+```
+
+#### Best Practices for Custom Enums
+
+1. **Name Your Enums**: Always provide a name parameter to `Enums.create` for better debugging and error messages
+2. **Type Parameters**: Use explicit type parameters when complex type inference is needed
+3. **Variant Arguments**: Use underscore prefix for unused parameters to show intent
+4. **Pattern Matching**: Always handle all variants or provide a default case
+5. **Type-safe Checks**: Use generated `isVariant()` methods instead of string-based `is()`
+
 ### Option Type (`option.ts`)
 
 Represents an optional value that may or may not be present. A type-safe alternative to null/undefined.

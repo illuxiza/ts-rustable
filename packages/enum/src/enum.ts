@@ -80,7 +80,7 @@ export namespace Enums {
    *   B: (_x: number) => {},
    *   C: (_x: string, _y: number) => {},
    * });
-   * 
+   *
    * const a = SimpleEnum.A();
    * const b = SimpleEnum.B(42);
    * const c = SimpleEnum.C('hello', 5);
