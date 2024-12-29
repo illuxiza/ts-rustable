@@ -272,4 +272,27 @@ describe('Enum.createEnum', () => {
     expect(() => (SimpleEnum as any).B()).toThrow();
     expect(() => (SimpleEnum.A() as any).isB()).toThrow();
   });
+
+  it('should create a named enum with given variants', () => {
+    const NamedEnum = Enums.create('NamedEnum', {
+      X: () => {},
+      Y: (_value: number) => {},
+      Z: (_a: string, _b: boolean) => {},
+    });
+
+    expect(NamedEnum.name).toBe('NamedEnum');
+
+    const x = NamedEnum.X();
+    const y = NamedEnum.Y(10);
+    const z = NamedEnum.Z('test', true);
+
+    expect(x.isX()).toBe(true);
+    expect(y.isY()).toBe(true);
+    expect(z.isZ()).toBe(true);
+
+    expect(y.unwrap()).toBe(10);
+    expect(z.unwrapTuple()).toEqual(['test', true]);
+
+    expect(() => (NamedEnum as any).W()).toThrow();
+  });
 });

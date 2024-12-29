@@ -45,11 +45,18 @@ Create type-safe enums with custom variants and parameters using `Enums.create`.
 import { Enums } from '@rustable/enum';
 
 // Define enum with different variant signatures
+const UserState = Enums.create('UserState', {
+  LoggedOut: () => {},
+  LoggedIn: (userId: string, role: string) => {},
+  Suspended: (reason: string) => {},
+});
+
+// Or 
 const UserState = Enums.create({
   LoggedOut: () => {},
   LoggedIn: (userId: string, role: string) => {},
   Suspended: (reason: string) => {},
-}, 'UserState');
+});
 
 // Create instances with type checking
 const state1 = UserState.LoggedOut();
@@ -83,15 +90,17 @@ type UserStateVariants = {
   Suspended: (reason: string) => void;
 };
 
-// Create enum with type information
-const UserState = Enums.create<UserStateVariants>({
+const userStateVariants: UserStateVariants = {
   LoggedOut: () => {},
-  LoggedIn: (_userId: string, _role: string) => {},
-  Suspended: (_reason: string) => {},
-}, 'UserState');
+  LoggedIn: (userId: string, role: string) => {},
+  Suspended: (reason: string) => {},
+};
+
+// Create enum with type information
+const UserState = Enums.create<UserStateVariants>('UserState', userStateVariants);
 
 // Type information is preserved
-type UserStateEnum = ReturnType<typeof UserState.LoggedIn>;
+type UserStateEnum = EnumInstance<UserStateVariants>;
 ```
 
 #### Best Practices for Custom Enums

@@ -40,38 +40,34 @@ export interface EnumModify {
   [key: string]: (...args: any[]) => any[];
 }
 
-export type CustomEnumParam = Record<string, (...args: any[]) => any>;
+export type EnumParam = Record<any, (...args: any[]) => any>;
 
-export type VariantMatchFunctions<T, U extends CustomEnumParam> = {
+export type VariantMatchFunctions<T, U extends EnumParam> = {
   [K in keyof U]: ((...args: Parameters<U[K]>) => T) | T;
 };
 
-export type VariantModifyFunctions<U extends CustomEnumParam> = {
+export type VariantModifyFunctions<U extends EnumParam> = {
   [K in keyof U]: (...args: Parameters<U[K]>) => Parameters<U[K]>;
 };
 
-export type CustomEnumInstance<U extends CustomEnumParam> = Omit<
-  Enum,
-  'match' | 'modify' | 'clone' | 'eq' | 'equals' | 'is'
-> & {
+export type EnumInstance<U extends EnumParam> = Omit<Enum, 'match' | 'modify' | 'clone' | 'eq' | 'is'> & {
   match<T>(patterns: Partial<VariantMatchFunctions<T, U>>, defaultPatterns?: VariantMatchFunctions<T, U>): T;
   modify(patterns: Partial<VariantModifyFunctions<U>>): void;
-  clone(): CustomEnumInstance<U>;
-  eq(other: CustomEnumInstance<U>): boolean;
-  equals(other: CustomEnumInstance<U>): boolean;
+  clone(): EnumInstance<U>;
+  eq(other: EnumInstance<U>): boolean;
 } & {
   [P in keyof U as `is${Capitalize<string & P>}`]: () => boolean;
 };
 
-export type CustomEnum<U extends CustomEnumParam> = typeof Enum & {
-  [K in keyof U]: (...args: Parameters<U[K]>) => CustomEnumInstance<U>;
+export type CustomEnum<U extends EnumParam> = typeof Enum & {
+  [K in keyof U]: (...args: Parameters<U[K]>) => EnumInstance<U>;
 } & Constructor<Enum>;
 
 export namespace Enums {
   /**
    * Creates a custom Enum class with the given variant definitions.
-   * @param variants An object defining the variants and their parameters
    * @param name Optional name for the created Enum class
+   * @param variants An object defining the variants and their parameters
    * @returns A new custom Enum class with the specified variants
    *
    * @example
@@ -85,16 +81,25 @@ export namespace Enums {
    * const b = SimpleEnum.B(42);
    * const c = SimpleEnum.C('hello', 5);
    */
-  export function create<U extends CustomEnumParam>(variants: U, name?: string): CustomEnum<U> {
+  export function create<U extends EnumParam>(variants: U): CustomEnum<U>;
+  export function create<U extends EnumParam>(name: string, variants: U): CustomEnum<U>;
+  export function create<U extends EnumParam>(arg1: string | U, arg2?: U): CustomEnum<U> {
     const AnonymousEnum = class extends Enum {};
-
-    if (name) {
-      Object.defineProperty(AnonymousEnum, 'name', {
-        value: name,
-        writable: false,
-        configurable: false,
-      });
+    if (arg2) {
+      if (typeof arg1 === 'string') {
+        Object.defineProperty(AnonymousEnum, 'name', {
+          value: arg1,
+          writable: false,
+          configurable: false,
+        });
+      } else {
+        throw new Error('Invalid arguments for create function');
+      }
+    } else if (typeof arg1 === 'string') {
+      throw new Error('Invalid arguments for create function');
     }
+
+    const variants = arg2 || (arg1 as U);
 
     for (const [variantName, _variantFunc] of Object.entries(variants)) {
       Object.defineProperty(AnonymousEnum, variantName, {
