@@ -15,6 +15,11 @@ export function deepClone<T>(data: T, hash: WeakMap<object, any> = new WeakMap()
     return hash.get(data);
   }
 
+  // Handle objects with a clone method
+  if (typeof (data as any).clone === 'function') {
+    return (data as any).clone();
+  }
+
   // Handle Date objects
   if (data instanceof Date) {
     return new Date(data.getTime()) as unknown as T;

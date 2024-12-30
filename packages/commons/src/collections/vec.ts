@@ -1,5 +1,5 @@
 import { None, Option, Some } from '@rustable/enum';
-import { Mut } from '@rustable/utils';
+import { deepClone, Mut } from '@rustable/utils';
 import { indexColl } from './func';
 import { HashMap } from './map';
 
@@ -60,6 +60,14 @@ export class Vec<T> implements Iterable<T> {
    */
   static from<T>(iterable: Iterable<T>): Vec<T> {
     return indexColl(new Vec<T>(iterable));
+  }
+
+  /**
+   * Creates a deep copy of the Vec.
+   * @returns A new Vec containing deep copies of all elements
+   */
+  clone(): Vec<T> {
+    return Vec.from(this.asSlice().map((item) => deepClone(item)));
   }
 
   /**
