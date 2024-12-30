@@ -702,7 +702,7 @@ export class IterImpl<T> implements Iterable<T> {
    * console.log(original[0].value); // Still 1
    * ```
    */
-  cloned<T>(this: IterImpl<T>): IterImpl<T> {
-    return this.map((x) => deepClone(x));
+  cloned<T>(this: IterImpl<T>, hash = new WeakMap<object, any>()): IterImpl<T> {
+    return this.map((x) => deepClone(x, hash));
   }
 }

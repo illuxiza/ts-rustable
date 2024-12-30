@@ -26,8 +26,11 @@ import { deepClone } from '@rustable/utils';
  */
 @trait
 export class Clone {
-  clone(): this {
-    return deepClone(this);
+  clone(hash = new WeakMap<object, any>()): this {
+    if (hash.has(this)) {
+      return hash.get(this);
+    }
+    return deepClone(this, hash);
   }
 }
 

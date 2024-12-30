@@ -274,12 +274,12 @@ export abstract class Enum {
    * Creates a deep clone of the current enum instance
    * @returns A new instance of the enum with the same variant and cloned arguments
    */
-  clone(): this {
+  clone(hash = new WeakMap<object, any>()): this {
     if (!this.variant.args || this.variant.args.length === 0) {
       return this;
     }
     const Constructor = this.constructor as new (name: string, ...args: any[]) => this;
-    const clonedArgs = this.variant.args.map((v) => deepClone(v));
+    const clonedArgs = this.variant.args.map((v) => deepClone(v, hash));
     return new Constructor(this.variant.name, ...clonedArgs);
   }
 

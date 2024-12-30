@@ -66,8 +66,8 @@ export class Vec<T> implements Iterable<T> {
    * Creates a deep copy of the Vec.
    * @returns A new Vec containing deep copies of all elements
    */
-  clone(): Vec<T> {
-    return Vec.from(this.asSlice().map((item) => deepClone(item)));
+  clone(hash = new WeakMap<object, any>()): Vec<T> {
+    return Vec.from(this.asSlice().map((item) => deepClone(item, hash)));
   }
 
   /**
