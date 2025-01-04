@@ -2,7 +2,6 @@ import { defineConfig } from 'monoup';
 
 export default defineConfig({
   name: 'rustable',
-  version: '0.0.9',
   monorepo: true,
   sourcemap: false,
   production: true,

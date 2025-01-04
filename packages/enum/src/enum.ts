@@ -290,7 +290,7 @@ export abstract class Enum {
    * @throws Error if the new variant is not a valid variant of this enum
    * @returns The old variant instance
    */
-  replace(newInstance: this): this {
+  replace(newInstance: Enum): this {
     if (!(newInstance instanceof this.constructor)) {
       throw new Error('Invalid instance: must be of the same enum type');
     }

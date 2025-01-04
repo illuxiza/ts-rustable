@@ -175,9 +175,9 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   Object.keys(staticImpl).forEach((name) => {
     if (!(name in target)) {
       Object.defineProperty(target, name, {
-        value: function (...args: any[]) {
+        value: function (this: Constructor<C>, ...args: any[]) {
           if (typeof staticImpl[name] === 'function') {
-            return staticImpl[name].call(target, ...args);
+            return staticImpl[name].call(this, ...args);
           }
         },
         enumerable: false,
