@@ -1,16 +1,11 @@
 import { Constructor } from './common';
+import { Type } from './type';
 
 /**
  * Registry for storing type IDs.
  * Uses WeakMap to allow garbage collection of unused type IDs.
  */
 const typeIdMap = new WeakMap<object, TypeId>();
-
-/**
- * Cache for storing type IDs with generic parameters.
- * Uses WeakMap to allow garbage collection of unused type IDs.
- */
-const genericTypeIdCache = new WeakMap<object, Map<string, TypeId>>();
 
 /**
  * TypeId represents a unique identifier for a type.
@@ -77,48 +72,26 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   }
 
   // Get the constructor if target is an instance
-  let constructor: Constructor<any>;
+  let constructor: Constructor;
   if (typeof target === 'object') {
-    constructor = target.constructor;
-  } else if (typeof target === 'function') {
-    constructor = target;
-  } else {
+    constructor = Type(target.constructor, genericParams);
+  } else if (typeof target === 'function' && target.prototype) {
+    constructor = Type(target.prototype.constructor, genericParams);
+  } else if (target.constructor) {
     // If target is a primitive value, get its constructor
-    constructor = target.constructor;
+    constructor = Type(target.constructor, genericParams);
+  } else {
+    constructor = target;
   }
 
-  // If no generic parameters, use simple type ID
-  if (genericParams === undefined || genericParams.length === 0) {
-    // Return existing ID if available
-    const existingId = typeIdMap.get(constructor);
-    if (existingId !== undefined) {
-      return existingId;
-    }
-
-    // Create and store new ID
-    const id = generateTypeId();
-    typeIdMap.set(constructor, id);
-    return id;
+  // Return existing ID if available
+  const existingId = typeIdMap.get(constructor);
+  if (existingId !== undefined) {
+    return existingId;
   }
 
-  // Handle generic parameters
-  let genericCache = genericTypeIdCache.get(constructor);
-  if (!genericCache) {
-    genericCache = new Map<string, TypeId>();
-    genericTypeIdCache.set(constructor, genericCache);
-  }
-
-  // Create a unique key for the generic parameters
-  const genericKey = genericParams.map((param) => typeId(param)).join(',');
-
-  // Return existing generic ID if available
-  const existingGenericId = genericCache.get(genericKey);
-  if (existingGenericId !== undefined) {
-    return existingGenericId;
-  }
-
-  // Create and store new generic ID
+  // Create and store new ID
   const id = generateTypeId();
-  genericCache.set(genericKey, id);
+  typeIdMap.set(constructor, id);
   return id;
 }
