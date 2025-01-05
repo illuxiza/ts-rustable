@@ -71,7 +71,7 @@ export class MapWindowsIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that maps over sliding windows of elements

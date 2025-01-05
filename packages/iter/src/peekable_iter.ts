@@ -67,7 +67,7 @@ export class PeekableIter<T> extends RustIter<T> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that allows peeking at the next element

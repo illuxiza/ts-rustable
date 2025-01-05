@@ -45,7 +45,7 @@ export class MapIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that transforms each element using a function

@@ -53,7 +53,7 @@ export class ScanIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that maintains state while transforming elements

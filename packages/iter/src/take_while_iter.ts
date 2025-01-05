@@ -55,7 +55,7 @@ export class TakeWhileIter<T> extends RustIter<T> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that takes elements while a predicate returns true

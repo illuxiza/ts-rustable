@@ -48,7 +48,7 @@ export class EnumerateIter<T> extends RustIter<[number, T]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that yields pairs of index and value

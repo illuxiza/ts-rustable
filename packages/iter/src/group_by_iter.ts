@@ -62,7 +62,7 @@ export class GroupByIter<T, K> extends RustIter<[K, T[]]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that groups elements by a key function

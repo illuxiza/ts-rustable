@@ -52,7 +52,7 @@ export class CycleIter<T> extends RustIter<T> {
 }
 
 // Extension to add cycle() method to base iterator
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that endlessly repeats the sequence of values

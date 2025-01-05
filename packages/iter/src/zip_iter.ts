@@ -52,7 +52,7 @@ export class ZipIter<T, U> extends RustIter<[T, U]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that combines elements with another iterator

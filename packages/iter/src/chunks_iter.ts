@@ -56,7 +56,7 @@ export class ChunksIter<T> extends RustIter<T[]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Splits the iterator into chunks of up to the specified size

@@ -56,7 +56,7 @@ export class IntersperseWithIter<T> extends RustIter<T> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Inserts a constant separator between elements

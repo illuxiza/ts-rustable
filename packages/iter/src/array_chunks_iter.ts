@@ -57,7 +57,7 @@ export class ArrayChunksIter<T, const N extends number> extends RustIter<T[]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Splits the iterator into arrays of fixed size

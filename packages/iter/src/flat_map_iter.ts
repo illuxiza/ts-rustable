@@ -58,7 +58,7 @@ export class FlatMapIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that maps elements to iterables and flattens the results

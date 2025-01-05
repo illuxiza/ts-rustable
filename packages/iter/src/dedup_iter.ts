@@ -48,7 +48,7 @@ export class DedupIter<T> extends RustIter<T> {
 }
 
 // Extension to add dedup() method to base iterator
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that removes consecutive duplicate elements

@@ -50,7 +50,7 @@ export class ChainIter<T> extends RustIter<T> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that yields all elements from this iterator, followed by all elements from another iterator

@@ -5,7 +5,7 @@
 
 import { RustIter } from './rust_iter';
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that yields elements in natural sorted order

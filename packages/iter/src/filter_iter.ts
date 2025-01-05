@@ -47,7 +47,7 @@ export class FilterIter<T> extends RustIter<T> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Creates an iterator that yields only elements satisfying the predicate

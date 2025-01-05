@@ -81,7 +81,7 @@ export class ChunkByIter<T> extends RustIter<T[]> {
   }
 }
 
-declare module './iter_impl' {
+declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Groups consecutive elements that satisfy the predicate into chunks
