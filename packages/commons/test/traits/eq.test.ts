@@ -1,9 +1,8 @@
-import { derive } from '@rustable/trait';
-import { equals } from '@rustable/utils';
+import { derive, equals } from '@rustable/utils';
 import { Eq } from '../../src/traits/eq';
 
 describe('Eq trait and equals function', () => {
-  @derive(Eq)
+  @derive([Eq])
   class Point {
     constructor(
       public x: number,

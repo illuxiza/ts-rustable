@@ -1,4 +1,4 @@
-import { trait } from '@rustable/trait';
+import { macroTrait, trait } from '@rustable/trait';
 import { equals } from '@rustable/utils';
 
 /**
@@ -25,7 +25,7 @@ import { equals } from '@rustable/utils';
  * - Handles special JavaScript values (NaN, undefined)
  */
 @trait
-export class Eq {
+class EqTrait {
   /**
    * Compare this object with another for equality
    * @param other Object to compare with
@@ -38,6 +38,10 @@ export class Eq {
     return equals(this, other);
   }
 }
+
+export const Eq = macroTrait(EqTrait);
+
+export interface Eq extends EqTrait {}
 
 Object.prototype.eq = function (other: any) {
   return this === other;

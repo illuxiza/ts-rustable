@@ -1,4 +1,4 @@
-import { trait, useTrait } from '@rustable/trait';
+import { macroTrait, trait, useTrait } from '@rustable/trait';
 import { Constructor } from '@rustable/utils';
 
 /**
@@ -22,11 +22,15 @@ import { Constructor } from '@rustable/utils';
  * - Thread-safe and memory efficient
  */
 @trait
-export class Default {
+class DefaultTrait {
   static default<T>(): T {
     return new this() as T;
   }
 }
+
+export const Default = macroTrait(DefaultTrait);
+
+export interface Default extends DefaultTrait {}
 
 export function defaultVal<T extends object>(target: Constructor<T>, generic?: Constructor<any>[]): T {
   return useTrait(target, Default, generic).default<T>();

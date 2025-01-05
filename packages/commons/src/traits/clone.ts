@@ -1,4 +1,4 @@
-import { trait } from '@rustable/trait';
+import { macroTrait, trait } from '@rustable/trait';
 import { deepClone } from '@rustable/utils';
 
 /**
@@ -25,7 +25,7 @@ import { deepClone } from '@rustable/utils';
  * - Thread-safe and memory efficient
  */
 @trait
-export class Clone {
+class CloneTrait {
   clone(hash = new WeakMap<object, any>()): this {
     if (hash.has(this)) {
       return hash.get(this);
@@ -33,6 +33,10 @@ export class Clone {
     return deepClone(this, hash);
   }
 }
+
+export const Clone = macroTrait(CloneTrait);
+
+export interface Clone extends CloneTrait {}
 
 declare global {
   interface Object extends Clone {}

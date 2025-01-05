@@ -1,9 +1,9 @@
 import { iter, RustIter } from '@rustable/iter';
-import { implTrait, trait } from '@rustable/trait';
+import { implTrait, macroTrait, trait } from '@rustable/trait';
 import { HashMap, HashSet, Vec } from '../collections';
 
 @trait
-export class Iter<T> implements Iterable<T> {
+class IterTrait<T> implements Iterable<T> {
   [Symbol.iterator](): IterableIterator<T> {
     throw new Error('Method not implemented.');
   }
@@ -58,6 +58,10 @@ export class Iter<T> implements Iterable<T> {
     return this.iter().enumerate();
   }
 }
+
+export const Iter = macroTrait(IterTrait);
+
+export interface Iter<T> extends IterTrait<T> {}
 
 declare module '../collections' {
   interface Vec<T> extends Iter<T> {}
