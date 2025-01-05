@@ -27,21 +27,25 @@ pnpm add @rustable/trait
 ### Defining a Trait
 
 ```typescript
-import { trait } from '@rustable/trait';
+import { trait, macroTrait } from '@rustable/trait';
 
 @trait
-class Display<T> {
+class DisplayTrait<T> {
   display(value: T): string {
     return String(value); // Default implementation
   }
 }
+
+// Create the trait using macroTrait
+export const Display = macroTrait(DisplayTrait);
 ```
 
 ### Implementing a Trait
 
 ```typescript
-import { implTrait } from '@rustable/trait';
+import { derive } from '@rustable/utils';
 
+@derive([Display])
 class Point {
   constructor(
     public x: number,
@@ -49,7 +53,7 @@ class Point {
   ) {}
 }
 
-// Implement Display for Point
+// Or manually implement using implTrait
 implTrait(Point, Display, {
   display() {
     return `Point(${this.x}, ${this.y})`;
@@ -108,30 +112,24 @@ class MultiFormat {
 }
 
 // Implement for different formats
-implTrait(MultiFormat, ToString, 'hex', {
+implTrait(MultiFormat, ToString, [Number], {
   toString() {
-    return this.value.toString(16);
+    return this.value.toString();
   },
 });
 
-implTrait(MultiFormat, ToString, 'binary', {
-  toString() {
-    return this.value.toString(2);
-  },
-});
-
-// Use specific implementation
+// Use implementation
 const num = new MultiFormat(42);
-const hexFormat = useTrait(num, ToString, 'hex');
-console.log(hexFormat.toString()); // "2a"
+const toString = useTrait(num, ToString);
+console.log(toString.toString()); // "42"
 ```
 
 ### Derive Decorator
 
 ```typescript
-import { derive } from '@rustable/trait';
+import { derive } from '@rustable/utils';
 
-// Automatically implement multiple commons
+// Automatically implement multiple traits
 @derive([Display, Clone, Debug])
 class Rectangle {
   constructor(

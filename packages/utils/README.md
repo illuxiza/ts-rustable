@@ -14,277 +14,304 @@ pnpm add @rustable/utils
 
 ## Key Components
 
-### Type Identification System (`type_id.ts`)
+### Type System (`type.ts`)
 
-- Provides a robust type identification system
-- Uses WeakMap for efficient memory management
-- Supports generic type parameters
-- Ensures type safety using TypeScript's branded type pattern
+- Generic type constructor factory
+- Efficient caching using WeakMap
+- Preserves static properties and prototype chain
+- Support for named generic types
+
+```typescript
+import { Type, typeId } from '@rustable/utils';
+
+// Generic type construction
+class Container<T> {
+  constructor(public value: T) {}
+  toString() {
+    return stringify(this.value);
+  }
+}
+
+// Create specific type with generics
+const StringContainer = Type(Container, [String]);
+const container = new StringContainer("hello");
+console.log(container.toString());  // '"hello"'
+
+// Type identification
+const id = typeId(StringContainer);  // Unique ID for Container<string>
+```
+
+### Derive System (`derive.ts`)
+
+- Provides decorators for applying traits and other functionality to classes
+- Supports both single and multiple derive functions
+- Includes type-safe derive functionality with `deriveType`
+- Preserves TypeScript type information
+
+```typescript
+import { derive, deriveType } from '@rustable/utils';
+
+// Basic usage
+@derive([Clone, Debug])
+class MyClass {}
+
+// Type-safe usage
+const MyDerive = deriveType([Resource, Serialize]);
+
+@MyDerive
+class TypeSafeClass {
+  value: string;
+}
+```
+
+### Factory Creation (`factory.ts`)
+
+- Creates class factories that work both with and without 'new' keyword
+- Preserves static methods and properties
+- Supports custom factory functions
+- Type-safe implementation
+
+```typescript
+import { createFactory } from '@rustable/utils';
+
+class MyClass {
+  static helper() { return 'help'; }
+}
+
+const Factory = createFactory(MyClass);
+const instance1 = Factory();      // Works without 'new'
+const instance2 = new Factory();  // Works with 'new'
+Factory.helper();                 // Static methods preserved
+```
 
 ### String Manipulation (`stringify.ts`)
 
-- Advanced string manipulation and conversion utilities
-- Handles complex object to string conversions
+- Robust string conversion for all JavaScript types
+- Handles circular references and complex objects
+- Produces deterministic output by sorting object keys
+- Comprehensive type conversion rules
+
+```typescript
+import { stringify } from '@rustable/utils';
+
+// Basic value stringification
+stringify(42);              // '42'
+stringify('hello');         // 'hello'
+stringify(null);           // ''
+stringify(undefined);      // ''
+
+// Complex object stringification
+const user = {
+  name: 'John',
+  info: { age: 30 }
+};
+stringify(user);  // '{info:{age:30},name:"John"}'
+
+// Special types
+stringify(Symbol('key'));  // 'Symbol(key)'
+stringify(42n);           // '42'
+stringify(() => {});      // 'function...'
+
+// Arrays and Maps
+stringify([1, 2, 3]);     // '[1,2,3]'
+stringify(new Map([['a', 1]])); // 'Map{a:1}'
+
+// Dates
+stringify(new Date(1234567890)); // 'Date("1234567890")'
+```
 
 ### Hashing (`hash.ts`)
 
-- Implements hashing functionality for various data types
-- Provides consistent hash generation
-
-### Object Cloning (`clone.ts`)
-
-- Deep cloning utilities for objects
-- Handles complex data structures
-
-### Equality Comparison (`eq.ts`)
-
-- Implements equality comparison functionality
-- Supports deep equality checks
-
-### Mutable Reference (`mut.ts`)
-
-- Provides a mutable reference with getter and setter functions
-- Supports generic types for flexible usage
-
-### Immutable Reference (`ref.ts`)
-
-- Provides an immutable reference to values
-- Creates a deep clone of the original value
-- Supports independent modifications without affecting the original
-
-## Usage
-
-Import the required utilities from the package:
-
-```typescript
-import { typeId, clone, hash, stringify, Mut, Ref } from '@rustable/utils';
-```
-
-### Example: Using Type ID
-
-```typescript
-class MyClass {}
-const id = typeId(MyClass); // Get type ID for class
-
-// With generic parameters
-class Container<T> {}
-const stringContainerId = typeId(Container, [String]);
-```
-
-### Example: Deep Cloning
-
-```typescript
-import { deepCopy } from '@rustable/utils';
-
-// Cloning simple objects
-const original = { name: 'John', age: 30 };
-const clone = deepCopy(original);
-
-// Cloning complex objects with circular references
-const complexObj = {
-  data: [1, 2, 3],
-  date: new Date(),
-};
-complexObj.self = complexObj; // circular reference
-const cloned = deepCopy(complexObj);
-```
-
-### Example: Hashing
+- Consistent hash values for all JavaScript types
+- Special handling for primitives and objects
 
 ```typescript
 import { hash } from '@rustable/utils';
 
-// Hash simple values
-const numberHash = hash(42);
-const stringHash = hash('Hello World');
+// Primitive values
+hash('hello');         // djb2 hash of the string
+hash(42);             // 42 (number as is)
+hash(true);           // 1
+hash(false);          // 0
+hash(null);           // -1
+hash(undefined);      // -1
 
-// Hash objects
-const objectHash = hash({ x: 1, y: 2 });
-const arrayHash = hash([1, 2, 3]);
+// Objects are hashed based on their string representation
+const obj = { x: 1, y: 2 };
+hash(obj);            // hash of '{x:1,y:2}'
 ```
 
-### Example: Equality Comparison
+### Object Cloning (`clone.ts`)
+
+- Comprehensive deep cloning system
+- Handles circular references
+- Supports custom clone methods
+- Special handling for built-in types (Date, RegExp, Set, Map)
+
+```typescript
+import { deepClone } from '@rustable/utils';
+
+// Clone primitive values
+const num = deepClone(42);
+const str = deepClone("hello");
+
+// Clone complex objects
+const original = {
+  date: new Date(),
+  regex: /test/g,
+  set: new Set([1, 2, 3]),
+  map: new Map([['a', 1], ['b', 2]]),
+  nested: { array: [1, 2, 3] }
+};
+
+const cloned = deepClone(original);
+// Each property is properly cloned:
+// - date is a new Date instance
+// - regex is a new RegExp
+// - set is a new Set
+// - map is a new Map
+// - nested objects are deeply cloned
+
+// Custom clone method support
+class Point {
+  constructor(public x: number, public y: number) {}
+  clone() {
+    return new Point(this.x, this.y);
+  }
+}
+
+const point = new Point(1, 2);
+const clonedPoint = deepClone(point); // Uses Point's clone method
+```
+
+### Equality Comparison (`eq.ts`)
+
+- Deep equality comparison using value serialization
+- Handles all JavaScript types consistently
+- Supports complex objects and nested structures
 
 ```typescript
 import { equals } from '@rustable/utils';
 
-// Compare simple values
-console.log(equals(5, 5)); // true
-console.log(equals('hello', 'hello')); // true
+// Compare primitive values
+equals(42, 42);              // true
+equals("hello", "hello");    // true
 
 // Compare objects
-const obj1 = { x: 1, y: [1, 2, 3] };
-const obj2 = { x: 1, y: [1, 2, 3] };
-console.log(equals(obj1, obj2)); // true
+equals({ x: 1 }, { x: 1 });  // true
+equals([1, 2], [1, 2]);      // true
+
+// Compare nested structures
+const obj1 = { data: { points: [1, 2] } };
+const obj2 = { data: { points: [1, 2] } };
+equals(obj1, obj2);          // true
 ```
 
-### Example: Using Mutable Reference
+### Value Management (`val.ts`)
+
+- Provides utilities for value manipulation and comparison
+- Supports primitive and object types
+- Implements safe equality comparisons
 
 ```typescript
-import { Mut } from '@rustable/utils';
+import { Val } from '@rustable/utils';
 
-// Create a mutable object reference
-let obj = { name: 'Alice', age: 30 };
-const mutRef = Mut.of({
-  get: () => obj,
-  set: (newValue) => {
-    obj = newValue;
-  },
+// Create an immutable reference
+const original = { count: 0, data: [1, 2, 3] };
+const val = Val(original);
+
+// Modifications don't affect original
+val.count = 1;
+val.data.push(4);
+console.log(original.count);     // Still 0
+console.log(original.data);      // Still [1, 2, 3]
+
+// Access original through symbol
+const originalRef = val[Val.ptr];
+console.log(originalRef === original);  // true
+```
+
+### Pointer Management (`ptr.ts`)
+
+- Provides mutable reference functionality
+- Supports transparent property access
+- Includes value replacement utilities
+- Type-safe implementation
+
+```typescript
+import { Ptr } from '@rustable/utils';
+
+// Basic pointer usage with method support
+class Counter {
+  count = 0;
+  increment() { this.count++; }
+}
+
+let counter = new Counter();
+const ptr = Ptr({
+  get: () => counter,
+  set: (v) => counter = v
 });
 
-// Access and modify properties directly
-console.log(mutRef.name); // Output: 'Alice'
-mutRef.age = 31;
-console.log(obj.age); // Output: 31
+// Method calls and property access work transparently
+ptr.increment();
+console.log(counter.count);  // 1
 
-// Replace entire object using Mut.ptr
-mutRef[Mut.ptr] = { name: 'Bob', age: 25 };
-console.log(obj); // Output: { name: 'Bob', age: 25 }
-
-// Get current value using Mut.ptr
-console.log(mutRef[Mut.ptr]); // Output: { name: 'Bob', age: 25 }
-
-// Replace using Mut.replace helper
-Mut.replace(mutRef, { name: 'Charlie', age: 20 });
-console.log(obj); // Output: { name: 'Charlie', age: 20 }
-
-// Working with nested objects
-let nested = {
-  info: {
-    name: 'Alice',
-    hobbies: ['reading'],
-  },
-};
-const nestedRef = Mut.of({
-  get: () => nested,
-  set: (newValue) => {
-    nested = newValue;
-  },
-});
-
-// Modify nested properties
-nestedRef.info.hobbies.push('coding');
-console.log(nested.info.hobbies); // Output: ['reading', 'coding']
-
-// Replace nested object
-Mut.replace(nestedRef, {
-  info: {
-    name: 'Bob',
-    hobbies: ['gaming'],
-  },
-});
-console.log(nested); // Output: { info: { name: 'Bob', hobbies: ['gaming'] } }
+// Value replacement
+Ptr.replace(ptr, new Counter());
 ```
 
-### Example: Using Immutable Reference
+## Advanced Usage
+
+### Combining Features
 
 ```typescript
-import { Ref } from '@rustable/utils';
+import { Ptr, Val, stringify, equals } from '@rustable/utils';
 
-// Create a reference
-const obj = { name: 'Alice', age: 30 };
-const ref = Ref.of(obj);
-
-// Modify the reference
-ref.name = 'Bob';
-console.log(ref.name); // 'Bob'
-
-// Original remains unchanged
-console.log(obj.name); // 'Alice'
-
-// Access original through ptr
-console.log(ref[Ref.ptr].name); // 'Alice'
-```
-
-## Ref
-
-The `Ref` type provides a way to create immutable references to values. Unlike `Mut`, which tracks mutations to the original value, `Ref` creates an independent copy that can be modified without affecting the original.
-
-### Usage
-
-```typescript
-import { Ref } from '@congeer/utils';
-
-// Create a reference
-const obj = { name: 'Alice', age: 30 };
-const ref = Ref.of(obj);
-
-// Modify the reference
-ref.name = 'Bob';
-console.log(ref.name); // 'Bob'
-
-// Original remains unchanged
-console.log(obj.name); // 'Alice'
-
-// Access original through ptr
-console.log(ref[Ref.ptr].name); // 'Alice'
-```
-
-### Features
-
-- **Deep Cloning**: Creates a deep clone of the original value, ensuring complete isolation
-- **Independent Modifications**: The reference can be freely modified without affecting the original
-- **Original Access**: The original value can be accessed through `Ref.ptr` symbol
-- **Method Support**: All methods work on the cloned value, preserving the original
-
-### Example with Complex Objects
-
-```typescript
-// Arrays
-const arr = [1, 2, 3];
-const arrRef = Ref.of(arr);
-
-arrRef.push(4);
-console.log([...arrRef]); // [1, 2, 3, 4]
-console.log(arr); // [1, 2, 3]
-
-// Objects with Methods
-class User {
-  constructor(public name: string) {}
-  setName(name: string) {
-    this.name = name;
-    return this;
+// Safe reference with immutable copies
+class SafeReference<T> {
+  private ptr: Ptr<T>;
+  
+  constructor(value: T) {
+    let current = Val(value);  // Immutable copy
+    this.ptr = Ptr({
+      get: () => current,
+      set: (v) => current = Val(v)  // New immutable copy on set
+    });
+  }
+  
+  get value(): T {
+    return this.ptr[Ptr.ptr];
+  }
+  
+  modify(fn: (value: T) => T) {
+    Ptr.replace(this.ptr, fn(this.value));
+  }
+  
+  toString() {
+    return stringify(this.value);
+  }
+  
+  equals(other: T) {
+    return equals(this.value, other);
   }
 }
 
-const user = new User('Alice');
-const userRef = Ref.of(user);
-
-userRef.setName('Bob');
-console.log(userRef.name); // 'Bob'
-console.log(user.name); // 'Alice'
-```
-
-### When to Use
-
-- When you need to experiment with modifications without affecting the original
-- When you want to maintain a separate copy of a value
-- When you need to compare modified state with original state
-- In scenarios where immutability of the original value is critical
-
-### Comparison with Mut
-
-While `Mut` tracks and propagates changes to the original value, `Ref` provides isolation:
-
-```typescript
-// Mut modifies original
-const mut = Mut.of({ value: 1 });
-mut.value = 2;
-console.log(mut[Mut.ptr].value); // 2
-
-// Ref keeps original unchanged
-const ref = Ref.of({ value: 1 });
-ref.value = 2;
-console.log(ref[Ref.ptr].value); // 1
+// Usage example combining multiple features
+const ref = new SafeReference({ data: [1, 2, 3] });
+ref.modify(val => ({ data: [...val.data, 4] }));
+console.log(ref.toString());  // '{data:[1,2,3,4]}'
+console.log(ref.equals({ data: [1, 2, 3, 4] }));  // true
 ```
 
 ## Notes
 
 - All utilities are designed with TypeScript's type system in mind
 - The package uses WeakMap for efficient memory management
-- Generic type support is available where applicable
-- The `Mut` type provides a proxy-based mutable reference that allows direct property access and modification
-- The `Ref` type provides an immutable reference to values, creating a deep clone of the original value
+- The `Ptr` type provides a proxy-based mutable reference
+- The `Val` type provides an immutable reference with deep cloning
+- All string conversions handle circular references and special types
+- Hash values are consistent across different runs
 
 ## License
 

@@ -39,43 +39,46 @@ pnpm add rustable
 
 🎭 Enum support and pattern matching
 
-- Option\<T> for null safety
-- Result\<T, E> for error handling
-- Enum support with pattern matching
-- Rich combinators (map, andThen, unwrapOr)
+- Option\<T> for null safety with rich combinators
+- Result<T, E> for error handling with chainable operations
+- Pattern matching with exhaustive checks
+- Enum support with variant types
+- Match expressions with guard clauses
 
 ### [@rustable/iter](https://github.com/illuxiza/ts-rustable/tree/main/packages/iter#readme)
 
 🔁 Iterator utilities and lazy evaluation
 
-- Rust-like iterator methods
-- Lazy evaluation of collections
-- Powerful transformation and filtering
-- Chaining and composition of iterators
-- Performance-optimized iterator operations
+- Rust-like iterator methods (map, filter, fold)
+- Lazy evaluation and efficient chaining
+- Specialized iterators (Range, Zip, Chain)
+- Consuming operations (collect, reduce, find)
+- Iterator adaptors (take, skip, enumerate)
 
 ### [@rustable/trait](https://github.com/illuxiza/ts-rustable/tree/main/packages/trait#readme)
 
 🎯 Core trait system implementation
 
-- Type-safe trait definitions
-- Runtime trait checking
-- Decorator-based API
-- Default implementations
+- Type-safe trait definitions with generics
+- Runtime trait checking and verification
+- Macro-based trait implementation
+- Default implementations with overrides
+- Trait composition and inheritance
 
 ### [@rustable/utils](https://github.com/illuxiza/ts-rustable/tree/main/packages/utils#readme)
 
 🛠️ Core utilities
 
-- Type identification system
-- Object cloning utilities
-- Hash function implementations
-- Equality comparison
-- Mutable (Mut) and immutable (Ref) references
+- Type system utilities with generic support
+- Pointer management (Ptr) for mutable references
+- Value management (Val) for immutable references
+- Efficient hashing and equality comparison
+- String manipulation and serialization
+- Derive system for automatic trait implementation
 
 ## Contributing
 
-We welcome contributions! Please feel free to submit a Pull Request.
+We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
 ## License
 

@@ -1,17 +1,16 @@
 import { defineConfig } from 'monoup';
 
 export default defineConfig({
-  name: 'rustable',
   monorepo: true,
   sourcemap: false,
-  production: true,
 
   build: {
+    main: true,
     mainEntry: 'index.ts',
     packageEntry: 'index.ts',
 
     typescript: {
-      enabled: true, 
+      enabled: true,
       declaration: true,
       removeComments: false,
     },
