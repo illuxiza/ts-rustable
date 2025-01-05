@@ -3,10 +3,10 @@
  * Provides functionality to sort elements and check sorting order
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields elements in natural sorted order
      * @returns A new iterator yielding sorted elements
@@ -18,7 +18,7 @@ declare module './iter_impl' {
      *   .collect() // [1, 1, 3, 4, 5]
      * ```
      */
-    sort(): IterImpl<T>;
+    sort(): RustIter<T>;
 
     /**
      * Creates an iterator that yields elements sorted by a comparison function
@@ -32,7 +32,7 @@ declare module './iter_impl' {
      *   .collect() // ['apple', 'banana', 'cherry']
      * ```
      */
-    sortBy(compare: (a: T, b: T) => number): IterImpl<T>;
+    sortBy(compare: (a: T, b: T) => number): RustIter<T>;
 
     /**
      * Creates an iterator that yields elements sorted by a key function
@@ -46,7 +46,7 @@ declare module './iter_impl' {
      *   .collect() // [{ id: 1 }, { id: 2 }, { id: 3 }]
      * ```
      */
-    sortByKey<K>(f: (x: T) => K): IterImpl<T>;
+    sortByKey<K>(f: (x: T) => K): RustIter<T>;
 
     /**
      * Checks if elements are in natural sorted order
@@ -88,29 +88,29 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.sort = function <T>(this: IterImpl<T>): IterImpl<T> {
+RustIter.prototype.sort = function <T>(this: RustIter<T>): RustIter<T> {
   const items = [...this];
   items.sort();
-  return new IterImpl(items);
+  return new RustIter(items);
 };
 
-IterImpl.prototype.sortBy = function <T>(this: IterImpl<T>, compare: (a: T, b: T) => number): IterImpl<T> {
+RustIter.prototype.sortBy = function <T>(this: RustIter<T>, compare: (a: T, b: T) => number): RustIter<T> {
   const items = [...this];
   items.sort(compare);
-  return new IterImpl(items);
+  return new RustIter(items);
 };
 
-IterImpl.prototype.sortByKey = function <T, K>(this: IterImpl<T>, f: (x: T) => K): IterImpl<T> {
+RustIter.prototype.sortByKey = function <T, K>(this: RustIter<T>, f: (x: T) => K): RustIter<T> {
   const items = [...this];
   items.sort((a, b) => {
     const ka = f(a);
     const kb = f(b);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
-  return new IterImpl(items);
+  return new RustIter(items);
 };
 
-IterImpl.prototype.isSorted = function <T>(this: IterImpl<T>): boolean {
+RustIter.prototype.isSorted = function <T>(this: RustIter<T>): boolean {
   const iterator = this[Symbol.iterator]();
   const first = iterator.next();
   if (first.done) {
@@ -131,7 +131,7 @@ IterImpl.prototype.isSorted = function <T>(this: IterImpl<T>): boolean {
   return true;
 };
 
-IterImpl.prototype.isSortedBy = function <T>(this: IterImpl<T>, compare: (a: T, b: T) => number): boolean {
+RustIter.prototype.isSortedBy = function <T>(this: RustIter<T>, compare: (a: T, b: T) => number): boolean {
   const iterator = this[Symbol.iterator]();
   const first = iterator.next();
   if (first.done) {
@@ -152,7 +152,7 @@ IterImpl.prototype.isSortedBy = function <T>(this: IterImpl<T>, compare: (a: T, 
   return true;
 };
 
-IterImpl.prototype.isSortedByKey = function <T, K>(this: IterImpl<T>, f: (x: T) => K): boolean {
+RustIter.prototype.isSortedByKey = function <T, K>(this: RustIter<T>, f: (x: T) => K): boolean {
   const iterator = this[Symbol.iterator]();
   const first = iterator.next();
   if (first.done) {

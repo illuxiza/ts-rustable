@@ -3,13 +3,13 @@
  * Provides functionality to combine multiple iterators into a single iterator of tuples
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that combines elements from two iterators into pairs
  * Similar to Rust's zip() iterator adapter
  */
-export class ZipIter<T, U> extends IterImpl<[T, U]> {
+export class ZipIter<T, U> extends RustIter<[T, U]> {
   private firstIter: IterableIterator<T>;
   private secondIter: IterableIterator<U>;
 
@@ -18,7 +18,7 @@ export class ZipIter<T, U> extends IterImpl<[T, U]> {
    * @param firstIter First iterator to zip
    * @param secondIter Second iterator to zip
    */
-  constructor(firstIter: IterImpl<T>, secondIter: IterImpl<U>) {
+  constructor(firstIter: RustIter<T>, secondIter: RustIter<U>) {
     super([]);
     this.firstIter = firstIter[Symbol.iterator]();
     this.secondIter = secondIter[Symbol.iterator]();
@@ -53,7 +53,7 @@ export class ZipIter<T, U> extends IterImpl<[T, U]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that combines elements with another iterator
      * @param other Iterator to combine with
@@ -77,7 +77,7 @@ declare module './iter_impl' {
      *   .collect() // [['x', 0], ['y', 1], ['z', 2]]
      * ```
      */
-    zip<U>(other: IterImpl<U>): ZipIter<T, U>;
+    zip<U>(other: RustIter<U>): ZipIter<T, U>;
 
     /**
      * Splits an iterator of tuples into a tuple of arrays
@@ -101,15 +101,15 @@ declare module './iter_impl' {
      *   .unzip() // [[], []]
      * ```
      */
-    unzip<U, V>(this: IterImpl<[U, V]>): [U[], V[]];
+    unzip<U, V>(this: RustIter<[U, V]>): [U[], V[]];
   }
 }
 
-IterImpl.prototype.zip = function <T, U>(this: IterImpl<T>, other: IterImpl<U>): ZipIter<T, U> {
+RustIter.prototype.zip = function <T, U>(this: RustIter<T>, other: RustIter<U>): ZipIter<T, U> {
   return new ZipIter(this, other);
 };
 
-IterImpl.prototype.unzip = function <T, U>(this: IterImpl<[T, U]>): [T[], U[]] {
+RustIter.prototype.unzip = function <T, U>(this: RustIter<[T, U]>): [T[], U[]] {
   const first: T[] = [];
   const second: U[] = [];
 

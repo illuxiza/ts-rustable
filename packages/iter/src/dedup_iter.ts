@@ -3,20 +3,20 @@
  * Provides functionality to remove consecutive duplicate elements from an iterator
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that removes consecutive duplicate elements
  * Similar to Rust's dedup() iterator adapter
  */
-export class DedupIter<T> extends IterImpl<T> {
+export class DedupIter<T> extends RustIter<T> {
   private lastItem: T | undefined;
 
   /**
    * Creates a new deduplication iterator
    * @param iter Source iterator to remove duplicates from
    */
-  constructor(iter: IterImpl<T>) {
+  constructor(iter: RustIter<T>) {
     super(iter);
   }
 
@@ -49,7 +49,7 @@ export class DedupIter<T> extends IterImpl<T> {
 
 // Extension to add dedup() method to base iterator
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that removes consecutive duplicate elements
      * @returns A new iterator with consecutive duplicates removed
@@ -65,6 +65,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.dedup = function <T>(this: IterImpl<T>): DedupIter<T> {
+RustIter.prototype.dedup = function <T>(this: RustIter<T>): DedupIter<T> {
   return new DedupIter(this);
 };

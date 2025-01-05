@@ -3,18 +3,18 @@
  * Provides functionality to create an iterator that stops after the first None
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that stops after encountering the first None
  * Similar to Rust's fuse() iterator adapter
  */
-export class FuseIter<T> extends IterImpl<T> {
+export class FuseIter<T> extends RustIter<T> {
   /**
    * Creates a new fuse iterator
    * @param iter Source iterator to fuse
    */
-  constructor(iter: IterImpl<T>) {
+  constructor(iter: RustIter<T>) {
     super(iter);
   }
 
@@ -40,7 +40,7 @@ export class FuseIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that stops after the first None
      * @returns A new iterator that stops permanently after first None
@@ -66,6 +66,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.fuse = function <T>(this: IterImpl<T>): FuseIter<T> {
+RustIter.prototype.fuse = function <T>(this: RustIter<T>): FuseIter<T> {
   return new FuseIter(this);
 };

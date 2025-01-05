@@ -3,13 +3,13 @@
  * Provides functionality to take elements while a condition is true
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields elements while a predicate returns true
  * Similar to Rust's take_while() iterator adapter
  */
-export class TakeWhileIter<T> extends IterImpl<T> {
+export class TakeWhileIter<T> extends RustIter<T> {
   private done: boolean = false;
 
   /**
@@ -18,7 +18,7 @@ export class TakeWhileIter<T> extends IterImpl<T> {
    * @param predicate Function that determines which elements to take
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => boolean,
   ) {
     super(iter);
@@ -56,7 +56,7 @@ export class TakeWhileIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that takes elements while a predicate returns true
      * @param predicate Function that determines which elements to take
@@ -84,6 +84,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.takeWhile = function <T>(this: IterImpl<T>, predicate: (x: T) => boolean): TakeWhileIter<T> {
+RustIter.prototype.takeWhile = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): TakeWhileIter<T> {
   return new TakeWhileIter(this, predicate);
 };

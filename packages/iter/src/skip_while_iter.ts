@@ -3,13 +3,13 @@
  * Provides functionality to skip elements while a condition is true
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that skips elements while a predicate returns true
  * Similar to Rust's skip_while() iterator adapter
  */
-export class SkipWhileIter<T> extends IterImpl<T> {
+export class SkipWhileIter<T> extends RustIter<T> {
   private done: boolean = false;
   private old: IterableIterator<T>;
 
@@ -19,7 +19,7 @@ export class SkipWhileIter<T> extends IterImpl<T> {
    * @param predicate Function that determines which elements to skip
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => boolean,
   ) {
     super([]);
@@ -57,7 +57,7 @@ export class SkipWhileIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that skips elements while a predicate returns true
      * @param predicate Function that determines which elements to skip
@@ -85,6 +85,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.skipWhile = function <T>(this: IterImpl<T>, predicate: (x: T) => boolean): SkipWhileIter<T> {
+RustIter.prototype.skipWhile = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): SkipWhileIter<T> {
   return new SkipWhileIter(this, predicate);
 };

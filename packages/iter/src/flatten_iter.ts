@@ -3,13 +3,13 @@
  * Provides functionality to flatten nested iterables into a single sequence
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that flattens nested iterables into a single sequence
  * Similar to Rust's flatten() iterator adapter
  */
-export class FlattenIter<T, I extends Iterable<T>> extends IterImpl<T> {
+export class FlattenIter<T, I extends Iterable<T>> extends RustIter<T> {
   private currentIter: Iterator<T> | null = null;
   private sourceIter: Iterator<Iterable<T>>;
 
@@ -17,7 +17,7 @@ export class FlattenIter<T, I extends Iterable<T>> extends IterImpl<T> {
    * Creates a new flatten iterator
    * @param iter Source iterator containing nested iterables
    */
-  constructor(iter: IterImpl<I>) {
+  constructor(iter: RustIter<I>) {
     super([]);
     this.sourceIter = iter[Symbol.iterator]();
   }
@@ -56,7 +56,7 @@ export class FlattenIter<T, I extends Iterable<T>> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that flattens nested iterables into a single sequence
      * @returns A new iterator yielding elements from all nested sequences
@@ -80,10 +80,10 @@ declare module './iter_impl' {
      *   .collect() // [2, 4, 6]
      * ```
      */
-    flatten<U>(this: IterImpl<T & Iterable<U>>): IterImpl<U>;
+    flatten<U>(this: RustIter<T & Iterable<U>>): RustIter<U>;
   }
 }
 
-IterImpl.prototype.flatten = function <T, U>(this: IterImpl<T & Iterable<U>>): IterImpl<U> {
+RustIter.prototype.flatten = function <T, U>(this: RustIter<T & Iterable<U>>): RustIter<U> {
   return new FlattenIter<U, T & Iterable<U>>(this);
 };

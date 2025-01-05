@@ -3,13 +3,13 @@
  * Provides functionality to iterate over elements in reverse order
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields elements in reverse order
  * Similar to Rust's rev() iterator adapter
  */
-export class RevIter<T> extends IterImpl<T> {
+export class RevIter<T> extends RustIter<T> {
   private items: T[];
   private index: number;
 
@@ -17,7 +17,7 @@ export class RevIter<T> extends IterImpl<T> {
    * Creates a new reverse iterator
    * @param iter Source iterator to reverse
    */
-  constructor(iter: IterImpl<T>) {
+  constructor(iter: RustIter<T>) {
     super([]);
     this.items = [...iter];
     this.index = this.items.length - 1;
@@ -44,7 +44,7 @@ export class RevIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields elements in reverse order
      * Note: This consumes the iterator to build a reversed collection
@@ -78,10 +78,10 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.rev = function <T>(this: IterImpl<T>): RevIter<T> {
+RustIter.prototype.rev = function <T>(this: RustIter<T>): RevIter<T> {
   return new RevIter(this);
 };
 
-IterImpl.prototype.reverse = function <T>(this: IterImpl<T>): RevIter<T> {
+RustIter.prototype.reverse = function <T>(this: RustIter<T>): RevIter<T> {
   return new RevIter(this);
 };

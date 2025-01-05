@@ -3,13 +3,13 @@
  * Provides functionality to split an iterator into chunks of elements
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that splits elements into chunks
  * Similar to Rust's chunks() iterator adapter
  */
-export class ChunksIter<T> extends IterImpl<T[]> {
+export class ChunksIter<T> extends RustIter<T[]> {
   private old: IterableIterator<T>;
 
   /**
@@ -19,7 +19,7 @@ export class ChunksIter<T> extends IterImpl<T[]> {
    * @throws Error if size is not positive
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private size: number,
   ) {
     super([]);
@@ -57,7 +57,7 @@ export class ChunksIter<T> extends IterImpl<T[]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Splits the iterator into chunks of up to the specified size
      * The last chunk may be smaller than the chunk size
@@ -80,6 +80,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.chunks = function <T>(this: IterImpl<T>, size: number): ChunksIter<T> {
+RustIter.prototype.chunks = function <T>(this: RustIter<T>, size: number): ChunksIter<T> {
   return new ChunksIter(this, size);
 };

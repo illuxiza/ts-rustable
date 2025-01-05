@@ -3,13 +3,13 @@
  * Provides functionality to pair each element with its index
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields pairs of index and value
  * Similar to Rust's enumerate() iterator adapter
  */
-export class EnumerateIter<T> extends IterImpl<[number, T]> {
+export class EnumerateIter<T> extends RustIter<[number, T]> {
   private old: IterableIterator<T>;
   private index: number = 0;
 
@@ -17,7 +17,7 @@ export class EnumerateIter<T> extends IterImpl<[number, T]> {
    * Creates a new enumerate iterator
    * @param iter Source iterator to enumerate
    */
-  constructor(private iter: IterImpl<T>) {
+  constructor(private iter: RustIter<T>) {
     super([]);
     this.old = iter[Symbol.iterator]();
   }
@@ -49,7 +49,7 @@ export class EnumerateIter<T> extends IterImpl<[number, T]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields pairs of index and value
      * The index starts at 0 and increments by 1 for each element
@@ -79,6 +79,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.enumerate = function <T>(this: IterImpl<T>): EnumerateIter<T> {
+RustIter.prototype.enumerate = function <T>(this: RustIter<T>): EnumerateIter<T> {
   return new EnumerateIter(this);
 };

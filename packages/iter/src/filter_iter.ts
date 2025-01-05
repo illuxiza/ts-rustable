@@ -3,20 +3,20 @@
  * Provides functionality to filter elements based on a predicate
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields only elements that satisfy a predicate
  * Similar to Rust's filter() iterator adapter
  */
-export class FilterIter<T> extends IterImpl<T> {
+export class FilterIter<T> extends RustIter<T> {
   /**
    * Creates a new filter iterator
    * @param iter Source iterator to filter
    * @param predicate Function that determines which elements to keep
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => boolean,
   ) {
     super(iter);
@@ -48,7 +48,7 @@ export class FilterIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields only elements satisfying the predicate
      * @param predicate Function that returns true for elements to keep
@@ -79,6 +79,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.filter = function <T>(this: IterImpl<T>, predicate: (x: T) => boolean): FilterIter<T> {
+RustIter.prototype.filter = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): FilterIter<T> {
   return new FilterIter(this, predicate);
 };

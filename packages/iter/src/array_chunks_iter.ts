@@ -3,13 +3,13 @@
  * Provides functionality to split an iterator into fixed-size arrays
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that splits elements into fixed-size arrays
  * Similar to Rust's array_chunks() iterator adapter
  */
-export class ArrayChunksIter<T, const N extends number> extends IterImpl<T[]> {
+export class ArrayChunksIter<T, const N extends number> extends RustIter<T[]> {
   private old: IterableIterator<T>;
 
   /**
@@ -19,7 +19,7 @@ export class ArrayChunksIter<T, const N extends number> extends IterImpl<T[]> {
    * @throws Error if size is not positive
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private size: N,
   ) {
     super([]);
@@ -58,7 +58,7 @@ export class ArrayChunksIter<T, const N extends number> extends IterImpl<T[]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Splits the iterator into arrays of fixed size
      * Only yields arrays that are exactly the specified size
@@ -82,8 +82,8 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.arrayChunks = function <T, const N extends number>(
-  this: IterImpl<T>,
+RustIter.prototype.arrayChunks = function <T, const N extends number>(
+  this: RustIter<T>,
   size: N,
 ): ArrayChunksIter<T, N> {
   return new ArrayChunksIter(this, size);

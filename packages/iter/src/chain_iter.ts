@@ -3,13 +3,13 @@
  * Provides functionality to chain two iterators together sequentially
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that chains two iterators together
  * Similar to Rust's chain() iterator adapter
  */
-export class ChainIter<T> extends IterImpl<T> {
+export class ChainIter<T> extends RustIter<T> {
   private firstIter: IterableIterator<T>;
   private secondIter: IterableIterator<T>;
   private firstDone: boolean = false;
@@ -19,7 +19,7 @@ export class ChainIter<T> extends IterImpl<T> {
    * @param firstIter First iterator to consume
    * @param secondIter Second iterator to consume after first is done
    */
-  constructor(firstIter: IterImpl<T>, secondIter: IterImpl<T>) {
+  constructor(firstIter: RustIter<T>, secondIter: RustIter<T>) {
     super([]);
     this.firstIter = firstIter[Symbol.iterator]();
     this.secondIter = secondIter[Symbol.iterator]();
@@ -51,7 +51,7 @@ export class ChainIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields all elements from this iterator, followed by all elements from another iterator
      * @param other The iterator to chain after this one
@@ -68,10 +68,10 @@ declare module './iter_impl' {
      *   .join('-') // "a-b-c"
      * ```
      */
-    chain(other: IterImpl<T>): ChainIter<T>;
+    chain(other: RustIter<T>): ChainIter<T>;
   }
 }
 
-IterImpl.prototype.chain = function <T>(this: IterImpl<T>, other: IterImpl<T>): ChainIter<T> {
+RustIter.prototype.chain = function <T>(this: RustIter<T>, other: RustIter<T>): ChainIter<T> {
   return new ChainIter(this, other);
 };

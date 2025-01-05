@@ -3,13 +3,13 @@
  * Provides functionality to map and flatten nested iterators into a single iterator
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that maps elements to iterators and flattens the results
  * Similar to Rust's flat_map() iterator adapter
  */
-export class FlatMapIter<T, U> extends IterImpl<U> {
+export class FlatMapIter<T, U> extends RustIter<U> {
   private currentIterator: Iterator<U> | null = null;
 
   /**
@@ -18,7 +18,7 @@ export class FlatMapIter<T, U> extends IterImpl<U> {
    * @param f Function that maps elements to iterables
    */
   constructor(
-    private iter: IterImpl<T>,
+    private iter: RustIter<T>,
     private f: (x: T) => Iterable<U>,
   ) {
     super([]);
@@ -59,7 +59,7 @@ export class FlatMapIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that maps elements to iterables and flattens the results
      * @param f Function that maps elements to iterables
@@ -83,10 +83,10 @@ declare module './iter_impl' {
      *   .collect() // [0, 0, 1]
      * ```
      */
-    flatMap<U>(f: (x: T) => Iterable<U>): IterImpl<U>;
+    flatMap<U>(f: (x: T) => Iterable<U>): RustIter<U>;
   }
 }
 
-IterImpl.prototype.flatMap = function <T, U>(this: IterImpl<T>, f: (x: T) => Iterable<U>): IterImpl<U> {
+RustIter.prototype.flatMap = function <T, U>(this: RustIter<T>, f: (x: T) => Iterable<U>): RustIter<U> {
   return new FlatMapIter(this, f);
 };

@@ -3,13 +3,13 @@
  * Provides functionality to take every nth element from an iterator
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields every nth element
  * Similar to Rust's step_by() iterator adapter
  */
-export class StepByIter<T> extends IterImpl<T> {
+export class StepByIter<T> extends RustIter<T> {
   private index = 0;
 
   /**
@@ -19,7 +19,7 @@ export class StepByIter<T> extends IterImpl<T> {
    * @throws Error if step is not positive
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private step: number,
   ) {
     super(iter);
@@ -57,7 +57,7 @@ export class StepByIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that yields every nth element
      * @param step Number of elements to skip between each yield
@@ -86,6 +86,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.stepBy = function <T>(this: IterImpl<T>, step: number): StepByIter<T> {
+RustIter.prototype.stepBy = function <T>(this: RustIter<T>, step: number): StepByIter<T> {
   return new StepByIter(this, step);
 };

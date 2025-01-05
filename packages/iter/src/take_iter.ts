@@ -3,13 +3,13 @@
  * Provides functionality to take a limited number of elements from an iterator
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields a limited number of elements
  * Similar to Rust's take() iterator adapter
  */
-export class TakeIter<T> extends IterImpl<T> {
+export class TakeIter<T> extends RustIter<T> {
   private remaining: number;
 
   /**
@@ -17,7 +17,7 @@ export class TakeIter<T> extends IterImpl<T> {
    * @param iter Source iterator to take from
    * @param n Number of elements to take
    */
-  constructor(iter: IterImpl<T>, n: number) {
+  constructor(iter: RustIter<T>, n: number) {
     super(iter);
     this.remaining = n;
   }
@@ -44,7 +44,7 @@ export class TakeIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that takes only the first n elements
      * @param n Number of elements to take
@@ -73,6 +73,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.take = function <T>(this: IterImpl<T>, n: number): TakeIter<T> {
+RustIter.prototype.take = function <T>(this: RustIter<T>, n: number): TakeIter<T> {
   return new TakeIter(this, n);
 };

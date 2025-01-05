@@ -4,13 +4,13 @@
  */
 
 import { Option } from '@rustable/enum';
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that transforms elements and keeps only successful transformations
  * Similar to Rust's filter_map() iterator adapter
  */
-export class FilterMapIter<T, U> extends IterImpl<U> {
+export class FilterMapIter<T, U> extends RustIter<U> {
   private old: IterableIterator<T>;
 
   /**
@@ -19,7 +19,7 @@ export class FilterMapIter<T, U> extends IterImpl<U> {
    * @param predicate Function that optionally transforms elements
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => Option<U>,
   ) {
     super([]);
@@ -53,7 +53,7 @@ export class FilterMapIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that both filters and maps elements
      * Only keeps elements where the transformation returns Some
@@ -89,6 +89,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.filterMap = function <T, U>(this: IterImpl<T>, f: (x: T) => Option<U>): FilterMapIter<T, U> {
+RustIter.prototype.filterMap = function <T, U>(this: RustIter<T>, f: (x: T) => Option<U>): FilterMapIter<T, U> {
   return new FilterMapIter(this, f);
 };

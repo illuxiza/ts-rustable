@@ -3,13 +3,13 @@
  * Inserts separators between elements in an iterator.
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Yields elements with dynamic separators between them.
  * Mimics Rust's intersperse_with() iterator adapter.
  */
-export class IntersperseWithIter<T> extends IterImpl<T> {
+export class IntersperseWithIter<T> extends RustIter<T> {
   private started = false;
   private nextItem?: T;
 
@@ -18,7 +18,7 @@ export class IntersperseWithIter<T> extends IterImpl<T> {
    * @param separator Function generating separator values
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private separator: () => T,
   ) {
     super(iter);
@@ -57,7 +57,7 @@ export class IntersperseWithIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Inserts a constant separator between elements
      * @param separator Value to insert
@@ -77,10 +77,10 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.intersperse = function <T>(this: IterImpl<T>, separator: T): IntersperseWithIter<T> {
+RustIter.prototype.intersperse = function <T>(this: RustIter<T>, separator: T): IntersperseWithIter<T> {
   return new IntersperseWithIter(this, () => separator);
 };
 
-IterImpl.prototype.intersperseWith = function <T>(this: IterImpl<T>, f: () => T): IntersperseWithIter<T> {
+RustIter.prototype.intersperseWith = function <T>(this: RustIter<T>, f: () => T): IntersperseWithIter<T> {
   return new IntersperseWithIter(this, f);
 };

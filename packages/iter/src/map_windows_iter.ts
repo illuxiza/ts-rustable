@@ -3,13 +3,13 @@
  * Implements functionality for mapping over sliding windows of elements
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that applies a mapping function to sliding windows of elements
  * Comparable to Rust's windows() iterator adapter with additional mapping capability
  */
-export class MapWindowsIter<T, U> extends IterImpl<U> {
+export class MapWindowsIter<T, U> extends RustIter<U> {
   private buffer: T[] = [];
   private started = false;
 
@@ -21,7 +21,7 @@ export class MapWindowsIter<T, U> extends IterImpl<U> {
    * @throws {Error} If window size is not positive
    */
   constructor(
-    private iter: IterImpl<T>,
+    private iter: RustIter<T>,
     private size: number,
     private f: (window: T[]) => U,
   ) {
@@ -72,7 +72,7 @@ export class MapWindowsIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that maps over sliding windows of elements
      * @param size Number of elements in each window
@@ -111,14 +111,14 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.mapWindows = function <T, U>(
-  this: IterImpl<T>,
+RustIter.prototype.mapWindows = function <T, U>(
+  this: RustIter<T>,
   size: number,
   f: (window: T[]) => U,
 ): MapWindowsIter<T, U> {
   return new MapWindowsIter(this, size, f);
 };
 
-IterImpl.prototype.windows = function <T>(this: IterImpl<T>, size: number): MapWindowsIter<T, T[]> {
+RustIter.prototype.windows = function <T>(this: RustIter<T>, size: number): MapWindowsIter<T, T[]> {
   return new MapWindowsIter(this, size, (w) => w);
 };

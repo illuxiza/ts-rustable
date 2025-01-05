@@ -3,16 +3,16 @@
  * Provides functionality to remove consecutive duplicate elements
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields unique elements by removing consecutive duplicates
  * Similar to Rust's dedup() iterator adapter
  */
-export class UniqIter<T> extends IterImpl<T> {
+export class UniqIter<T> extends RustIter<T> {
   private lastItem: T | undefined;
   private hasLast = false;
-  constructor(private iter: IterImpl<T>) {
+  constructor(private iter: RustIter<T>) {
     super([]);
   }
 
@@ -49,10 +49,10 @@ export class UniqIter<T> extends IterImpl<T> {
  * Iterator that yields unique elements based on a key function
  * Similar to Rust's dedup_by_key() iterator adapter
  */
-export class UniqByIter<T, K> extends IterImpl<T> {
+export class UniqByIter<T, K> extends RustIter<T> {
   private seen = new Set<K>();
   constructor(
-    private iter: IterImpl<T>,
+    private iter: RustIter<T>,
     private f: (x: T) => K,
   ) {
     super([]);
@@ -89,7 +89,7 @@ export class UniqByIter<T, K> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that removes consecutive duplicate elements
      * @returns A new iterator yielding unique consecutive elements
@@ -134,10 +134,10 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.uniq = function <T>(this: IterImpl<T>): UniqIter<T> {
+RustIter.prototype.uniq = function <T>(this: RustIter<T>): UniqIter<T> {
   return new UniqIter(this);
 };
 
-IterImpl.prototype.uniqBy = function <T, K>(this: IterImpl<T>, f: (x: T) => K): UniqByIter<T, K> {
+RustIter.prototype.uniqBy = function <T, K>(this: RustIter<T>, f: (x: T) => K): UniqByIter<T, K> {
   return new UniqByIter(this, f);
 };

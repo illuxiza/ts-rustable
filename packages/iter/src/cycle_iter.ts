@@ -3,13 +3,13 @@
  * Provides functionality to create an infinite iterator that cycles through a sequence
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that cycles infinitely through a sequence of values
  * Similar to Rust's cycle() iterator adapter
  */
-export class CycleIter<T> extends IterImpl<T> {
+export class CycleIter<T> extends RustIter<T> {
   private values: T[];
   private index: number = 0;
 
@@ -18,7 +18,7 @@ export class CycleIter<T> extends IterImpl<T> {
    * @param iter Source iterator whose values will be cycled through
    * @throws Error if the source iterator is empty
    */
-  constructor(iter: IterImpl<T>) {
+  constructor(iter: RustIter<T>) {
     super([]);
     this.values = [];
     for (const item of iter) {
@@ -53,7 +53,7 @@ export class CycleIter<T> extends IterImpl<T> {
 
 // Extension to add cycle() method to base iterator
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that endlessly repeats the sequence of values
      * @returns A new iterator that cycles through the original sequence infinitely
@@ -71,6 +71,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.cycle = function <T>(this: IterImpl<T>): CycleIter<T> {
+RustIter.prototype.cycle = function <T>(this: RustIter<T>): CycleIter<T> {
   return new CycleIter(this);
 };

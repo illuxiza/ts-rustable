@@ -3,10 +3,10 @@
  * Provides functionality to compare iterators lexicographically
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Compares two iterators lexicographically
      * @param other Iterator to compare with
@@ -19,7 +19,7 @@ declare module './iter_impl' {
      * iter([1, 3]).cmp(iter([1, 2])) // 1
      * ```
      */
-    cmp(other: IterImpl<T>): number;
+    cmp(other: RustIter<T>): number;
 
     /**
      * Compares two iterators lexicographically using a key function
@@ -38,11 +38,11 @@ declare module './iter_impl' {
      * iter(people1).cmpBy(iter(people2), p => p.age) // -1
      * ```
      */
-    cmpBy<K>(other: IterImpl<T>, f: (x: T) => K): number;
+    cmpBy<K>(other: RustIter<T>, f: (x: T) => K): number;
   }
 }
 
-IterImpl.prototype.cmp = function <T>(this: IterImpl<T>, other: IterImpl<T>): number {
+RustIter.prototype.cmp = function <T>(this: RustIter<T>, other: RustIter<T>): number {
   const thisIter = this[Symbol.iterator]();
   const otherIter = other[Symbol.iterator]();
 
@@ -59,6 +59,6 @@ IterImpl.prototype.cmp = function <T>(this: IterImpl<T>, other: IterImpl<T>): nu
   }
 };
 
-IterImpl.prototype.cmpBy = function <T, K>(this: IterImpl<T>, other: IterImpl<T>, f: (x: T) => K): number {
+RustIter.prototype.cmpBy = function <T, K>(this: RustIter<T>, other: RustIter<T>, f: (x: T) => K): number {
   return this.map(f).cmp(other.map(f));
 };

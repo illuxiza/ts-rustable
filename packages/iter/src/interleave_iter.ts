@@ -3,13 +3,13 @@
  * Provides functionality to alternate elements from two iterators
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that alternates between elements from two iterators
  * Similar to Rust's interleave() iterator adapter
  */
-export class InterleaveIter<T> extends IterImpl<T> {
+export class InterleaveIter<T> extends RustIter<T> {
   private firstIter: IterableIterator<T>;
   private secondIter: IterableIterator<T>;
   private useFirst: boolean = true;
@@ -19,7 +19,7 @@ export class InterleaveIter<T> extends IterImpl<T> {
    * @param firstIter First iterator to interleave
    * @param secondIter Second iterator to interleave
    */
-  constructor(firstIter: IterImpl<T>, secondIter: IterImpl<T>) {
+  constructor(firstIter: RustIter<T>, secondIter: RustIter<T>) {
     super([]);
     this.firstIter = firstIter[Symbol.iterator]();
     this.secondIter = secondIter[Symbol.iterator]();
@@ -51,7 +51,7 @@ export class InterleaveIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that alternates between elements from two iterators
      * @param other Iterator to interleave with
@@ -70,10 +70,10 @@ declare module './iter_impl' {
      *   .collect() // [1, 'a', 2, 'b', 'c']
      * ```
      */
-    interleave(other: IterImpl<T>): InterleaveIter<T>;
+    interleave(other: RustIter<T>): InterleaveIter<T>;
   }
 }
 
-IterImpl.prototype.interleave = function <T>(this: IterImpl<T>, other: IterImpl<T>): InterleaveIter<T> {
+RustIter.prototype.interleave = function <T>(this: RustIter<T>, other: RustIter<T>): InterleaveIter<T> {
   return new InterleaveIter(this, other);
 };

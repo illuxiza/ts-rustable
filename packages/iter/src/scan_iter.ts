@@ -4,13 +4,13 @@
  */
 
 import { deepClone } from '@rustable/utils';
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that maintains state while transforming elements
  * Similar to Rust's scan() iterator adapter
  */
-export class ScanIter<T, U> extends IterImpl<U> {
+export class ScanIter<T, U> extends RustIter<U> {
   private state: U;
 
   /**
@@ -20,7 +20,7 @@ export class ScanIter<T, U> extends IterImpl<U> {
    * @param f Function that updates state and produces next value
    */
   constructor(
-    private iter: IterImpl<T>,
+    private iter: RustIter<T>,
     state: U,
     private f: (state: U, item: T) => U,
   ) {
@@ -54,7 +54,7 @@ export class ScanIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that maintains state while transforming elements
      * @param init Initial state value
@@ -87,6 +87,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.scan = function <T, U>(this: IterImpl<T>, init: U, f: (state: U, item: T) => U): ScanIter<T, U> {
+RustIter.prototype.scan = function <T, U>(this: RustIter<T>, init: U, f: (state: U, item: T) => U): ScanIter<T, U> {
   return new ScanIter(this, init, f);
 };

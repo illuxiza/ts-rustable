@@ -3,14 +3,14 @@
  * Provides functionality to transform elements while a condition holds
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 import { Option } from '@rustable/enum';
 
 /**
  * Iterator that transforms elements until a condition fails
  * Similar to Rust's map_while() iterator adapter
  */
-export class MapWhileIter<T, U> extends IterImpl<U> {
+export class MapWhileIter<T, U> extends RustIter<U> {
   private old: IterableIterator<T>;
 
   /**
@@ -20,7 +20,7 @@ export class MapWhileIter<T, U> extends IterImpl<U> {
    * @param mapper Function to transform elements
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => Option<U>,
   ) {
     super([]);
@@ -56,7 +56,7 @@ export class MapWhileIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that transforms elements while a predicate holds
      * Stops when predicate returns false
@@ -87,6 +87,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.mapWhile = function <T, U>(this: IterImpl<T>, predicate: (x: T) => Option<U>): MapWhileIter<T, U> {
+RustIter.prototype.mapWhile = function <T, U>(this: RustIter<T>, predicate: (x: T) => Option<U>): MapWhileIter<T, U> {
   return new MapWhileIter(this, predicate);
 };

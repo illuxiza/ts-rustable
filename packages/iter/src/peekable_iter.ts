@@ -4,20 +4,20 @@
  */
 
 import { None, Option } from '@rustable/enum';
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that allows peeking at the next element
  * Similar to Rust's peekable() iterator adapter
  */
-export class PeekableIter<T> extends IterImpl<T> {
+export class PeekableIter<T> extends RustIter<T> {
   private nextItem: Option<T> = None;
 
   /**
    * Creates a new peekable iterator
    * @param iter Source iterator to peek into
    */
-  constructor(private iter: IterImpl<T>) {
+  constructor(private iter: RustIter<T>) {
     super([]);
   }
 
@@ -68,7 +68,7 @@ export class PeekableIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that allows peeking at the next element
      * @returns A new iterator with peeking capability
@@ -100,6 +100,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.peekable = function <T>(this: IterImpl<T>): PeekableIter<T> {
+RustIter.prototype.peekable = function <T>(this: RustIter<T>): PeekableIter<T> {
   return new PeekableIter(this);
 };

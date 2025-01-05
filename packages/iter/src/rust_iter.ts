@@ -11,7 +11,7 @@ import { deepClone } from '@rustable/utils';
  * Base iterator class that implements Rust-like iteration behavior
  * Provides common iterator operations like map, filter, reduce etc.
  */
-export class IterImpl<T> implements Iterable<T> {
+export class RustIter<T> implements Iterable<T> {
   protected iterator: Iterator<T>;
 
   /**
@@ -27,8 +27,8 @@ export class IterImpl<T> implements Iterable<T> {
    * @param source Source iterable
    * @returns New iterator instance
    */
-  static from<T>(source: Iterable<T>): IterImpl<T> {
-    return new IterImpl(source);
+  static from<T>(source: Iterable<T>): RustIter<T> {
+    return new RustIter(source);
   }
 
   /**
@@ -650,7 +650,7 @@ export class IterImpl<T> implements Iterable<T> {
    * iter([1n, 2n, 3n]).sum() // 6n
    * ```
    */
-  sum<T extends number | bigint>(this: IterImpl<T>): T {
+  sum<T extends number | bigint>(this: RustIter<T>): T {
     return this.fold(0 as T, (a, b) => (a as any) + (b as any));
   }
 
@@ -666,7 +666,7 @@ export class IterImpl<T> implements Iterable<T> {
    * iter([2n, 3n, 4n]).product() // 24n
    * ```
    */
-  product<T extends number | bigint>(this: IterImpl<T>): T {
+  product<T extends number | bigint>(this: RustIter<T>): T {
     return this.fold(1 as T, (a, b) => ((a as any) * (b as any)) as T);
   }
 
@@ -702,7 +702,7 @@ export class IterImpl<T> implements Iterable<T> {
    * console.log(original[0].value); // Still 1
    * ```
    */
-  cloned<T>(this: IterImpl<T>, hash = new WeakMap<object, any>()): IterImpl<T> {
+  cloned<T>(this: RustIter<T>, hash = new WeakMap<object, any>()): RustIter<T> {
     return this.map((x) => deepClone(x, hash));
   }
 }

@@ -3,13 +3,13 @@
  * Provides functionality to create iterators over numeric ranges
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields numbers in a range
  * Similar to Rust's range() function
  */
-export class RangeIter extends IterImpl<number> {
+export class RangeIter extends RustIter<number> {
   private current: number;
 
   /**

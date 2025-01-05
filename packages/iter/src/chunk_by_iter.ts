@@ -3,13 +3,13 @@
  * Provides functionality to group consecutive elements that satisfy a predicate
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that groups consecutive elements based on a predicate
  * Similar to Rust's chunk_by() iterator adapter
  */
-export class ChunkByIter<T> extends IterImpl<T[]> {
+export class ChunkByIter<T> extends RustIter<T[]> {
   private old: IterableIterator<T>;
   private currentChunk: T[] = [];
   private nextValue: T | undefined;
@@ -20,7 +20,7 @@ export class ChunkByIter<T> extends IterImpl<T[]> {
    * @param predicate Function that determines if two consecutive elements belong in the same group
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (prev: T, curr: T) => boolean,
   ) {
     super([]);
@@ -82,7 +82,7 @@ export class ChunkByIter<T> extends IterImpl<T[]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Groups consecutive elements that satisfy the predicate into chunks
      * @param predicate Function that returns true if two consecutive elements should be in the same group
@@ -105,6 +105,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.chunkBy = function <T>(this: IterImpl<T>, predicate: (prev: T, curr: T) => boolean): ChunkByIter<T> {
+RustIter.prototype.chunkBy = function <T>(this: RustIter<T>, predicate: (prev: T, curr: T) => boolean): ChunkByIter<T> {
   return new ChunkByIter(this, predicate);
 };

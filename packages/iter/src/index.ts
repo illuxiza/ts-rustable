@@ -6,7 +6,7 @@
 
 import './iter_imports';
 import { RangeIter } from './range_iter';
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Creates a new iterator from an iterable
@@ -27,11 +27,14 @@ import { IterImpl } from './iter_impl';
  *   .collect() // [[0, 'h'], [1, 'e'], [2, 'l'], [3, 'l'], [4, 'o']]
  * ```
  */
-export function iter<T>(items: Iterable<T>): IterImpl<T> {
-  return IterImpl.from(items);
+export function iter<T>(items: Iterable<T>): RustIter<T> {
+  return RustIter.from(items);
 }
 
-export type RustIter<T> = IterImpl<T>;
+/**
+ * Rust Iterator Class
+ */
+export { RustIter };
 
 /**
  * Creates a new range iterator

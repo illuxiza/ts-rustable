@@ -3,20 +3,20 @@
  * Provides functionality to inspect elements as they pass through the iterator
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that calls a function on each element without modifying them
  * Similar to Rust's inspect() iterator adapter
  */
-export class InspectIter<T> extends IterImpl<T> {
+export class InspectIter<T> extends RustIter<T> {
   /**
    * Creates a new inspect iterator
    * @param iter Source iterator to inspect
    * @param f Function to call on each element
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private f: (x: T) => void,
   ) {
     super(iter);
@@ -44,7 +44,7 @@ export class InspectIter<T> extends IterImpl<T> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that calls a function on each element
      * @param f Function to call on each element
@@ -75,6 +75,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.inspect = function <T>(this: IterImpl<T>, f: (x: T) => void): InspectIter<T> {
+RustIter.prototype.inspect = function <T>(this: RustIter<T>, f: (x: T) => void): InspectIter<T> {
   return new InspectIter(this, f);
 };

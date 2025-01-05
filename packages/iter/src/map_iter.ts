@@ -3,13 +3,13 @@
  * Provides functionality to transform elements using a mapping function
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that transforms elements using a mapping function
  * Similar to Rust's map() iterator adapter
  */
-export class MapIter<T, U> extends IterImpl<U> {
+export class MapIter<T, U> extends RustIter<U> {
   private old: IterableIterator<T>;
   /**
    * Creates a new map iterator
@@ -17,7 +17,7 @@ export class MapIter<T, U> extends IterImpl<U> {
    * @param predicate Function to transform each element
    */
   constructor(
-    iter: IterImpl<T>,
+    iter: RustIter<T>,
     private predicate: (x: T) => U,
   ) {
     super([]);
@@ -46,7 +46,7 @@ export class MapIter<T, U> extends IterImpl<U> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that transforms each element using a function
      * @param predicate Function to transform elements
@@ -76,6 +76,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.map = function <T, U>(this: IterImpl<T>, predicate: (x: T) => U): MapIter<T, U> {
+RustIter.prototype.map = function <T, U>(this: RustIter<T>, predicate: (x: T) => U): MapIter<T, U> {
   return new MapIter(this, predicate);
 };

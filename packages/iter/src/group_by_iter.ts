@@ -3,13 +3,13 @@
  * Provides functionality to group elements by a key function
  */
 
-import { IterImpl } from './iter_impl';
+import { RustIter } from './rust_iter';
 
 /**
  * Iterator that yields groups of elements sharing the same key
  * Similar to Rust's group_by() iterator adapter
  */
-export class GroupByIter<T, K> extends IterImpl<[K, T[]]> {
+export class GroupByIter<T, K> extends RustIter<[K, T[]]> {
   private groups: Map<K, T[]> = new Map();
   private consumed = false;
 
@@ -19,7 +19,7 @@ export class GroupByIter<T, K> extends IterImpl<[K, T[]]> {
    * @param f Function that determines the group key for each element
    */
   constructor(
-    private iter: IterImpl<T>,
+    private iter: RustIter<T>,
     private f: (x: T) => K,
   ) {
     super([]);
@@ -63,7 +63,7 @@ export class GroupByIter<T, K> extends IterImpl<[K, T[]]> {
 }
 
 declare module './iter_impl' {
-  interface IterImpl<T> {
+  interface RustIter<T> {
     /**
      * Creates an iterator that groups elements by a key function
      * @param f Function that determines the group key for each element
@@ -94,6 +94,6 @@ declare module './iter_impl' {
   }
 }
 
-IterImpl.prototype.groupBy = function <T, K>(this: IterImpl<T>, f: (x: T) => K): GroupByIter<T, K> {
+RustIter.prototype.groupBy = function <T, K>(this: RustIter<T>, f: (x: T) => K): GroupByIter<T, K> {
   return new GroupByIter(this, f);
 };
