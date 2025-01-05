@@ -1,5 +1,5 @@
 import { None, Option, Some } from '@rustable/enum';
-import { deepClone, Mut } from '@rustable/utils';
+import { deepClone, Ptr } from '@rustable/utils';
 import { indexColl } from './func';
 import { HashMap } from './map';
 
@@ -109,13 +109,13 @@ export class Vec<T> implements Iterable<T> {
    * const vec = Vec.from([1, 2, 3]);
    * const element = vec.getMut(1).unwrap().value; // Some(2)
    */
-  getMut(index: number): Option<Mut<T>> {
+  getMut(index: number): Option<Ptr<T>> {
     if (index >= this.__length || index < 0) {
       return None;
     }
 
     return Some(
-      Mut.of({
+      Ptr({
         get: () => this.__buffer[index],
         set: (value: T) => {
           this.__buffer[index] = value;

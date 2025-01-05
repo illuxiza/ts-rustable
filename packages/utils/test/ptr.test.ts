@@ -1,9 +1,9 @@
-import { Mut } from '../src/mut';
+import { Ptr } from '../src/ptr';
 
 describe('Mut', () => {
   it('should get and set object properties through getter/setter', () => {
     let obj = { name: 'Alice', age: 30 };
-    const m = Mut.of({
+    const m = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
@@ -20,14 +20,14 @@ describe('Mut', () => {
 
   it('should replace entire object using Symbol', () => {
     let obj = { name: 'Alice', age: 30 };
-    const m = Mut.of({
+    const m = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
       },
     });
 
-    m[Mut.ptr] = { name: 'Charlie', age: 25 };
+    m[Ptr.ptr] = { name: 'Charlie', age: 25 };
     expect(obj).toEqual({ name: 'Charlie', age: 25 });
     expect(m.name).toBe('Charlie');
     expect(m.age).toBe(25);
@@ -42,7 +42,7 @@ describe('Mut', () => {
         hobbies: ['reading', 'coding'],
       },
     };
-    const m = Mut.of({
+    const m = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
@@ -75,7 +75,7 @@ describe('Mut', () => {
       },
     };
 
-    const m = Mut.of({
+    const m = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
@@ -98,7 +98,7 @@ describe('Mut', () => {
     });
 
     // Replace entire object using ptr
-    m[Mut.ptr] = {
+    m[Ptr.ptr] = {
       id: 2,
       data: {
         users: [{ id: 3, name: 'Charlie', tags: ['guest'] }],
@@ -116,7 +116,7 @@ describe('Mut', () => {
 
   it('should handle array operations correctly', () => {
     let arr = [1, 2, 3];
-    const m = Mut.of({
+    const m = Ptr({
       get: () => arr,
       set: (newValue) => {
         arr = newValue;
@@ -137,7 +137,7 @@ describe('Mut', () => {
     expect(arr).toEqual([1, 2, 3]);
 
     // Array spread should work
-    m[Mut.ptr] = [...m[Mut.ptr], 4, 5];
+    m[Ptr.ptr] = [...m[Ptr.ptr], 4, 5];
     expect(arr).toEqual([1, 2, 3, 4, 5]);
 
     // Array splice should work
@@ -162,7 +162,7 @@ describe('Mut', () => {
     }
 
     let user = new User('Alice', 30);
-    const m = Mut.of({
+    const m = Ptr({
       get: () => user,
       set: (newValue) => {
         user = newValue;
@@ -177,7 +177,7 @@ describe('Mut', () => {
     expect(user.age).toBe(31);
 
     // Replace with new instance
-    m[Mut.ptr] = new User('Bob', 25);
+    m[Ptr.ptr] = new User('Bob', 25);
     expect(user.name).toBe('Bob');
     expect(user.age).toBe(25);
     expect(user.greet()).toBe("Hello, I'm Bob");
@@ -185,7 +185,7 @@ describe('Mut', () => {
 
   it('should handle Set operations correctly', () => {
     let set = new Set([1, 2, 3]);
-    const m = Mut.of({
+    const m = Ptr({
       get: () => set,
       set: (newValue) => {
         set = newValue;
@@ -202,7 +202,7 @@ describe('Mut', () => {
     expect([...set]).toEqual([]);
 
     // Replace using ptr
-    m[Mut.ptr] = new Set([5, 6]);
+    m[Ptr.ptr] = new Set([5, 6]);
     expect([...set]).toEqual([5, 6]);
   });
 
@@ -211,7 +211,7 @@ describe('Mut', () => {
       ['a', 1],
       ['b', 2],
     ]);
-    const m = Mut.of({
+    const m = Ptr({
       get: () => map,
       set: (newValue) => {
         map = newValue;
@@ -235,13 +235,13 @@ describe('Mut', () => {
     expect([...map.entries()]).toEqual([]);
 
     // Replace using ptr
-    m[Mut.ptr] = new Map([['x', 10]]);
+    m[Ptr.ptr] = new Map([['x', 10]]);
     expect([...map.entries()]).toEqual([['x', 10]]);
   });
 
   it('should handle Date operations correctly', () => {
     let date = new Date('2024-01-01');
-    const m = Mut.of({
+    const m = Ptr({
       get: () => date,
       set: (newValue) => {
         date = newValue;
@@ -255,7 +255,7 @@ describe('Mut', () => {
     expect(date.getMonth()).toBe(6);
 
     // Replace using ptr
-    m[Mut.ptr] = new Date('2023-12-31');
+    m[Ptr.ptr] = new Date('2023-12-31');
     expect(date.toISOString()).toBe('2023-12-31T00:00:00.000Z');
   });
 
@@ -292,7 +292,7 @@ describe('Mut', () => {
     }
 
     let counter = new Counter();
-    const m = Mut.of({
+    const m = Ptr({
       get: () => counter,
       set: (newValue) => {
         counter = newValue;
@@ -325,14 +325,14 @@ describe('Mut', () => {
     // 使用 ptr 替换整个对象
     const newCounter = new Counter();
     newCounter.add(10);
-    m[Mut.ptr] = newCounter;
+    m[Ptr.ptr] = newCounter;
     expect(counter.getNumbers()).toEqual([10]);
   });
 
   it('should handle Mut.replace function correctly', () => {
     // Test with primitive objects
     let obj = { x: 1, y: 2 };
-    const m = Mut.of({
+    const m = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
@@ -340,29 +340,29 @@ describe('Mut', () => {
     });
 
     // Using Mut.replace
-    Mut.replace(m, { x: 3, y: 4 });
+    Ptr.replace(m, { x: 3, y: 4 });
     expect(obj).toEqual({ x: 3, y: 4 });
 
     // Compare with ptr assignment
-    const m2 = Mut.of({
+    const m2 = Ptr({
       get: () => obj,
       set: (newValue) => {
         obj = newValue;
       },
     });
-    m2[Mut.ptr] = { x: 5, y: 6 };
+    m2[Ptr.ptr] = { x: 5, y: 6 };
     expect(obj).toEqual({ x: 5, y: 6 });
 
     // Test with arrays
     let arr = [1, 2, 3];
-    const arrMut = Mut.of({
+    const arrMut = Ptr({
       get: () => arr,
       set: (newValue) => {
         arr = newValue;
       },
     });
 
-    Mut.replace(arrMut, [4, 5, 6]);
+    Ptr.replace(arrMut, [4, 5, 6]);
     expect(arr).toEqual([4, 5, 6]);
 
     // Test with complex objects
@@ -382,7 +382,7 @@ describe('Mut', () => {
       },
     };
 
-    const complexMut = Mut.of({
+    const complexMut = Ptr({
       get: () => complex,
       set: (newValue) => {
         complex = newValue;
@@ -390,7 +390,7 @@ describe('Mut', () => {
     });
 
     // Replace with new complex object
-    Mut.replace(complexMut, {
+    Ptr.replace(complexMut, {
       id: 2,
       data: {
         name: 'new',
@@ -419,39 +419,39 @@ describe('Mut', () => {
     }
 
     let person = new Person('Alice', 30);
-    const personMut = Mut.of({
+    const personMut = Ptr({
       get: () => person,
       set: (newValue) => {
         person = newValue;
       },
     });
 
-    Mut.replace(personMut, new Person('Bob', 25));
+    Ptr.replace(personMut, new Person('Bob', 25));
     expect(person.name).toBe('Bob');
     expect(person.age).toBe(25);
     expect(person.greet()).toBe('Hello, Bob');
 
     // Test with built-in objects
     let date = new Date('2024-01-01');
-    const dateMut = Mut.of({
+    const dateMut = Ptr({
       get: () => date,
       set: (newValue) => {
         date = newValue;
       },
     });
 
-    Mut.replace(dateMut, new Date('2024-12-31'));
+    Ptr.replace(dateMut, new Date('2024-12-31'));
     expect(date.toISOString()).toBe('2024-12-31T00:00:00.000Z');
 
     let set = new Set([1, 2, 3]);
-    const setMut = Mut.of({
+    const setMut = Ptr({
       get: () => set,
       set: (newValue) => {
         set = newValue;
       },
     });
 
-    Mut.replace(setMut, new Set([4, 5, 6]));
+    Ptr.replace(setMut, new Set([4, 5, 6]));
     expect([...set]).toEqual([4, 5, 6]);
   });
 });

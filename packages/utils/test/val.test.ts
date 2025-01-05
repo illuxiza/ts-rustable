@@ -1,9 +1,9 @@
-import { Ref } from '../src/ref';
+import { Val } from '../src/val';
 
 describe('Ref', () => {
   it('should allow reading values', () => {
     const obj = { name: 'Alice', age: 30 };
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
     expect(ref.name).toBe('Alice');
     expect(ref.age).toBe(30);
@@ -11,7 +11,7 @@ describe('Ref', () => {
 
   it('should allow modifying ref but not affect original', () => {
     const obj = { name: 'Alice', age: 30 };
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
     // Modify ref
     (ref as any).name = 'Bob';
@@ -39,7 +39,7 @@ describe('Ref', () => {
       },
     };
 
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
     // Modify nested object in ref
     ref.data.user.name = 'Bob';
@@ -55,7 +55,7 @@ describe('Ref', () => {
 
   it('should handle arrays correctly', () => {
     const arr = [1, 2, 3];
-    const ref = Ref.of(arr);
+    const ref = Val(arr);
 
     // Reading should work
     expect(ref[0]).toBe(1);
@@ -95,7 +95,7 @@ describe('Ref', () => {
     }
 
     const user = new User('Alice', 30);
-    const ref = Ref.of(user);
+    const ref = Val(user);
 
     // Methods should work with current state
     expect(ref.greet()).toBe('Hello, Alice');
@@ -111,7 +111,7 @@ describe('Ref', () => {
 
   it('should handle methods that return new objects', () => {
     const arr = [1, 2, 3];
-    const ref = Ref.of(arr);
+    const ref = Val(arr);
 
     // map returns a new array
     const mapped = ref.map((x) => x * 2);
@@ -128,7 +128,7 @@ describe('Ref', () => {
 
   it('should handle methods that modify array', () => {
     const arr = [3, 1, 2];
-    const ref = Ref.of(arr);
+    const ref = Val(arr);
 
     // sort should modify ref but not original
     ref.sort();
@@ -155,7 +155,7 @@ describe('Ref', () => {
       },
     };
 
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
     // Getting items should return current state
     const items = ref.data.getItems();
@@ -179,7 +179,7 @@ describe('Ref', () => {
       },
     };
 
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
     // Getting count should return current state
     expect(ref.getCount()).toBe(0);
@@ -193,7 +193,7 @@ describe('Ref', () => {
 
   it('should handle Date methods correctly', () => {
     const date = new Date('2024-01-01');
-    const ref = Ref.of(date);
+    const ref = Val(date);
 
     // Read methods should work with current state
     expect(ref.getFullYear()).toBe(2024);
@@ -207,7 +207,7 @@ describe('Ref', () => {
 
   it('should handle Set/Map methods correctly', () => {
     const set = new Set([1, 2, 3]);
-    const ref = Ref.of(set);
+    const ref = Val(set);
 
     // Read methods should work
     expect(ref.has(1)).toBe(true);
@@ -222,7 +222,7 @@ describe('Ref', () => {
       ['a', 1],
       ['b', 2],
     ]);
-    const mapRef = Ref.of(map);
+    const mapRef = Val(map);
 
     // Read methods should work
     expect(mapRef.get('a')).toBe(1);
@@ -246,11 +246,11 @@ describe('Ref', () => {
 
   it('should allow accessing original value through ptr', () => {
     const obj = { name: 'Alice', age: 30 };
-    const ref = Ref.of(obj);
+    const ref = Val(obj);
 
-    expect(ref[Ref.ptr]).toBe(obj);
+    expect(ref[Val.ptr]).toBe(obj);
 
     // Original value should be unchanged
-    expect(ref[Ref.ptr]).toEqual({ name: 'Alice', age: 30 });
+    expect(ref[Val.ptr]).toEqual({ name: 'Alice', age: 30 });
   });
 });

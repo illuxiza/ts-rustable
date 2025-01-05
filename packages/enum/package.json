@@ -1,6 +1,6 @@
 {
   "name": "@rustable/enum",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "description": "Rust-inspired pattern matching and type-safe error handling for TypeScript. Includes Option<T> for null-safety and Result<T, E> for error handling, with comprehensive pattern matching support",
   "keywords": [
     "typescript",

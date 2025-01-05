@@ -4,4 +4,6 @@ export * from './eq';
 export * from './hash';
 export * from './stringify';
 export * from './type_id';
-export * from './mut';
+export * from './ptr';
+export * from './val';
+export * from './factory';
