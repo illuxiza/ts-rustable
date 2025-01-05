@@ -1,12 +1,15 @@
-import { derive, hasTrait, implTrait, trait, useTrait } from '../src';
+import { derive } from 'packages/utils/src/derive';
+import { hasTrait, implTrait, macroTrait, trait, useTrait } from '../src';
 
 describe('Static Trait Features', () => {
   @trait
-  class StaticPrint {
+  class StaticPrintTrait {
     static staticPrint(): string {
       return 'default static print';
     }
   }
+
+  const StaticPrint = macroTrait(StaticPrintTrait);
 
   @derive([StaticPrint])
   class StaticClass {}

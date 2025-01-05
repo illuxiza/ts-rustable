@@ -1,4 +1,5 @@
-import { derive, hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { derive } from 'packages/utils/src/derive';
+import { hasTrait, implTrait, macroTrait, trait, useTrait } from '../src/trait';
 
 // Basic trait interfaces
 interface BasicClass {
@@ -9,7 +10,7 @@ interface BasicClass {
 
 // Basic trait implementations
 @trait
-class Print {
+class PrintTrait {
   print(): string {
     return 'default print';
   }
@@ -19,12 +20,16 @@ class Print {
   }
 }
 
+const Print = macroTrait(PrintTrait);
+
 @trait
-class Debug {
+class DebugTrait {
   debug(): string {
     return 'default debug';
   }
 }
+
+const Debug = macroTrait(DebugTrait);
 
 // Basic class with commons
 @derive([Print])

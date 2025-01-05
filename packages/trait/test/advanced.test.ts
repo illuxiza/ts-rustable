@@ -1,4 +1,5 @@
-import { derive, implTrait, trait, useTrait } from '../src/trait';
+import { derive } from 'packages/utils/src/derive';
+import { implTrait, macroTrait, trait, useTrait } from '../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
@@ -74,7 +75,7 @@ describe('Advanced Trait Features', () => {
     }
 
     @trait
-    class Playable {
+    class PlayableTrait {
       playGame(): string {
         return 'Playing a game';
       }
@@ -83,8 +84,10 @@ describe('Advanced Trait Features', () => {
       }
     }
 
+    const Playable = macroTrait(PlayableTrait);
+
     @trait
-    class Scoreable {
+    class ScoreableTrait {
       playGame(): string {
         return 'Scoring a game';
       }
@@ -92,6 +95,8 @@ describe('Advanced Trait Features', () => {
         throw new Error('Method not implemented.');
       }
     }
+
+    const Scoreable = macroTrait(ScoreableTrait);
 
     @derive([Playable, Scoreable])
     class Dog {
@@ -132,18 +137,22 @@ describe('Advanced Trait Features', () => {
 
   describe('Default Implementation Override', () => {
     @trait
-    class Printable {
+    class PrintableTrait {
       print(): string {
         return 'default print';
       }
     }
 
+    const Printable = macroTrait(PrintableTrait);
+
     @trait
-    class Displayable {
+    class DisplayableTrait {
       display(): string {
         return 'default display';
       }
     }
+
+    const Displayable = macroTrait(DisplayableTrait);
 
     test('should use default trait implementations', () => {
       @derive([Printable, Displayable])

@@ -2,7 +2,7 @@
  * Core trait system implementation for TypeScript
  * Provides Rust-like trait functionality with compile-time type checking
  */
-import { Constructor, typeId, TypeId } from '@rustable/utils';
+import { Constructor, createFactory, typeId, TypeId } from '@rustable/utils';
 
 /**
  * Registry for storing trait implementations.
@@ -535,40 +535,45 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
     },
   ) as TC;
 }
-/**
- * Decorator for implementing traits at runtime.
- * Supports a single trait or an array of traits.
- *
- * @param traits - A single trait or an array of traits to be implemented.
- * @returns A decorator function that applies the specified traits to the target class.
- *
- * @example
- * Implementing a single trait:
- * ```typescript
- * @derive(Debug)
- * class Point { }
- * ```
- *
- * @example
- * Implementing multiple traits:
- * ```typescript
- * @derive([Debug, Clone])
- * class Rectangle { }
- * ```
- */
-export function derive<C extends object, CC extends Constructor<C>>(traits: Constructor<any> | Constructor<any>[]) {
-  function tryImpl(target: CC, trait: Constructor<any>) {
-    if (!hasTrait(target, trait)) {
-      implTrait(target, trait);
-    }
-  }
 
-  return function (target: CC): CC {
-    const traitArray = Array.isArray(traits) ? traits : [traits];
-    traitArray.forEach((trait) => {
-      collectParentTraits(trait).forEach((parent) => tryImpl(target, parent));
-      tryImpl(target, trait);
+/**
+ * Decorator for implementing traits at compile time.
+ * @param trait - The trait to be implemented.
+ * @param implementation - Optional implementation for the trait.
+ * @returns A decorator function that applies the specified trait to the target class.
+ *
+ * @example
+ * ```typescript
+ * @trait
+ * class DisplayTrait<T> {
+ *   display(value: T): string {
+ *     return String(value);  // Default implementation
+ *   }
+ * }
+ *
+ * const Display = macroTrait(DisplayTrait);
+ *
+ * @derive([Display])
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
+ * }
+ */
+export function macroTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+  trait: TC,
+  implementation?: TraitImplementation<C, T, TC>,
+) {
+  const factoryFn = function (target: Constructor<C>): void {
+    // Auto-implement traits that this trait implements
+    collectParentTraits(trait).forEach((parent) => {
+      if (!hasTrait(target, parent)) {
+        implTrait(target, parent);
+      }
     });
-    return target as CC;
+    // Then implement this trait
+    if (!hasTrait(target, trait)) {
+      implTrait(target, trait, implementation);
+    }
   };
+
+  return createFactory(trait, factoryFn);
 }
