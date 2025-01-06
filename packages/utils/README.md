@@ -45,18 +45,18 @@ const id = typeId(StringContainer);  // Unique ID for Container<string>
 
 - Provides decorators for applying traits and other functionality to classes
 - Supports both single and multiple derive functions
-- Includes type-safe derive functionality with `deriveType`
+- Includes type-safe derive functionality with `applyMacros`
 - Preserves TypeScript type information
 
 ```typescript
-import { derive, deriveType } from '@rustable/utils';
+import { derive, applyMacros } from '@rustable/utils';
 
 // Basic usage
 @derive([Clone, Debug])
 class MyClass {}
 
 // Type-safe usage
-const MyDerive = deriveType([Resource, Serialize]);
+const MyDerive = applyMacros([Resource, Serialize]);
 
 @MyDerive
 class TypeSafeClass {

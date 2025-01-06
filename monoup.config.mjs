@@ -6,8 +6,6 @@ export default defineConfig({
 
   build: {
     main: true,
-    mainEntry: 'index.ts',
-    packageEntry: 'index.ts',
 
     typescript: {
       enabled: true,

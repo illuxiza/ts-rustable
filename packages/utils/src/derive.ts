@@ -55,9 +55,9 @@ export function derive(fns: MarcoFn | MarcoFn[]) {
  *
  * @example
  * ```typescript
- * const MyDerive = deriveType([Resource, Serialize]);
+ * const MyMacro = applyMacros([Resource, Serialize]);
  *
- * @MyDerive
+ * @MyMacro
  * class MyClass {
  *   value: string;
  * }
@@ -67,8 +67,8 @@ export function derive(fns: MarcoFn | MarcoFn[]) {
  * instance.value = "test";
  * ```
  */
-export function deriveType<T extends Constructor<any>>(fns: MarcoFn | MarcoFn[]) {
-  return function (target: T): T {
-    return derive(fns)(target) as T;
+export function applyMacros(macros: MarcoFn | MarcoFn[]) {
+  return function <T extends Constructor<any>>(target: T): T {
+    return derive(macros)(target) as T;
   };
 }

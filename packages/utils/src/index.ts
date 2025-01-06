@@ -8,4 +8,3 @@ export * from './ptr';
 export * from './stringify';
 export * from './type_id';
 export * from './val';
-

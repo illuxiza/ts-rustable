@@ -119,7 +119,10 @@ describe('Type', () => {
 
     // Multiple generic parameters
     class MultiGenericClass<T, U> {
-      constructor(public first: T, public second: U) {}
+      constructor(
+        public first: T,
+        public second: U,
+      ) {}
     }
     const StringNumberClass = Type(MultiGenericClass, [String, Number]);
     expect(StringNumberClass.name).toBe('MultiGenericClass<String,Number>');

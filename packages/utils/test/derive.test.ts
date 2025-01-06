@@ -1,5 +1,5 @@
-import { derive, deriveType } from '../src/derive';
 import { Constructor } from '../src/common';
+import { applyMacros, derive } from '../src/derive';
 
 describe('derive', () => {
   // Example derive functions
@@ -11,7 +11,7 @@ describe('derive', () => {
   }
 
   function addMethod(target: Constructor<any>) {
-    target.prototype.derivedMethod = function() {
+    target.prototype.derivedMethod = function () {
       return 'method';
     };
   }
@@ -45,7 +45,7 @@ describe('derive', () => {
     @derive([addProperty])
     class TestClass {
       constructor(public value: string) {}
-      
+
       method() {
         return this.value;
       }
@@ -57,8 +57,8 @@ describe('derive', () => {
     expect((instance as any).derivedProp).toBe('derived');
   });
 
-  test('should work with type-safe deriveType', () => {
-    const MyDerive = deriveType([addProperty, addMethod]);
+  test('should work with type-safe applyMacros', () => {
+    const MyDerive = applyMacros([addProperty, addMethod]);
 
     @MyDerive
     class TestClass {
@@ -69,7 +69,7 @@ describe('derive', () => {
     // Original properties are type-safe
     instance.value = 'new value';
     expect(instance.value).toBe('new value');
-    
+
     // Derived properties need type assertion
     expect((instance as any).derivedProp).toBe('derived');
     expect((instance as any).derivedMethod()).toBe('method');
@@ -77,14 +77,12 @@ describe('derive', () => {
 
   test('should support derive functions with additional parameters', () => {
     function parameterizedDerive(target: Constructor<any>, prefix: string) {
-      target.prototype.getName = function() {
+      target.prototype.getName = function () {
         return prefix + this.name;
       };
     }
 
-    @derive([
-      target => parameterizedDerive(target, 'test_')
-    ])
+    @derive([(target) => parameterizedDerive(target, 'test_')])
     class TestClass {
       name = 'class';
     }
