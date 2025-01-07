@@ -8,3 +8,4 @@ coverage/
 .yarn
 package-lock.json
 yarn.lock
+.vitest

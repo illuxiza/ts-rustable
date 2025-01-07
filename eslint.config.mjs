@@ -6,7 +6,7 @@ import globals from 'globals';
 export default [
   eslint.configs.recommended,
   {
-    files: ['**/*.ts'],
+    files: ['packages/**/*.ts', 'src/**/*.ts'],
     languageOptions: {
       parser: tsparser,
       parserOptions: {

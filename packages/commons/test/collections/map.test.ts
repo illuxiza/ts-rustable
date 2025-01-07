@@ -230,8 +230,6 @@ describe('HashMap', () => {
   });
 });
 
-describe('query methods', () => {});
-
 describe('error cases', () => {
   test('getUnchecked on non-existent key', () => {
     const map = new HashMap<string, number>();

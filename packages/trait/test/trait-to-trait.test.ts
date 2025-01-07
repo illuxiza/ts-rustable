@@ -1,4 +1,3 @@
-import { describe, expect, test } from '@jest/globals';
 import { hasTrait, implTrait, macroTrait, trait, useTrait } from '../src/trait';
 
 describe('Trait to Trait Implementation', () => {

@@ -19,7 +19,7 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false,
-    "types": ["node", "jest"],
+    "types": ["vitest", "vitest/globals"],
     "paths": {
       "@rustable/utils": ["packages/utils"],
       "@rustable/enum": ["packages/enum"],

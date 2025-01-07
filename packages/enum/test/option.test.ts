@@ -1,3 +1,4 @@
+import { vitest } from 'vitest';
 import { None, Option, Some } from '../src/option';
 
 describe('Option', () => {
@@ -113,7 +114,7 @@ describe('Option', () => {
 
     describe('inspect', () => {
       test('inspect should call function for Some', () => {
-        const mockFn = jest.fn();
+        const mockFn = vitest.fn();
         const some = Some(42);
         const result = some.inspect(mockFn);
 
@@ -123,7 +124,7 @@ describe('Option', () => {
       });
 
       test('inspect should not call function for None', () => {
-        const mockFn = jest.fn();
+        const mockFn = vitest.fn();
         const result = None.inspect(mockFn);
 
         expect(mockFn).not.toHaveBeenCalled();

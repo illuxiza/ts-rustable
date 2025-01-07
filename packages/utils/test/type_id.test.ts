@@ -1,4 +1,3 @@
-import { describe, expect, test } from '@jest/globals';
 import { typeId } from '../src/type_id';
 
 describe('TypeId System', () => {
