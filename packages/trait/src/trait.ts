@@ -70,7 +70,8 @@ interface TraitConstructor<T> extends Constructor<T> {
  * @returns Array of parent trait constructors
  */
 function collectParentTraits(trait: TraitConstructor<any>): TraitConstructor<any>[] {
-  const cached = parentTraitsCache.get(trait);
+  const traitConstructor = trait.prototype.constructor;
+  const cached = parentTraitsCache.get(traitConstructor);
   if (cached) {
     return cached;
   }
@@ -85,7 +86,7 @@ function collectParentTraits(trait: TraitConstructor<any>): TraitConstructor<any
     proto = Object.getPrototypeOf(proto);
   }
 
-  parentTraitsCache.set(trait, parents);
+  parentTraitsCache.set(traitConstructor, parents);
   return parents;
 }
 
@@ -169,12 +170,15 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
 
   const traitId = typeId(trait, generics);
   const targetProto = target.prototype;
+  const targetConstructor = target.prototype.constructor;
+  const traitConstructor = trait.prototype.constructor;
 
   // Add static trait methods to target class
   const staticImpl = getStaticTraitBound(target, trait, implementation);
+
   Object.keys(staticImpl).forEach((name) => {
-    if (!(name in target)) {
-      Object.defineProperty(target, name, {
+    if (!(name in targetConstructor)) {
+      Object.defineProperty(targetConstructor, name, {
         value: function (this: Constructor<C>, ...args: any[]) {
           if (typeof staticImpl[name] === 'function') {
             return staticImpl[name].call(this, ...args);
@@ -188,31 +192,31 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   });
 
   // Store static implementation
-  const staticImplMap = staticTraitRegistry.get(target) || new Map<TypeId, any>();
+  const staticImplMap = staticTraitRegistry.get(targetConstructor) || new Map<TypeId, any>();
   staticImplMap.set(traitId, staticImpl);
-  staticTraitRegistry.set(target, staticImplMap);
+  staticTraitRegistry.set(targetConstructor, staticImplMap);
 
   // Check if target is a trait
-  const isTargetTrait = traitSymbol in target;
+  const isTargetTrait = traitSymbol in targetConstructor;
   if (isTargetTrait) {
     // Record trait-to-trait implementation
-    let implMap = traitToTraitRegistry.get(target as TraitConstructor<any>);
+    let implMap = traitToTraitRegistry.get(targetConstructor);
     if (!implMap) {
       implMap = new Map();
-      traitToTraitRegistry.set(target as TraitConstructor<any>, implMap);
+      traitToTraitRegistry.set(targetConstructor, implMap);
     }
     implMap.set(traitId, { trait, generics, implementation });
     // If target is a trait, we only need to record the relationship
     return;
   }
 
-  const selfBoundImpl = getSelfBound(targetProto, target);
+  const selfBoundImpl = getSelfBound(targetProto, targetConstructor);
 
   // Get or create implementation map for target
   const implMap = traitRegistry.get(targetProto)!;
 
   if (implMap.has(traitId)) {
-    throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
+    throw new Error(`Trait ${traitConstructor.name} already implemented for ${targetConstructor.name}`);
   }
 
   // Check parent commons
@@ -220,7 +224,7 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   parents.forEach((parent) => {
     const parentId = typeId(parent, generics);
     if (!implMap.has(parentId)) {
-      throw new Error(`Parent trait ${parent.name} not implemented for ${target.name}`);
+      throw new Error(`Parent trait ${parent.name} not implemented for ${targetConstructor.name}`);
     }
   });
 
@@ -267,7 +271,7 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
 
   // Auto-implement traits that this trait implements
   if (!isTargetTrait) {
-    const traitImplMap = traitToTraitRegistry.get(trait);
+    const traitImplMap = traitToTraitRegistry.get(traitConstructor);
     if (traitImplMap) {
       for (const [_implTraitId, implInfo] of traitImplMap) {
         // Recursively call implTrait for the implemented trait
@@ -291,15 +295,17 @@ function getStaticTraitBound<C extends object, T extends object, TC extends Trai
   implementation?: TraitImplementation<C, T, TC>,
 ) {
   const boundImpl: Record<string, any> = {};
+  const targetConstructor = target.prototype.constructor;
+  const traitConstructor = trait.prototype.constructor;
   // Add trait's static methods
-  const staticMethods = Object.getOwnPropertyNames(trait).filter(
-    (name) => name !== 'prototype' && typeof trait.prototype.constructor[name] === 'function',
+  const staticMethods = Object.getOwnPropertyNames(traitConstructor).filter(
+    (name) => name !== 'prototype' && typeof traitConstructor[name] === 'function',
   );
   staticMethods.forEach((name) => {
-    if (name in target && typeof target.prototype.constructor[name] === 'function') {
-      boundImpl[name] = target.prototype.constructor[name];
+    if (name in targetConstructor && typeof targetConstructor[name] === 'function') {
+      boundImpl[name] = targetConstructor[name];
     } else {
-      boundImpl[name] = trait.prototype.constructor[name];
+      boundImpl[name] = traitConstructor[name];
     }
   });
 
@@ -421,20 +427,17 @@ export function hasTrait<Class extends object, Trait extends object>(
   trait: Constructor<Trait>,
   generic?: Constructor<any>[],
 ): boolean {
+  const targetConstructor = typeof target === 'function' ? target.prototype.constructor : target.constructor;
   const traitId = typeId(trait, generic);
 
   // If target is a trait (checking trait-to-trait implementation)
-  if (traitSymbol in target) {
-    const traitImplMap = traitToTraitRegistry.get(target as TraitConstructor<any>);
+  if (traitSymbol in targetConstructor) {
+    const traitImplMap = traitToTraitRegistry.get(targetConstructor);
     return traitImplMap?.has(traitId) ?? false;
   }
 
   // For normal class implementation
-  let proto = Object.getPrototypeOf(target);
-  if (typeof target === 'function') {
-    proto = target.prototype;
-  }
-  const implMap = traitRegistry.get(proto);
+  const implMap = traitRegistry.get(targetConstructor.prototype);
   return implMap?.has(traitId) ?? false;
 }
 
@@ -512,14 +515,15 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
   trait: TC & TraitConstructor<T>,
   generic?: Constructor<any>[],
 ): TC {
+  const targetConstructor = target.prototype.constructor;
   const traitId = typeId(trait, generic);
-  const staticImpls = staticTraitRegistry.get(target);
+  const staticImpls = staticTraitRegistry.get(targetConstructor);
   if (!staticImpls?.has(traitId)) {
     let traitName = trait.name;
     if (generic) {
       traitName += `<${generic.map((g) => g.name).join(', ')}>`;
     }
-    throw new Error(`Trait ${traitName} not implemented for ${target.constructor.name}`);
+    throw new Error(`Trait ${traitName} not implemented for ${targetConstructor.name}`);
   }
 
   const impl = staticImpls.get(traitId);
@@ -528,7 +532,7 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
     {
       get(_, prop) {
         if (typeof prop === 'string' && prop in impl) {
-          return impl[prop].bind(target);
+          return impl[prop].bind(targetConstructor);
         }
         throw new Error(`Method ${String(prop)} not implemented for trait`);
       },
@@ -558,11 +562,13 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
  *   constructor(public x: number, public y: number) {}
  * }
  */
-export function macroTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  trait: TC,
-  implementation?: TraitImplementation<C, T, TC>,
-) {
-  const factoryFn = function (target: Constructor<C>): void {
+export function macroTrait<
+  C extends object,
+  T extends object,
+  CC extends Constructor<C>,
+  TC extends TraitConstructor<T> = TraitConstructor<T>,
+>(trait: TC, implementation?: TraitImplementation<C, T, TC>) {
+  const factoryFn = function (target: CC) {
     // Auto-implement traits that this trait implements
     collectParentTraits(trait).forEach((parent) => {
       if (!hasTrait(target, parent)) {
@@ -573,6 +579,7 @@ export function macroTrait<C extends object, T extends object, TC extends TraitC
     if (!hasTrait(target, trait)) {
       implTrait(target, trait, implementation);
     }
+    // return target;
   };
 
   return createFactory(trait, factoryFn);

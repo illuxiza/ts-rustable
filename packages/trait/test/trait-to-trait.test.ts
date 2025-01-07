@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { hasTrait, implTrait, macroTrait, trait, useTrait } from '../src/trait';
 
 describe('Trait to Trait Implementation', () => {
   test('trait implementing another trait should be recorded correctly', () => {
@@ -24,6 +24,32 @@ describe('Trait to Trait Implementation', () => {
     expect(hasTrait(Debug, Display)).toBe(true);
   });
 
+  test('macroled trait implementing another trait should be recorded correctly', () => {
+    @trait
+    class DisplayTrait {
+      display(): string {
+        return 'Display';
+      }
+    }
+
+    const Display = macroTrait(DisplayTrait);
+
+    @trait
+    class DebugTrait {
+      debug(): string {
+        return 'Debug';
+      }
+    }
+
+    const Debug = macroTrait(DebugTrait);
+
+    // Implement Display for Debug trait
+    implTrait(Debug, Display);
+
+    // Debug trait should have Display trait
+    expect(hasTrait(Debug, Display)).toBe(true);
+  });
+
   test('class implementing a trait should automatically implement its implemented traits', () => {
     @trait
     class Display {
@@ -38,6 +64,45 @@ describe('Trait to Trait Implementation', () => {
         return 'Debug';
       }
     }
+
+    // Implement Display for Debug trait
+    implTrait(Debug, Display);
+
+    // Create a class and implement Debug
+    class MyClass {}
+    implTrait(MyClass, Debug);
+
+    // MyClass should have both Debug and Display traits
+    expect(hasTrait(MyClass, Debug)).toBe(true);
+    expect(hasTrait(MyClass, Display)).toBe(true);
+
+    // Should be able to use both traits
+    const instance = new MyClass();
+    const debugTrait = useTrait(instance, Debug);
+    const displayTrait = useTrait(instance, Display);
+
+    expect(debugTrait.debug()).toBe('Debug');
+    expect(displayTrait.display()).toBe('Display');
+  });
+
+  test('class implementing a macroled trait should automatically implement its implemented traits', () => {
+    @trait
+    class DisplayTrait {
+      display(): string {
+        return 'Display';
+      }
+    }
+
+    const Display = macroTrait(DisplayTrait);
+
+    @trait
+    class DebugTrait {
+      debug(): string {
+        return 'Debug';
+      }
+    }
+
+    const Debug = macroTrait(DebugTrait);
 
     // Implement Display for Debug trait
     implTrait(Debug, Display);

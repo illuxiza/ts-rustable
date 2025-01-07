@@ -1,5 +1,5 @@
 {
-  "include": ["packages", "types", "scripts", "src"],
+  "include": ["packages", "types", "src"],
   "compilerOptions": {
     "allowJs": false,
     "target": "ESNext",
@@ -25,7 +25,7 @@
       "@rustable/enum": ["packages/enum"],
       "@rustable/iter": ["packages/iter"],
       "@rustable/trait": ["packages/trait"],
-      "@rustable/commons": ["packages/commons"],
+      "@rustable/commons": ["packages/commons"]
     }
   }
 }
