@@ -1,4 +1,4 @@
-import { hasTrait, implTrait, trait, TraitImplementation, useTrait } from '@rustable/trait';
+import { hasTrait, implTrait, trait, TraitStaticMethods, useTrait } from '@rustable/trait';
 import { Constructor, Named } from '@rustable/utils';
 
 /**
@@ -69,7 +69,7 @@ export class Into<T> {
    * @throws {Error} If conversion is not implemented
    * @param targetType
    */
-  into<U extends object>(this: T, targetType: Constructor<U>, generic?: Constructor<any>[]): U {
+  into<U extends object>(this: T, targetType: Constructor<U>, generic?: Constructor[]): U {
     return from(this, targetType, generic) as U;
   }
 }
@@ -93,7 +93,7 @@ declare global {
  * @returns The converted value
  * @throws {Error} If no From implementation is found
  */
-export function from<T, U extends object>(source: T, targetType: Constructor<U>, generic?: Constructor<any>[]): U {
+export function from<T, U extends object>(source: T, targetType: Constructor<U>, generic?: Constructor[]): U {
   if (source === null) {
     throw new Error('Cannot convert null');
   }
@@ -116,32 +116,26 @@ export function from<T, U extends object>(source: T, targetType: Constructor<U>,
   return impl.from(source);
 }
 
-export function implFrom<T extends object, U extends object>(
-  sourceType: Constructor<T>,
-  targetType: Constructor<U>,
-  implementation: TraitImplementation<T, From, typeof From>,
+export function implFrom<T extends Constructor, U extends Constructor>(
+  targetType: T,
+  sourceType: U,
+  implementation: TraitStaticMethods<T, typeof From>,
 ): void;
-export function implFrom<T extends object, U extends object>(
-  sourceType: Constructor<T>,
-  targetType: Constructor<U>,
-  generic: Constructor<any>,
-  implementation: TraitImplementation<T, From, typeof From>,
+export function implFrom<T extends Constructor, U extends Constructor>(
+  targetType: T,
+  sourceType: U,
+  generic: Constructor[],
+  implementation: TraitStaticMethods<T, typeof From>,
 ): void;
-export function implFrom<T extends object, U extends object>(
-  sourceType: Constructor<T>,
-  targetType: Constructor<U>,
-  generic: Constructor<any>[],
-  implementation: TraitImplementation<T, From, typeof From>,
-): void;
-export function implFrom<T extends object, U extends object>(
-  targetType: Constructor<T>,
-  sourceType: Constructor<U>,
-  generic: Constructor<any> | Constructor<any>[] | TraitImplementation<T, From, typeof From>,
-  implementation?: TraitImplementation<T, From, typeof From>,
+export function implFrom<T extends Constructor, U extends Constructor>(
+  targetType: T,
+  sourceType: U,
+  generic: Constructor[] | TraitStaticMethods<T, typeof From>,
+  implementation?: TraitStaticMethods<T, typeof From>,
 ): void {
   // Handle generic parameters
-  let genericParams = [sourceType];
-  let actualImplementation: TraitImplementation<T, From, typeof From> | undefined;
+  let genericParams: Constructor[] = [sourceType];
+  let actualImplementation: TraitStaticMethods<T, typeof From> | undefined;
   if (implementation) {
     actualImplementation = implementation;
     if (Array.isArray(generic)) {
@@ -155,11 +149,11 @@ export function implFrom<T extends object, U extends object>(
       throw new Error('Invalid generic parameter');
     }
   } else if (generic && typeof generic === 'object') {
-    actualImplementation = generic as TraitImplementation<T, From, typeof From>;
+    actualImplementation = generic as TraitStaticMethods<T, typeof From>;
   } else {
     throw new Error('Invalid implementation');
   }
-  implTrait(targetType, From, genericParams, actualImplementation);
+  implTrait(targetType, From, genericParams, { static: actualImplementation });
   if (!hasTrait(sourceType, Into)) {
     implTrait(sourceType, Into);
   }

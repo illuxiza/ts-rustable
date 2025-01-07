@@ -1,1 +1,10 @@
-export { TraitImplementation, hasTrait, implTrait, macroTrait, trait, useTrait } from './trait';
+export {
+  TraitImplementation,
+  TraitInstanceMethods,
+  TraitStaticMethods,
+  hasTrait,
+  implTrait,
+  macroTrait,
+  trait,
+  useTrait,
+} from './trait';

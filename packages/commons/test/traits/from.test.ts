@@ -187,7 +187,7 @@ describe('Type Conversion System', () => {
 
     test('implementation with single generic', () => {
       class Generic {}
-      implFrom(Target, Source, Generic, {
+      implFrom(Target, Source, [Generic], {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },

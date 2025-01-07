@@ -200,8 +200,10 @@ describe('Advanced Trait Features', () => {
         }
       }
       implTrait(Target, MixedTrait, {
-        staticMethod(): string {
-          return 'custom static method';
+        static: {
+          staticMethod(): string {
+            return 'custom static method';
+          },
         },
         instanceMethod(): string {
           return 'custom instance method';

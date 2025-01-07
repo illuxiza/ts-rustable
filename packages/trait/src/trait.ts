@@ -49,13 +49,19 @@ const traitSymbol = Symbol('TRAIT');
  * @template C The class type implementing the trait
  * @template T The trait being implemented
  */
-export type TraitImplementation<C extends Constructor, T extends TraitConstructor> = {
+export type TraitInstanceMethods<C extends Constructor, T extends TraitConstructor> = {
   [K in keyof InstanceType<T>]?: (
     this: InstanceType<C>,
     ...args: any[]
   ) => InstanceType<T>[K] extends (...args: any[]) => infer R ? R : never;
-} & {
-  [K in keyof T]?: (this: T, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
+};
+
+export type TraitStaticMethods<C extends Constructor, T extends TraitConstructor> = {
+  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
+};
+
+export type TraitImplementation<C extends Constructor, T extends TraitConstructor> = TraitInstanceMethods<C, T> & {
+  static?: TraitStaticMethods<C, T>;
 };
 
 /**
@@ -164,8 +170,9 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   arg3?: Constructor[] | TraitImplementation<C, T>,
   arg4?: TraitImplementation<C, T>,
 ): void {
-  if (!trait[traitSymbol]) {
-    throw new Error('Trait must be implemented using the trait function');
+  const traitConstructor = trait.prototype.constructor;
+  if (!traitConstructor[traitSymbol]) {
+    throw new Error(traitConstructor.name + ' must be implemented using the trait function');
   }
 
   // Handle generic parameters
@@ -174,7 +181,6 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   const traitType = Type(trait, generics);
   const targetProto = target.prototype;
   const targetConstructor = target.prototype.constructor;
-  const traitConstructor = trait.prototype.constructor;
 
   // Add static trait methods to target class
   const staticImpl = getStaticTraitBound(target, trait, implementation);
@@ -263,15 +269,6 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
     }
   });
 
-  // Check if all methods in implementation exist in trait
-  if (implementation) {
-    Object.keys(implementation).forEach((key) => {
-      if (!(key in boundImpl) && !(key in staticImpl)) {
-        throw new Error(`Method ${key} not defined in trait`);
-      }
-    });
-  }
-
   // Auto-implement traits that this trait implements
   if (!isTraitTarget) {
     const traitImplMap = traitToTraitRegistry.get(traitConstructor);
@@ -313,10 +310,10 @@ function getStaticTraitBound<C extends Constructor, T extends TraitConstructor>(
   });
 
   // Add custom implementation methods
-  if (implementation) {
-    Object.entries(implementation).forEach(([key, method]) => {
+  if (implementation && implementation.static) {
+    Object.entries(implementation.static).forEach(([key, method]) => {
       if (!(key in boundImpl)) {
-        return;
+        throw new Error(`Static method ${key} not defined in trait`);
       }
       if (typeof method === 'function') {
         boundImpl[key] = method;
@@ -345,8 +342,11 @@ function getTraitBound<C extends Constructor, T extends TraitConstructor>(
   // Add custom implementation methods
   if (implementation) {
     Object.entries(implementation).forEach(([key, method]) => {
-      if (!(key in boundImpl)) {
+      if (key === 'static') {
         return;
+      }
+      if (!(key in boundImpl)) {
+        throw new Error(`Method ${key} not defined in trait`);
       }
       if (typeof method === 'function') {
         boundImpl[key] = method;
@@ -565,7 +565,7 @@ export function macroTrait<C extends Constructor, T extends TraitConstructor>(
   trait: T,
   implementation?: TraitImplementation<C, T>,
 ) {
-  const factoryFn = function (target: C) {
+  const factoryFn = function (target: any) {
     // Auto-implement traits that this trait implements
     collectParentTraits(trait).forEach((parent) => {
       if (!hasTrait(target, parent)) {
