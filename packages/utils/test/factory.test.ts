@@ -246,3 +246,77 @@ describe('createFactory with different class return', () => {
     expect(instance.getValue()).toBe(25);
   });
 });
+
+describe('createFactory with inheritance', () => {
+  class BaseClass {
+    constructor(public name: string) {}
+
+    static version = '1.0.0';
+
+    getName() {
+      return this.name;
+    }
+
+    greet() {
+      return `Hello, ${this.name}!`;
+    }
+  }
+
+  const FactoryBaseClass = createFactory(BaseClass);
+
+  class DerivedClass extends FactoryBaseClass {
+    constructor(
+      name: string,
+      public role: string,
+    ) {
+      super(name);
+    }
+
+    greet() {
+      return `Hello, ${this.name} (${this.role})!`;
+    }
+  }
+
+  const DerivedClassFactory = createFactory(DerivedClass);
+
+  it('should allow inheritance from factory-created class', () => {
+    const derived = new DerivedClass('John', 'Admin');
+    expect(derived).toBeInstanceOf(DerivedClass);
+    expect(derived).toBeInstanceOf(BaseClass);
+    expect(derived.name).toBe('John');
+    expect(derived.role).toBe('Admin');
+    const derived2 = DerivedClassFactory('Jane', 'User');
+    expect(derived2).toBeInstanceOf(DerivedClass);
+    expect(derived2).toBeInstanceOf(BaseClass);
+    expect(derived2.name).toBe('Jane');
+    expect(derived2.role).toBe('User');
+  });
+
+  it('should maintain prototype chain in inherited class', () => {
+    const derived = new DerivedClass('Jane', 'User');
+    expect(Object.getPrototypeOf(derived)).toBe(DerivedClass.prototype);
+    expect(Object.getPrototypeOf(DerivedClass.prototype)).toBe(BaseClass.prototype);
+    const derived2 = DerivedClassFactory('Jane', 'User');
+    expect(Object.getPrototypeOf(derived2)).toBe(DerivedClass.prototype);
+    expect(Object.getPrototypeOf(DerivedClassFactory.prototype)).toBe(BaseClass.prototype);
+  });
+
+  it('should properly override methods from base class', () => {
+    const base = new FactoryBaseClass('Alice');
+    const derived = new DerivedClass('Bob', 'Manager');
+    const derived2 = DerivedClassFactory('Charlie', 'Developer');
+
+    expect(base.greet()).toBe('Hello, Alice!');
+    expect(derived.greet()).toBe('Hello, Bob (Manager)!');
+    expect(derived2.greet()).toBe('Hello, Charlie (Developer)!');
+  });
+
+  it('should inherit static properties from base class', () => {
+    expect(DerivedClass.version).toBe('1.0.0');
+  });
+
+  it('should allow using base class methods', () => {
+    const derived = new DerivedClass('Tom', 'Developer');
+    expect(derived.getName()).toBe('Tom');
+  });
+});

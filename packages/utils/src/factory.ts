@@ -48,7 +48,8 @@ export function createFactory<
     if (!(this instanceof Factory)) {
       return factoryFn ? factoryFn(...args) : new BaseClass(...args);
     }
-    return new BaseClass(...args);
+    // Use Reflect.construct to properly handle inheritance
+    return Reflect.construct(BaseClass, args, this.constructor);
   }
 
   // Copy prototype
