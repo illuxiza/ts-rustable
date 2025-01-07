@@ -1,5 +1,4 @@
 import { Constructor } from './common';
-import { createFactory } from './factory';
 
 // Store type constructors in a WeakMap using the target as key
 const typeMap = new WeakMap<any, Map<string, Constructor<any>>>();
@@ -15,7 +14,7 @@ function getGenericKey(genericParams: any[]): string {
     .join(',');
 }
 
-function typeConstructor<T extends Constructor<any>>(target: T, genericParams?: any[]): T {
+export function Type<T extends Constructor<any>>(target: T, genericParams?: any[]): T {
   // If no generic parameters, return the target directly
   if (!genericParams || genericParams.length === 0) {
     return target.prototype.constructor as T;
@@ -61,10 +60,6 @@ function typeConstructor<T extends Constructor<any>>(target: T, genericParams?: 
 
   return customType as T;
 }
-
-export const Type = createFactory(Object, typeConstructor) as {
-  <T extends Constructor<any>>(target: T, genericParams?: any[]): T;
-};
 
 /**
  * Decorator for naming a class.
