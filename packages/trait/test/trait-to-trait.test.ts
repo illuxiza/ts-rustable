@@ -102,7 +102,11 @@ describe('Trait to Trait Implementation', () => {
       }
     }
 
-    const Debug = macroTrait(DebugTrait);
+    const Debug = macroTrait(DebugTrait, {
+      debug() {
+        return `Debug(${this.value})`;
+      },
+    });
 
     // Implement Display for Debug trait
     implTrait(Debug, Display);
@@ -222,7 +226,7 @@ describe('Trait to Trait Implementation', () => {
 
     // Implement Display for Debug trait with custom implementation
     implTrait(Debug, Display, {
-      display() {
+      display(this: Debug) {
         return `Debug(${this.debug()})`;
       },
     });

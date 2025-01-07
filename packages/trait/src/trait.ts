@@ -8,25 +8,25 @@ import { Constructor, createFactory, Type } from '@rustable/utils';
  * Registry for storing trait implementations.
  * Uses WeakMap to allow garbage collection of unused implementations.
  */
-const traitRegistry = new WeakMap<Constructor<any>, WeakMap<Constructor<any>, any>>();
+const traitRegistry = new WeakMap<Constructor, WeakMap<Constructor, any>>();
 
 /**
  * Registry for storing static trait implementations.
  * Uses WeakMap to allow garbage collection of unused implementations.
  */
-const staticTraitRegistry = new WeakMap<Constructor<any>, WeakMap<TraitConstructor<any>, any>>();
+const staticTraitRegistry = new WeakMap<Constructor, WeakMap<TraitConstructor, any>>();
 
 /**
  * Registry for storing trait-to-trait implementations.
  * When a trait implements another trait, this registry keeps track of it.
  */
 const traitToTraitRegistry = new WeakMap<
-  TraitConstructor<any>,
+  TraitConstructor,
   Map<
-    TraitConstructor<any>,
+    TraitConstructor,
     {
-      trait: TraitConstructor<any>;
-      generics?: Constructor<any>[];
+      trait: TraitConstructor;
+      generics?: Constructor[];
       implementation?: any;
     }
   >
@@ -35,7 +35,7 @@ const traitToTraitRegistry = new WeakMap<
 /**
  * Cache for parent commons to optimize inheritance chain lookups.
  */
-const parentTraitsCache = new WeakMap<object, TraitConstructor<any>[]>();
+const parentTraitsCache = new WeakMap<object, TraitConstructor[]>();
 
 /**
  * Symbol used to mark trait classes.
@@ -49,17 +49,20 @@ const traitSymbol = Symbol('TRAIT');
  * @template C The class type implementing the trait
  * @template T The trait being implemented
  */
-export type TraitImplementation<C, T, TC extends TraitConstructor<T>> = {
-  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
+export type TraitImplementation<C extends Constructor, T extends TraitConstructor> = {
+  [K in keyof InstanceType<T>]?: (
+    this: InstanceType<C>,
+    ...args: any[]
+  ) => InstanceType<T>[K] extends (...args: any[]) => infer R ? R : never;
 } & {
-  [K in keyof TC]?: (...args: any[]) => TC[K] extends (...args: any[]) => infer R ? R : never;
+  [K in keyof T]?: (this: T, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
 };
 
 /**
  * Constructor type for commons.
  * Extends the base constructor with trait metadata.
  */
-interface TraitConstructor<T> extends Constructor<T> {
+interface TraitConstructor<T = any> extends Constructor<T> {
   [traitSymbol]?: boolean;
 }
 
@@ -69,14 +72,14 @@ interface TraitConstructor<T> extends Constructor<T> {
  * @param trait The trait to collect parents for
  * @returns Array of parent trait constructors
  */
-function collectParentTraits(trait: TraitConstructor<any>): TraitConstructor<any>[] {
+function collectParentTraits(trait: TraitConstructor): TraitConstructor[] {
   const traitConstructor = trait.prototype.constructor;
   const cached = parentTraitsCache.get(traitConstructor);
   if (cached) {
     return cached;
   }
 
-  const parents: TraitConstructor<any>[] = [];
+  const parents: TraitConstructor[] = [];
   let proto = Object.getPrototypeOf(trait.prototype);
   while (proto && proto !== Object.prototype) {
     const parentTrait = proto.constructor;
@@ -144,22 +147,22 @@ export function trait<T extends object, TC extends Constructor<T>>(traitClass: T
  * });
  * ```
  */
-export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  implementation?: TraitImplementation<C, T, TC>,
+export function implTrait<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  implementation?: TraitImplementation<C, T>,
 ): void;
-export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  generics: Constructor<any>[],
-  implementation?: TraitImplementation<C, T, TC>,
+export function implTrait<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  generics: Constructor[],
+  implementation?: TraitImplementation<C, T>,
 ): void;
-export function implTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  arg3?: Constructor<any>[] | TraitImplementation<C, T, TC>,
-  arg4?: TraitImplementation<C, T, TC>,
+export function implTrait<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  arg3?: Constructor[] | TraitImplementation<C, T>,
+  arg4?: TraitImplementation<C, T>,
 ): void {
   if (!trait[traitSymbol]) {
     throw new Error('Trait must be implemented using the trait function');
@@ -289,10 +292,10 @@ export function implTrait<C extends object, T extends object, TC extends TraitCo
   }
 }
 
-function getStaticTraitBound<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  implementation?: TraitImplementation<C, T, TC>,
+function getStaticTraitBound<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  implementation?: TraitImplementation<C, T>,
 ) {
   const boundImpl: Record<string, any> = {};
   const targetConstructor = target.prototype.constructor;
@@ -323,9 +326,9 @@ function getStaticTraitBound<C extends object, T extends object, TC extends Trai
   return boundImpl;
 }
 
-function getTraitBound<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  trait: TC,
-  implementation?: TraitImplementation<C, T, TC>,
+function getTraitBound<C extends Constructor, T extends TraitConstructor>(
+  trait: T,
+  implementation?: TraitImplementation<C, T>,
 ) {
   const boundImpl: Record<string, any> = {};
   // Add trait's own methods
@@ -353,12 +356,12 @@ function getTraitBound<C extends object, T extends object, TC extends TraitConst
   return boundImpl;
 }
 
-function parseParams<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  arg3?: Constructor<any>[] | TraitImplementation<C, T, TC>,
-  arg4?: TraitImplementation<C, T, TC>,
+function parseParams<C extends Constructor, T extends TraitConstructor>(
+  arg3?: Constructor[] | TraitImplementation<C, T>,
+  arg4?: TraitImplementation<C, T>,
 ) {
-  let generics: Constructor<any>[] = [];
-  let implementation: TraitImplementation<C, T, TC> | undefined;
+  let generics: Constructor[] = [];
+  let implementation: TraitImplementation<C, T> | undefined;
 
   if (arg4) {
     if (Array.isArray(arg3)) {
@@ -425,7 +428,7 @@ function getSelfBound<Class extends object>(targetProto: any, target: Constructo
 export function hasTrait<Class extends object, Trait extends object>(
   target: Class | Constructor<Class>,
   trait: Constructor<Trait>,
-  generic?: Constructor<any>[],
+  generic?: Constructor[],
 ): boolean {
   const targetConstructor = typeof target === 'function' ? target.prototype.constructor : target.constructor;
   const traitType = Type(trait, generic);
@@ -458,33 +461,33 @@ export function hasTrait<Class extends object, Trait extends object>(
  * }
  * ```
  */
-export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  generic?: Constructor<any>[],
-): TC;
-export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
+export function useTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
-  trait: TC & TraitConstructor<T>,
-  generic?: Constructor<any>[],
+  trait: T,
+  generic?: Constructor[],
 ): T;
-export function useTrait<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: C | Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  generic?: Constructor<any>[],
-): TC | T {
+export function useTrait<C extends Constructor, T extends TraitConstructor>(
+  target: InstanceType<C>,
+  trait: T,
+  generic?: Constructor[],
+): InstanceType<T>;
+export function useTrait<C extends Constructor, T extends TraitConstructor>(
+  target: C | InstanceType<C>,
+  trait: T,
+  generic?: Constructor[],
+): InstanceType<T> | T {
   if (typeof target === 'function') {
-    return useStatic<C, T, TC>(target, trait, generic);
+    return useStatic<C, T>(target, trait, generic);
   } else if (typeof target === 'object') {
-    return useNormal<C, T, TC>(target, trait, generic);
+    return useNormal<C, T>(target, trait, generic);
   }
   throw new Error('Invalid target type');
 }
 
-function useNormal<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: C,
-  trait: TC & TraitConstructor<T>,
-  generic?: Constructor<any>[],
+function useNormal<C extends Constructor, T extends TraitConstructor>(
+  target: InstanceType<C>,
+  trait: T,
+  generic?: Constructor[],
 ): T {
   const traitType = Type(trait, generic);
   const implMap = traitRegistry.get(Object.getPrototypeOf(target));
@@ -507,14 +510,10 @@ function useNormal<C extends object, T extends object, TC extends TraitConstruct
         throw new Error(`Method ${String(prop)} not implemented for trait`);
       },
     },
-  ) as T;
+  ) as InstanceType<T>;
 }
 
-function useStatic<C extends object, T extends object, TC extends TraitConstructor<T> = TraitConstructor<T>>(
-  target: Constructor<C>,
-  trait: TC & TraitConstructor<T>,
-  generic?: Constructor<any>[],
-): TC {
+function useStatic<C extends Constructor, T extends TraitConstructor>(target: C, trait: T, generic?: Constructor[]): T {
   const targetConstructor = target.prototype.constructor;
   const traitType = Type(trait, generic);
   const staticImpls = staticTraitRegistry.get(targetConstructor);
@@ -537,7 +536,7 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
         throw new Error(`Method ${String(prop)} not implemented for trait`);
       },
     },
-  ) as TC;
+  ) as T;
 }
 
 /**
@@ -562,13 +561,11 @@ function useStatic<C extends object, T extends object, TC extends TraitConstruct
  *   constructor(public x: number, public y: number) {}
  * }
  */
-export function macroTrait<
-  C extends object,
-  T extends object,
-  CC extends Constructor<C>,
-  TC extends TraitConstructor<T> = TraitConstructor<T>,
->(trait: TC, implementation?: TraitImplementation<C, T, TC>) {
-  const factoryFn = function (target: CC) {
+export function macroTrait<C extends Constructor, T extends TraitConstructor>(
+  trait: T,
+  implementation?: TraitImplementation<C, T>,
+) {
+  const factoryFn = function (target: C) {
     // Auto-implement traits that this trait implements
     collectParentTraits(trait).forEach((parent) => {
       if (!hasTrait(target, parent)) {

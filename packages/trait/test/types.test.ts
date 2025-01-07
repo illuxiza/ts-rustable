@@ -104,13 +104,13 @@ describe('Trait Type System', () => {
     }
 
     implTrait(Point, FormatTrait, [Number, String], {
-      format(value: number, style: string): string {
+      format(this: Point, value: number, style: string): string {
         return `${style}: (${this.x}, ${this.y}) -> ${value}`;
       },
     });
 
     implTrait(Point, MultiDisplayTrait, [Number, String, Boolean], {
-      display(value: number, format: string, extra: boolean): string {
+      display(this: Point, value: number, format: string, extra: boolean): string {
         const coords = `(${this.x}, ${this.y})`;
         return extra ? `${format}: ${coords} -> ${value}` : coords;
       },
@@ -154,7 +154,7 @@ describe('Trait Type System', () => {
 
     class TypeContainer<T> extends Container<T> {}
 
-    implTrait<TypeContainer<string>, Transform<string>>(TypeContainer, Transform, [String], {
+    implTrait(TypeContainer<string>, Transform, [String], {
       transform<U extends number | string>(this: TypeContainer<string>, value: U): string {
         return `${this.getValue()}_${String(value)}`;
       },
@@ -165,7 +165,7 @@ describe('Trait Type System', () => {
 
     test('should handle generic method constraints', () => {
       const container = new TypeContainer('base');
-      const trait = useTrait<TypeContainer<string>, Transform<string>>(container, Transform, [String]);
+      const trait = useTrait(container, Transform<string>, [String]);
 
       expect(trait?.transform(42)).toBe('base_42');
       expect(trait?.transform('test')).toBe('base_test');

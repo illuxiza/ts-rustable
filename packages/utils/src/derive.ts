@@ -13,7 +13,7 @@ import { Constructor } from './common';
  * }
  * ```
  */
-type MarcoFn = (target: Constructor<any>, ...args: any[]) => void;
+type MarcoFn<T extends Constructor = any> = (target: T, ...args: any[]) => void;
 
 /**
  * Applies a list of derive functions to a target class
@@ -38,8 +38,8 @@ type MarcoFn = (target: Constructor<any>, ...args: any[]) => void;
  * }
  * ```
  */
-export function derive(fns: MarcoFn | MarcoFn[]) {
-  return function (target: any) {
+export function derive<T extends Constructor>(fns: MarcoFn<T> | MarcoFn<T>[]) {
+  return function (target: T) {
     // Apply each derive function in sequence
     if (Array.isArray(fns)) {
       fns.forEach((fn) => fn(target));
@@ -67,8 +67,8 @@ export function derive(fns: MarcoFn | MarcoFn[]) {
  * instance.value = "test";
  * ```
  */
-export function applyMacros(macros: MarcoFn | MarcoFn[]) {
-  return function <T extends Constructor<any>>(target: T): T {
-    return derive(macros)(target) as T;
+export function applyMacros<T extends Constructor>(macros: MarcoFn<T> | MarcoFn<T>[]) {
+  return function (target: T) {
+    return derive(macros)(target);
   };
 }
