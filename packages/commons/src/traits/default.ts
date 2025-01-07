@@ -1,5 +1,5 @@
 import { macroTrait, trait, useTrait } from '@rustable/trait';
-import { Constructor } from '@rustable/utils';
+import { Constructor, Named } from '@rustable/utils';
 
 /**
  * Default trait for default value initialization.
@@ -22,6 +22,7 @@ import { Constructor } from '@rustable/utils';
  * - Thread-safe and memory efficient
  */
 @trait
+@Named('Default')
 class DefaultTrait {
   static default<T>(): T {
     return new this() as T;

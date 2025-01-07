@@ -18,13 +18,15 @@ function getGenericKey(genericParams: any[]): string {
 function typeConstructor<T extends Constructor<any>>(target: T, genericParams?: any[]): T {
   // If no generic parameters, return the target directly
   if (!genericParams || genericParams.length === 0) {
-    return target;
+    return target.prototype.constructor as T;
   }
 
-  let targetTypes = typeMap.get(target);
+  const targetConstructor = target.prototype.constructor;
+
+  let targetTypes = typeMap.get(targetConstructor);
   if (!targetTypes) {
     targetTypes = new Map();
-    typeMap.set(target, targetTypes);
+    typeMap.set(targetConstructor, targetTypes);
   }
 
   const genericKey = getGenericKey(genericParams);
@@ -35,19 +37,19 @@ function typeConstructor<T extends Constructor<any>>(target: T, genericParams?: 
       return new target(...args);
     } as any;
 
-    Object.setPrototypeOf(newCustomType, target);
+    Object.setPrototypeOf(newCustomType, targetConstructor);
     newCustomType.prototype = Object.create(target.prototype);
     newCustomType.prototype.constructor = newCustomType;
 
     // Copy all static properties
-    Object.getOwnPropertyNames(target).forEach((prop) => {
+    Object.getOwnPropertyNames(targetConstructor).forEach((prop) => {
       if (prop !== 'prototype' && prop !== 'name') {
-        Object.defineProperty(newCustomType, prop, Object.getOwnPropertyDescriptor(target, prop)!);
+        Object.defineProperty(newCustomType, prop, Object.getOwnPropertyDescriptor(targetConstructor, prop)!);
       }
     });
 
     Object.defineProperty(newCustomType, 'name', {
-      value: `${target.name}<${genericKey}>`,
+      value: `${targetConstructor.name}<${genericKey}>`,
       writable: false,
       enumerable: false,
       configurable: true,
@@ -63,3 +65,28 @@ function typeConstructor<T extends Constructor<any>>(target: T, genericParams?: 
 export const Type = createFactory(Object, typeConstructor) as {
   <T extends Constructor<any>>(target: T, genericParams?: any[]): T;
 };
+
+/**
+ * Decorator for naming a class.
+ * @param name - The name to give the class
+ * @returns A decorator function that applies the name to the class.
+ *
+ * @example
+ * ```typescript
+ * @Named('Point')
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
+ * }
+ * ```
+ */
+export function Named(name: string) {
+  return function (target: any): any {
+    Object.defineProperty(target, 'name', {
+      value: name,
+      writable: false,
+      enumerable: false,
+      configurable: true,
+    });
+    return target;
+  };
+}

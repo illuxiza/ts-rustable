@@ -6,5 +6,6 @@ export * from './factory';
 export * from './hash';
 export * from './ptr';
 export * from './stringify';
+export * from './type';
 export * from './type_id';
 export * from './val';

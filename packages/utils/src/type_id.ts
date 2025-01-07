@@ -76,7 +76,7 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   if (typeof target === 'object') {
     constructor = Type(target.constructor, genericParams);
   } else if (typeof target === 'function' && target.prototype) {
-    constructor = Type(target.prototype.constructor, genericParams);
+    constructor = Type(target, genericParams);
   } else if (target.constructor) {
     // If target is a primitive value, get its constructor
     constructor = Type(target.constructor, genericParams);

@@ -30,11 +30,20 @@
  * const obj = factory('test'); // returns { name: 'test', timestamp: 123... }
  * const instance = new factory('test'); // returns Person instance
  */
+const factoryCache = new WeakMap<any, WeakMap<any, any>>();
+
 export function createFactory<
   T extends new (...args: any[]) => any,
   P extends readonly any[] = ConstructorParameters<T>,
   R = InstanceType<T>,
 >(BaseClass: T, factoryFn?: (...args: P) => R): T & ((...args: P) => R) {
+  if (!factoryCache.has(BaseClass)) {
+    factoryCache.set(BaseClass, new WeakMap());
+  }
+  const cache = factoryCache.get(BaseClass)!;
+  if (cache.has(factoryFn)) {
+    return cache.get(factoryFn) as T & ((...args: P) => R);
+  }
   function Factory(this: any, ...args: P) {
     if (!(this instanceof Factory)) {
       return factoryFn ? factoryFn(...args) : new BaseClass(...args);
@@ -51,6 +60,7 @@ export function createFactory<
 
   // Set proper prototype chain for static inheritance
   Object.setPrototypeOf(Factory, BaseClass);
+  cache.set(factoryFn ?? BaseClass, Factory);
 
   return Factory as T & ((...args: P) => R);
 }
