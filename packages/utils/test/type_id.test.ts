@@ -1,3 +1,4 @@
+import { Type } from '../src';
 import { typeId } from '../src/type_id';
 
 describe('TypeId System', () => {
@@ -291,6 +292,44 @@ describe('TypeId System', () => {
       // Instances should enum their class IDs
       expect(typeId(button)).toBe(typeId(Button));
       expect(typeId(icon)).toBe(typeId(Icon));
+    });
+
+    test('should handle generic classes and interfaces', () => {
+      interface Container<T> {
+        value: T;
+      }
+
+      class Box<T> implements Container<T> {
+        constructor(public value: T) {}
+      }
+
+      class Pair<T, U> {
+        constructor(
+          public first: T,
+          public second: U,
+        ) {}
+      }
+
+      const BoxString = Type(Box, [String]);
+      const BoxNumber = Type(Box, [Number]);
+      const PairStringNumber = Type(Pair, [String, Number]);
+
+      const stringBox = new BoxString('hello');
+      const numberBox = new BoxNumber(42);
+      const mixedPair = new PairStringNumber('world', 100);
+
+      // Generic classes with different type parameters should have different IDs
+      // expect(typeId(Box, [String])).not.toBe(typeId(Box, [Number]));
+      // expect(typeId(Pair, [String, Number])).not.toBe(typeId(Pair, [Number, String]));
+
+      expect(typeId(Box, [String])).toBe(typeId(BoxString));
+      expect(typeId(Box, [Number])).toBe(typeId(BoxNumber));
+      expect(typeId(Pair, [String, Number])).toBe(typeId(PairStringNumber));
+
+      // Instances should match their constructed types
+      expect(typeId(stringBox)).toBe(typeId(Box, [String]));
+      expect(typeId(numberBox)).toBe(typeId(Box, [Number]));
+      expect(typeId(mixedPair)).toBe(typeId(Pair, [String, Number]));
     });
   });
 });

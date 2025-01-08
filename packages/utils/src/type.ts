@@ -3,6 +3,8 @@ import { Constructor } from './common';
 // Store type constructors in a WeakMap using the target as key
 const typeMap = new WeakMap<any, Map<string, Constructor<any>>>();
 
+const genericType = Symbol('GenericType');
+
 function getGenericKey(genericParams: any[]): string {
   return genericParams
     .map((param) => {
@@ -14,8 +16,20 @@ function getGenericKey(genericParams: any[]): string {
     .join(',');
 }
 
-export function Type<T extends Constructor<any>>(target: T, genericParams?: any[]): T {
+export interface MaybeGenericConstructor extends Constructor {
+  [genericType]?: true;
+}
+
+export function Type<T extends MaybeGenericConstructor>(target: T, genericParams?: any[]): T {
   // If no generic parameters, return the target directly
+  if (target[genericType]) {
+    if (!genericParams || genericParams.length === 0) {
+      return target as T;
+    } else {
+      throw new Error('Cannot specify generic parameters for generic type');
+    }
+  }
+
   if (!genericParams || genericParams.length === 0) {
     return target.prototype.constructor as T;
   }
@@ -32,32 +46,40 @@ export function Type<T extends Constructor<any>>(target: T, genericParams?: any[
   let customType = targetTypes.get(genericKey);
 
   if (!customType) {
-    const newCustomType = function (this: any, ...args: any[]) {
-      return Reflect.construct(targetConstructor, args, this.constructor);
-    } as any;
-
-    Object.setPrototypeOf(newCustomType, targetConstructor);
-    newCustomType.prototype = targetConstructor.prototype;
-
+    customType = class extends targetConstructor {
+      constructor(...args: any[]) {
+        super(...args);
+      }
+    };
     // Copy all static properties
     Object.getOwnPropertyNames(targetConstructor).forEach((prop) => {
       if (prop !== 'prototype' && prop !== 'name') {
-        Object.defineProperty(newCustomType, prop, Object.getOwnPropertyDescriptor(targetConstructor, prop)!);
+        Object.defineProperty(customType, prop, Object.getOwnPropertyDescriptor(targetConstructor, prop)!);
       }
     });
 
-    Object.defineProperty(newCustomType, 'name', {
+    Object.defineProperty(customType, 'name', {
       value: `${targetConstructor.name}<${genericKey}>`,
       writable: false,
       enumerable: false,
       configurable: true,
     });
 
-    targetTypes.set(genericKey, newCustomType);
-    customType = newCustomType;
+    Object.defineProperty(customType, genericType, {
+      value: true,
+      writable: false,
+      enumerable: false,
+      configurable: true,
+    });
+
+    targetTypes.set(genericKey, customType);
   }
 
   return customType as T;
+}
+
+export function isGenericType(target: any): boolean {
+  return target[genericType];
 }
 
 /**

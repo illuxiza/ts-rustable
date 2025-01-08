@@ -34,10 +34,10 @@ export type TypeId = string & { readonly __type: unique symbol };
  *
  * @returns A new unique TypeId
  */
-function generateTypeId(): TypeId {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 8);
-  return `${timestamp}-${random}` as TypeId;
+let i = 0;
+
+function generateTypeId(type: Constructor): TypeId {
+  return `${++i}:${type.name}` as TypeId;
 }
 
 /**
@@ -91,7 +91,7 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   }
 
   // Create and store new ID
-  const id = generateTypeId();
+  const id = generateTypeId(constructor);
   typeIdMap.set(constructor, id);
   return id;
 }
