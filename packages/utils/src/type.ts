@@ -33,12 +33,11 @@ export function Type<T extends Constructor<any>>(target: T, genericParams?: any[
 
   if (!customType) {
     const newCustomType = function (this: any, ...args: any[]) {
-      return new target(...args);
+      return Reflect.construct(targetConstructor, args, this.constructor);
     } as any;
 
     Object.setPrototypeOf(newCustomType, targetConstructor);
-    newCustomType.prototype = Object.create(target.prototype);
-    newCustomType.prototype.constructor = newCustomType;
+    newCustomType.prototype = targetConstructor.prototype;
 
     // Copy all static properties
     Object.getOwnPropertyNames(targetConstructor).forEach((prop) => {
