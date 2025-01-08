@@ -172,9 +172,11 @@ describe('Trait Type System', () => {
 
     test('should handle generic method constraints', () => {
       const container = new TypeContainer('base');
+      expect(hasTrait(container, Transform, [String])).toBe(true);
       const trait = useTrait(container, Transform<string>, [String]);
 
       const stringContainer = new StringTypeContainer('base');
+      expect(hasTrait(stringContainer, Transform, [String])).toBe(true);
       const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
 
       expect(trait?.transform(42)).toBe('base_42');

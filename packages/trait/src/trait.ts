@@ -441,12 +441,29 @@ export function hasTrait<Class extends object, Trait extends object>(
   // If target is a trait (checking trait-to-trait implementation)
   if (traitSymbol in targetConstructor) {
     const traitImplMap = traitToTraitRegistry.get(targetConstructor);
-    return traitImplMap?.has(traitType) ?? false;
+    if (traitImplMap?.has(traitType)) {
+      return true;
+    }
+    if (isGenericType(targetConstructor)) {
+      const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
+      const traitImplMap = traitToTraitRegistry.get(sourceType);
+      return traitImplMap?.has(traitType) ?? false;
+    }
+    return false;
   }
 
   // For normal class implementation
   const implMap = traitRegistry.get(targetConstructor.prototype);
-  return implMap?.has(traitType) ?? false;
+  if (implMap?.has(traitType)) {
+    return true;
+  }
+  if (isGenericType(targetConstructor)) {
+    const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
+    const implMap = traitRegistry.get(sourceType.prototype);
+    return implMap?.has(traitType) ?? false;
+  }
+
+  return false;
 }
 
 /**
