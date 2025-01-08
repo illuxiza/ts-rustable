@@ -232,6 +232,7 @@ describe('Trait Type System', () => {
       expect(hasTrait(container, Transform<string>, [String])).toBe(false);
 
       const stringContainer = new StringTypeContainer('base');
+      expect(hasTrait(stringContainer, Transform, [String])).toBe(true);
       const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
 
       expect(hasTrait(TypeContainer, Transform, [String])).toBe(false);
