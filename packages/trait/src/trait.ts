@@ -495,13 +495,18 @@ function useNormal<C extends Constructor, T extends TraitConstructor>(
   generic?: Constructor[],
 ): T {
   const traitType = Type(trait, generic);
-  const implMap = traitRegistry.get(Object.getPrototypeOf(target));
+  const targetType = target.constructor;
+  let implMap = traitRegistry.get(targetType.prototype);
   if (!implMap?.has(traitType)) {
-    let traitName = trait.name;
-    if (generic) {
-      traitName += `<${generic.map((g) => g.name).join(', ')}>`;
+    if (isGenericType(targetType)) {
+      const sourceType = Object.getPrototypeOf(targetType.prototype).constructor;
+      implMap = traitRegistry.get(sourceType.prototype);
+      if (!implMap?.has(traitType)) {
+        throw new Error(`Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetType.name}`);
+      }
+    } else {
+      throw new Error(`Trait ${traitType.name} not implemented for ${targetType.name}`);
     }
-    throw new Error(`Trait ${traitName} not implemented for ${target.constructor.name}`);
   }
 
   const impl = implMap.get(traitType);
@@ -523,11 +528,16 @@ function useStatic<C extends Constructor, T extends TraitConstructor>(target: C,
   const traitType = Type(trait, generic);
   const staticImpls = staticTraitRegistry.get(targetConstructor);
   if (!staticImpls?.has(traitType)) {
-    let traitName = trait.name;
-    if (generic) {
-      traitName += `<${generic.map((g) => g.name).join(', ')}>`;
+    if (isGenericType(targetConstructor)) {
+      const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
+      const sourceImpls = staticTraitRegistry.get(sourceType);
+      if (!sourceImpls?.has(traitType)) {
+        throw new Error(`Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetConstructor.name}`);
+      }
+      return useStatic(sourceType, trait, generic);
+    } else {
+      throw new Error(`Trait ${traitType.name} not implemented for ${targetConstructor.name}`);
     }
-    throw new Error(`Trait ${traitName} not implemented for ${targetConstructor.name}`);
   }
 
   const impl = staticImpls.get(traitType);

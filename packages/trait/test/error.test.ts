@@ -98,7 +98,7 @@ describe('Trait Error Cases', () => {
 
       const point = new Point(1, 2);
       expect(() => useTrait(point, MultiGeneric, [String, Number])).toThrow(
-        'Trait MultiGeneric<String, Number> not implemented for Point',
+        'Trait MultiGeneric<String,Number> not implemented for Point',
       );
     });
 

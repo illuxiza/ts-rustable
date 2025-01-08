@@ -1,3 +1,4 @@
+import { Type } from '@rustable/utils';
 import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
 
 describe('Trait Type System', () => {
@@ -150,9 +151,15 @@ describe('Trait Type System', () => {
       convertTo<U>(_converter: (value: T) => U): U {
         throw new Error('Not implemented');
       }
+
+      static version(): string {
+        return '1.0.0';
+      }
     }
 
     class TypeContainer<T> extends Container<T> {}
+
+    const StringTypeContainer = Type(TypeContainer, [String]);
 
     implTrait(TypeContainer<string>, Transform, [String], {
       transform<U extends number | string>(this: TypeContainer<string>, value: U): string {
@@ -167,9 +174,70 @@ describe('Trait Type System', () => {
       const container = new TypeContainer('base');
       const trait = useTrait(container, Transform<string>, [String]);
 
+      const stringContainer = new StringTypeContainer('base');
+      const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
+
       expect(trait?.transform(42)).toBe('base_42');
       expect(trait?.transform('test')).toBe('base_test');
       expect(trait?.convertTo((value) => value.length)).toBe(4);
+      expect(useTrait(TypeContainer, Transform, [String])?.version()).toBe('1.0.0');
+
+      expect(stringTrait?.transform(42)).toBe('base_42');
+      expect(stringTrait?.transform('test')).toBe('base_test');
+      expect(stringTrait?.convertTo((value) => value.length)).toBe(4);
+      expect(useTrait(StringTypeContainer, Transform, [String])?.version()).toBe('1.0.0');
+    });
+  });
+
+  describe('Generic Method Constraints2', () => {
+    interface Transformable<T> {
+      transform<U extends number | string>(value: U): T;
+      convertTo<U>(converter: (value: T) => U): U;
+    }
+
+    @trait
+    class Transform<T> implements Transformable<T> {
+      transform<U extends number | string>(_value: U): T {
+        throw new Error('Not implemented');
+      }
+
+      convertTo<U>(_converter: (value: T) => U): U {
+        throw new Error('Not implemented');
+      }
+
+      static version(): string {
+        return '1.0.0';
+      }
+    }
+
+    class TypeContainer<T> extends Container<T> {}
+
+    const StringTypeContainer = Type(TypeContainer<string>, [String]);
+
+    interface StringTypeContainer extends TypeContainer<string> {}
+
+    implTrait(StringTypeContainer, Transform, [String], {
+      transform<U extends number | string>(this: StringTypeContainer, value: U): string {
+        return `${this.getValue()}_${String(value)}`;
+      },
+      convertTo<U>(this: StringTypeContainer, converter: (value: string) => U): U {
+        return converter(this.getValue());
+      },
+    });
+
+    test('should handle generic method constraints', () => {
+      const container = new TypeContainer('base');
+      expect(hasTrait(container, Transform<string>, [String])).toBe(false);
+
+      const stringContainer = new StringTypeContainer('base');
+      const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
+
+      expect(hasTrait(TypeContainer, Transform, [String])).toBe(false);
+
+      expect(stringTrait?.transform(42)).toBe('base_42');
+      expect(stringTrait?.transform('test')).toBe('base_test');
+      expect(stringTrait?.convertTo((value) => value.length)).toBe(4);
+      expect(useTrait(StringTypeContainer, Transform, [String])?.version()).toBe('1.0.0');
     });
   });
 
