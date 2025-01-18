@@ -44,9 +44,14 @@ export const Eq = macroTrait(EqTrait);
 
 export interface Eq extends EqTrait {}
 
-Object.prototype.eq = function (other: any) {
-  return this === other;
-};
+Object.defineProperty(Object.prototype, 'eq', {
+  value: function (other: any) {
+    return this === other;
+  },
+  enumerable: false,
+  configurable: true,
+  writable: true,
+});
 
 declare global {
   interface Object extends Eq {}
