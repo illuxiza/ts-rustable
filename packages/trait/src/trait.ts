@@ -31,6 +31,12 @@ const traitToTraitRegistry = new WeakMap<
 >();
 
 /**
+ * Registry for tracking which classes have implemented each trait.
+ * Maps trait constructors to the set of classes that implement them.
+ */
+const traitImplementersRegistry = new WeakMap<TraitConstructor, Constructor[]>();
+
+/**
  * Cache for parent commons to optimize inheritance chain lookups.
  */
 const parentTraitsCache = new WeakMap<object, TraitConstructor[]>();
@@ -134,7 +140,6 @@ export function trait<T extends object, TC extends Constructor<T>>(traitClass: T
  * @param target The class to implement the trait for
  * @param trait The trait to implement
  * @param implementation The trait implementation
- * @param staticImplementation Optional static trait implementation
  *
  * @example
  * ```typescript
@@ -160,6 +165,9 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   trait: T,
   implementation?: TraitImplementation<C, T>,
 ): void;
+/**
+ * @deprecated Use Type(trait, generics) directly instead of passing generics as a separate parameter.
+ */
 export function implTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
   trait: T,
@@ -216,6 +224,15 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
       traitToTraitRegistry.set(targetConstructor, implMap);
     }
     implMap.set(trait, { implementation });
+
+    // Auto-propagate this trait-to-trait implementation to all classes that implement the source trait
+    const implementers = traitImplementersRegistry.get(target) || [];
+    for (const implementer of implementers) {
+      // The class has implemented the source trait, so it should also implement the target trait
+      // Use the same generics as the class used to implement the source trait
+      implTrait(implementer as C, trait, implementation);
+    }
+
     // If target is a trait, we only need to record the relationship
     return;
   }
@@ -223,7 +240,8 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   const selfBoundImpl = getSelfBound(targetProto, targetConstructor);
 
   // Get or create implementation map for target
-  const implMap = traitRegistry.get(targetProto)!;
+  const implMap = traitRegistry.get(targetProto) || new WeakMap();
+  traitRegistry.set(targetProto, implMap);
 
   if (implMap.has(trait)) {
     throw new Error(`Trait ${traitConstructor.name} already implemented for ${targetConstructor.name}`);
@@ -243,7 +261,14 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
 
   // Store the implementation
   implMap.set(trait, boundImpl);
-  traitRegistry.set(targetProto, implMap);
+
+  // Record that this class implements this trait
+  let implementers = traitImplementersRegistry.get(trait);
+  if (!implementers) {
+    implementers = [];
+    traitImplementersRegistry.set(trait, implementers);
+  }
+  implementers.push(target);
 
   // Add trait methods to target prototype
   Object.keys(boundImpl).forEach((name) => {
@@ -419,16 +444,17 @@ function getSelfBound<Class extends object>(targetProto: any, target: Constructo
  *
  * @param target The value to check
  * @param trait The trait to check for
- * @param generic Optional generic type parameter
+ * @param generic Optional generic type parameter (deprecated)
  * @returns true if the value implements the trait
  *
  * @example
  * ```typescript
  * const point = new Point(1, 2);
- * if (hasTrait(point, Display, String)) {
+ * if (hasTrait(point, Type(Display, [String]))) {
  *   console.log(point.display());
  * }
  * ```
+ * @deprecated The `generic` parameter is deprecated. Use `Type(trait, generics)` instead.
  */
 export function hasTrait<Class extends object, Trait extends object>(
   target: Class | Constructor<Class>,
@@ -471,17 +497,18 @@ export function hasTrait<Class extends object, Trait extends object>(
  *
  * @param target The value to get the trait implementation from
  * @param trait The trait to get
- * @param generic Optional generic type parameter
+ * @param generics Optional generic type parameters
  * @returns The trait implementation or undefined if not implemented
  *
  * @example
  * ```typescript
  * const point = new Point(1, 2);
- * const display = useTrait(point, Display, String);
+ * const display = useTrait(point, Type(Display, [String]));
  * if (display) {
  *   console.log(display.display("test"));
  * }
  * ```
+ * @deprecated The `generic` parameter is deprecated. Use `Type(trait, generics)` instead.
  */
 export function useTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
