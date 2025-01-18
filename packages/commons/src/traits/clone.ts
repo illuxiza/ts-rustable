@@ -1,5 +1,5 @@
 import { macroTrait, trait } from '@rustable/trait';
-import { deepClone, Named } from '@rustable/utils';
+import { deepClone, named } from '@rustable/utils';
 
 /**
  * Clone trait that provides deep cloning functionality for objects.
@@ -25,7 +25,7 @@ import { deepClone, Named } from '@rustable/utils';
  * - Thread-safe and memory efficient
  */
 @trait
-@Named('Clone')
+@named('Clone')
 class CloneTrait {
   clone(hash = new WeakMap<object, any>()): this {
     if (hash.has(this)) {

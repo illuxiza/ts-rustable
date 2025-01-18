@@ -145,7 +145,7 @@ export class Result<T, E> extends Enum {
 
   /**
    * Returns the Ok value or the provided default
-   * @param opt Default value to return if Err
+   * @param def Default value to return if Err
    * @returns T Ok value or default
    */
   unwrapOr(def: T): T {
@@ -231,12 +231,53 @@ export class Result<T, E> extends Enum {
   }
 
   /**
-   * Chain Result-returning functions
-   * @param fn Function to chain
+   * Throws an error if the Result is Err
+   * @param msg Error message to include in the error
+   * @returns T Ok value
+   */
+  expect(msg: string): T {
+    return this.match({
+      Ok: (val) => val,
+      Err: (err) => {
+        throw new Error(`${msg}: ${err}`);
+      },
+    });
+  }
+
+  /**
+   * Chained Result-returning functions
+   * @param res Result to chain
    * @returns Result<U, E> chained Result
    */
-  andThen<U>(fn: (val: T) => Result<U, E>): Result<U, E> {
-    return this.isOk() ? fn(this.unwrap()) : Result.Err(this.unwrapErr());
+  and<U>(res: Result<U, E>): Result<U, E> {
+    return this.match({
+      Ok: () => res,
+      Err: (e) => Result.Err(e),
+    });
+  }
+
+  /**
+   * Chain Result-returning functions
+   * @param op Function to chain
+   * @returns Result<U, E> chained Result
+   */
+  andThen<U>(op: (val: T) => Result<U, E>): Result<U, E> {
+    return this.match({
+      Ok: (val) => op(val),
+      Err: (err) => Result.Err(err),
+    });
+  }
+
+  /**
+   * Chained Result-returning functions
+   * @param res Result to chain
+   * @returns Result<T, F> chained Result
+   */
+  or<F>(res: Result<T, F>): Result<T, F> {
+    return this.match({
+      Ok: (val) => Result.Ok(val),
+      Err: () => res,
+    });
   }
 
   /**
@@ -245,7 +286,10 @@ export class Result<T, E> extends Enum {
    * @returns Result<T, E> or Result<U, E> computed Result
    */
   orElse<F>(fn: (err: E) => Result<T, F>): Result<T, F> {
-    return this.isOk() ? Result.Ok(this.unwrap()) : fn(this.unwrapErr());
+    return this.match({
+      Ok: (val) => Result.Ok(val),
+      Err: (e) => fn(e),
+    });
   }
 }
 

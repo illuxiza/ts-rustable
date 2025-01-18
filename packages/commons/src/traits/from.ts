@@ -1,5 +1,5 @@
 import { hasTrait, implTrait, trait, TraitStaticMethods, useTrait } from '@rustable/trait';
-import { Constructor, Named } from '@rustable/utils';
+import { Constructor, named } from '@rustable/utils';
 
 /**
  * From trait for type conversion.
@@ -37,7 +37,7 @@ import { Constructor, Named } from '@rustable/utils';
  * @template T The type to convert from
  */
 @trait
-@Named('From')
+@named('From')
 export class From {
   /**
    * Creates a new instance of this type from the provided value.
@@ -60,7 +60,7 @@ export class From {
  * @template T The type to convert into
  */
 @trait
-@Named('Into')
+@named('Into')
 export class Into<T> {
   /**
    * Converts this value into the target type.

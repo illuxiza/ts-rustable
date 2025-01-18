@@ -95,7 +95,7 @@ export function isGenericType(target: any): boolean {
  * }
  * ```
  */
-export function Named(name: string) {
+export function named(name: string) {
   return function (target: any): any {
     Object.defineProperty(target, 'name', {
       value: name,

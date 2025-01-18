@@ -1,6 +1,6 @@
 {
   "name": "@rustable/iter",
-  "version": "0.3.8",
+  "version": "0.3.9",
   "description": "Rust-style iterator adapters for TypeScript, providing a rich set of functional operations for iterating over collections",
   "keywords": [
     "iterator",

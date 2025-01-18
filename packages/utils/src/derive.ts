@@ -13,7 +13,7 @@ import { Constructor } from './common';
  * }
  * ```
  */
-type MarcoFn<T extends Constructor = any> = (target: T, ...args: any[]) => void;
+export type MarcoFn<T extends Constructor = any> = (target: T, ...args: any[]) => void;
 
 /**
  * Applies a list of derive functions to a target class

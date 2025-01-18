@@ -1,10 +1,10 @@
 import { iter, RustIter } from '@rustable/iter';
 import { implTrait, macroTrait, trait } from '@rustable/trait';
-import { Named } from '@rustable/utils';
+import { named } from '@rustable/utils';
 import { HashMap, HashSet, Vec } from '../collections';
 
 @trait
-@Named('Iter')
+@named('Iter')
 class IterTrait<T> implements Iterable<T> {
   [Symbol.iterator](): IterableIterator<T> {
     throw new Error('Method not implemented.');

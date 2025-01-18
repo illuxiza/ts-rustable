@@ -1,5 +1,5 @@
 import { macroTrait, trait } from '@rustable/trait';
-import { equals, Named } from '@rustable/utils';
+import { equals, named } from '@rustable/utils';
 
 /**
  * Eq trait for equality comparison.
@@ -25,7 +25,7 @@ import { equals, Named } from '@rustable/utils';
  * - Handles special JavaScript values (NaN, undefined)
  */
 @trait
-@Named('Eq')
+@named('Eq')
 class EqTrait {
   /**
    * Compare this object with another for equality
