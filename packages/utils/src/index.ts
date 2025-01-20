@@ -6,6 +6,7 @@ export { createFactory } from './factory';
 export { hash } from './hash';
 export { Ptr } from './ptr';
 export { stringify } from './stringify';
-export { MaybeGenericConstructor, Type, isGenericType, named } from './type';
+export { MaybeGenericConstructor, Type, isGenericType, named, typeName } from './type';
 export { TypeId, typeId } from './type_id';
 export { Val } from './val';
+

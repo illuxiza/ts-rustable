@@ -106,3 +106,12 @@ export function named(name: string) {
     return target;
   };
 }
+
+export function typeName(target: any): string {
+  if (typeof target === 'function') {
+    return target.name;
+  } else if (typeof target === 'object') {
+    return target.constructor.name;
+  }
+  return String(target);
+}

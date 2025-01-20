@@ -273,7 +273,7 @@ describe('Trait Type System', () => {
 
       class Target {}
 
-      implTrait(Target, TestTrait, [String]);
+      implTrait(Target, Type(TestTrait, [String]));
 
       const target = new Target();
       const impl = useTrait(target, TestTrait, [String]);
