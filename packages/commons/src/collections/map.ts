@@ -269,6 +269,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    */
   private keysEqual(a: K, b: K): boolean {
     if (a === b) return true;
+    if (a === null || b === null) return false;
+    if (a === undefined || b === undefined) return false;
+    if (typeof a === 'object' && 'eq' in a) {
+      return a.eq(b);
+    }
     return equals(a, b);
   }
 

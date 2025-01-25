@@ -33,7 +33,7 @@ class EqTrait {
    * @returns true if objects are equal, false otherwise
    */
   eq(other: any): boolean {
-    if (!(other instanceof Object)) {
+    if (!(other instanceof this.constructor)) {
       return false;
     }
     return equals(this, other);
@@ -46,7 +46,8 @@ export interface Eq extends EqTrait {}
 
 Object.defineProperty(Object.prototype, 'eq', {
   value: function (other: any) {
-    return this === other;
+    if (this === other) return true;
+    return equals(this, other);
   },
   enumerable: false,
   configurable: true,

@@ -1,6 +1,6 @@
 {
   "name": "@rustable/commons",
-  "version": "0.3.12",
+  "version": "0.3.13",
   "description": "A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.",
   "keywords": [
     "typescript",
