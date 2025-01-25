@@ -16,7 +16,9 @@ export function Val<T>(value: T): Val<T> {
       if (prop === Val.ptr) {
         return value;
       }
-      return typeof target[prop] === 'function' ? (target[prop] as Function).bind(target) : target[prop];
+      return typeof target[prop] === 'function'
+        ? (target[prop] as Function).bind(target)
+        : target[prop];
     },
     set(target: any, prop: any, value: any) {
       if (prop === Val.ptr) {

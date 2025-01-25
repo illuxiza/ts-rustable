@@ -84,6 +84,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.takeWhile = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): TakeWhileIter<T> {
+RustIter.prototype.takeWhile = function <T>(
+  this: RustIter<T>,
+  predicate: (x: T) => boolean,
+): TakeWhileIter<T> {
   return new TakeWhileIter(this, predicate);
 };

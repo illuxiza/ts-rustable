@@ -61,10 +61,16 @@ export type TraitInstanceMethods<C extends Constructor, T extends TraitConstruct
 };
 
 export type TraitStaticMethods<C extends Constructor, T extends TraitConstructor> = {
-  [K in keyof T]?: (this: C, ...args: any[]) => T[K] extends (...args: any[]) => infer R ? R : never;
+  [K in keyof T]?: (
+    this: C,
+    ...args: any[]
+  ) => T[K] extends (...args: any[]) => infer R ? R : never;
 };
 
-export type TraitImplementation<C extends Constructor, T extends TraitConstructor> = TraitInstanceMethods<C, T> & {
+export type TraitImplementation<
+  C extends Constructor,
+  T extends TraitConstructor,
+> = TraitInstanceMethods<C, T> & {
   static?: TraitStaticMethods<C, T>;
 };
 
@@ -244,7 +250,9 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   traitRegistry.set(targetProto, implMap);
 
   if (implMap.has(trait)) {
-    throw new Error(`Trait ${traitConstructor.name} already implemented for ${targetConstructor.name}`);
+    throw new Error(
+      `Trait ${traitConstructor.name} already implemented for ${targetConstructor.name}`,
+    );
   }
 
   // Check parent commons
@@ -286,7 +294,9 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
     } else if (!(name in selfBoundImpl)) {
       Object.defineProperty(targetProto, name, {
         value: function (this: C, ..._args: any[]) {
-          throw new Error(`Multiple implementations of method ${name} for ${target.name}, please use useTrait`);
+          throw new Error(
+            `Multiple implementations of method ${name} for ${target.name}, please use useTrait`,
+          );
         },
         enumerable: false,
         configurable: true,
@@ -298,7 +308,9 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   // Auto-implement traits that this trait implements
   if (!isTraitTarget) {
     if (isGenericType(trait)) {
-      const traitImplMap = traitToTraitRegistry.get(Object.getPrototypeOf(trait).prototype.constructor);
+      const traitImplMap = traitToTraitRegistry.get(
+        Object.getPrototypeOf(trait).prototype.constructor,
+      );
       if (traitImplMap) {
         for (const [traitToTrait, implInfo] of traitImplMap) {
           if (!hasTrait(target, traitToTrait)) {
@@ -461,7 +473,8 @@ export function hasTrait<Class extends object, Trait extends object>(
   trait: Constructor<Trait>,
   generic?: Constructor[],
 ): boolean {
-  const targetConstructor = typeof target === 'function' ? target.prototype.constructor : target.constructor;
+  const targetConstructor =
+    typeof target === 'function' ? target.prototype.constructor : target.constructor;
   const traitType = Type(trait, generic);
 
   // If target is a trait (checking trait-to-trait implementation)
@@ -546,7 +559,9 @@ function useNormal<C extends Constructor, T extends TraitConstructor>(
       const sourceType = Object.getPrototypeOf(targetType.prototype).constructor;
       implMap = traitRegistry.get(sourceType.prototype);
       if (!implMap?.has(traitType)) {
-        throw new Error(`Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetType.name}`);
+        throw new Error(
+          `Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetType.name}`,
+        );
       }
     } else {
       throw new Error(`Trait ${traitType.name} not implemented for ${targetType.name}`);
@@ -567,7 +582,11 @@ function useNormal<C extends Constructor, T extends TraitConstructor>(
   ) as InstanceType<T>;
 }
 
-function useStatic<C extends Constructor, T extends TraitConstructor>(target: C, trait: T, generic?: Constructor[]): T {
+function useStatic<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  generic?: Constructor[],
+): T {
   const targetConstructor = target.prototype.constructor;
   const traitType = Type(trait, generic);
   const staticImpls = staticTraitRegistry.get(targetConstructor);
@@ -576,7 +595,9 @@ function useStatic<C extends Constructor, T extends TraitConstructor>(target: C,
       const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
       const sourceImpls = staticTraitRegistry.get(sourceType);
       if (!sourceImpls?.has(traitType)) {
-        throw new Error(`Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetConstructor.name}`);
+        throw new Error(
+          `Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetConstructor.name}`,
+        );
       }
       return useStatic(sourceType, trait, generic);
     } else {

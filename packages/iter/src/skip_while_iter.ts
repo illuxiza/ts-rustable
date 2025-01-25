@@ -85,6 +85,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.skipWhile = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): SkipWhileIter<T> {
+RustIter.prototype.skipWhile = function <T>(
+  this: RustIter<T>,
+  predicate: (x: T) => boolean,
+): SkipWhileIter<T> {
   return new SkipWhileIter(this, predicate);
 };

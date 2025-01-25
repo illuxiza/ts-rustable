@@ -101,7 +101,9 @@ describe('Trait Inheritance', () => {
 
       expect(richItem.display()).toBe('Value: [object Object]');
       expect(richItem.formatDisplay('italic')).toBe('italic: Value: [object Object]');
-      expect(richItem.displayWithMetadata({ author: 'user' })).toBe('rich: Value: [object Object] [{"author":"user"}]');
+      expect(richItem.displayWithMetadata({ author: 'user' })).toBe(
+        'rich: Value: [object Object] [{"author":"user"}]',
+      );
     });
   });
 

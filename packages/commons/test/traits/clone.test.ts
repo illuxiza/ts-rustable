@@ -300,7 +300,11 @@ describe('Clone trait', () => {
     }
     interface ComplexObject extends Clone {}
 
-    const obj = new ComplexObject({ x: 1, y: 2 }, [1, 2, 3], new ComplexObject({ x: 3, y: 4 }, [5, 6]));
+    const obj = new ComplexObject(
+      { x: 1, y: 2 },
+      [1, 2, 3],
+      new ComplexObject({ x: 3, y: 4 }, [5, 6]),
+    );
 
     const cloned = obj.clone();
 
@@ -577,6 +581,8 @@ describe('Clone trait', () => {
     // Verify prototype chain
     expect(Object.getPrototypeOf(cloned)).toBe(SubClass.prototype);
     expect(Object.getPrototypeOf(Object.getPrototypeOf(cloned))).toBe(MiddleClass.prototype);
-    expect(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(cloned)))).toBe(BaseClass.prototype);
+    expect(Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(cloned)))).toBe(
+      BaseClass.prototype,
+    );
   });
 });

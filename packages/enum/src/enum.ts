@@ -50,8 +50,14 @@ export type VariantModifyFunctions<U extends EnumParam> = {
   [K in keyof U]: (...args: Parameters<U[K]>) => Parameters<U[K]>;
 };
 
-export type EnumInstance<U extends EnumParam> = Omit<Enum, 'match' | 'modify' | 'clone' | 'eq' | 'is'> & {
-  match<T>(patterns: Partial<VariantMatchFunctions<T, U>>, defaultPatterns?: VariantMatchFunctions<T, U>): T;
+export type EnumInstance<U extends EnumParam> = Omit<
+  Enum,
+  'match' | 'modify' | 'clone' | 'eq' | 'is'
+> & {
+  match<T>(
+    patterns: Partial<VariantMatchFunctions<T, U>>,
+    defaultPatterns?: VariantMatchFunctions<T, U>,
+  ): T;
   modify(patterns: Partial<VariantModifyFunctions<U>>): void;
   clone(): EnumInstance<U>;
   eq(other: EnumInstance<U>): boolean;
@@ -103,7 +109,8 @@ export namespace Enums {
 
     for (const [variantName, _variantFunc] of Object.entries(variants)) {
       Object.defineProperty(AnonymousEnum, variantName, {
-        value: (...args: Parameters<typeof _variantFunc>) => new AnonymousEnum(variantName, ...args),
+        value: (...args: Parameters<typeof _variantFunc>) =>
+          new AnonymousEnum(variantName, ...args),
         writable: false,
         configurable: false,
       });
@@ -205,10 +212,13 @@ export abstract class Enum {
    */
   match<U>(patterns: Partial<EnumMatch<U>>, defaultPatterns?: EnumMatch<U>): U {
     const variantName = this.variant.name;
-    const handler = patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
+    const handler =
+      patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
 
     if (undefined === handler) {
-      throw new Error(`Non-exhaustive pattern matching: missing handler for variant '${variantName}'`);
+      throw new Error(
+        `Non-exhaustive pattern matching: missing handler for variant '${variantName}'`,
+      );
     }
     if (typeof handler !== 'function') {
       return handler;

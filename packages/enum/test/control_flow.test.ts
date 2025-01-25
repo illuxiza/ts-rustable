@@ -136,7 +136,8 @@ describe('ControlFlow', () => {
     });
 
     test('should handle union types', () => {
-      const flow: ControlFlow<string | number, boolean> = Math.random() > 0.5 ? Break('error') : Break(42);
+      const flow: ControlFlow<string | number, boolean> =
+        Math.random() > 0.5 ? Break('error') : Break(42);
 
       const result = flow.match({
         Break: (val) => (typeof val === 'string' ? val.length : val),

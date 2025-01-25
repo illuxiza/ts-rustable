@@ -94,7 +94,10 @@ RustIter.prototype.sort = function <T>(this: RustIter<T>): RustIter<T> {
   return new RustIter(items);
 };
 
-RustIter.prototype.sortBy = function <T>(this: RustIter<T>, compare: (a: T, b: T) => number): RustIter<T> {
+RustIter.prototype.sortBy = function <T>(
+  this: RustIter<T>,
+  compare: (a: T, b: T) => number,
+): RustIter<T> {
   const items = [...this];
   items.sort(compare);
   return new RustIter(items);
@@ -131,7 +134,10 @@ RustIter.prototype.isSorted = function <T>(this: RustIter<T>): boolean {
   return true;
 };
 
-RustIter.prototype.isSortedBy = function <T>(this: RustIter<T>, compare: (a: T, b: T) => number): boolean {
+RustIter.prototype.isSortedBy = function <T>(
+  this: RustIter<T>,
+  compare: (a: T, b: T) => number,
+): boolean {
   const iterator = this[Symbol.iterator]();
   const first = iterator.next();
   if (first.done) {

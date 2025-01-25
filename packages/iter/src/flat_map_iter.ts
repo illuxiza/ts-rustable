@@ -87,6 +87,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.flatMap = function <T, U>(this: RustIter<T>, f: (x: T) => Iterable<U>): RustIter<U> {
+RustIter.prototype.flatMap = function <T, U>(
+  this: RustIter<T>,
+  f: (x: T) => Iterable<U>,
+): RustIter<U> {
   return new FlatMapIter(this, f);
 };

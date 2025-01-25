@@ -3,7 +3,9 @@ import { iter } from '../src';
 
 describe('TryFold', () => {
   test('should fold with early return', () => {
-    const result = iter([1, 2, 3, 4, 5]).tryFold(0, (acc, x) => (x > 3 ? Break(None) : Continue(acc + x)));
+    const result = iter([1, 2, 3, 4, 5]).tryFold(0, (acc, x) =>
+      x > 3 ? Break(None) : Continue(acc + x),
+    );
     expect(result.breakValue()).toEqual(Some(None));
   });
 
@@ -31,7 +33,9 @@ describe('TryFold', () => {
 
 describe('TryReduce', () => {
   test('should reduce with early return', () => {
-    const result = iter([1, 2, 3, 4]).tryReduce((acc, x) => (x > 3 ? Break(None) : Continue(acc + x)));
+    const result = iter([1, 2, 3, 4]).tryReduce((acc, x) =>
+      x > 3 ? Break(None) : Continue(acc + x),
+    );
     expect(result.breakValue()).toEqual(Some(None));
   });
 

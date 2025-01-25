@@ -93,7 +93,11 @@ declare global {
  * @returns The converted value
  * @throws {Error} If no From implementation is found
  */
-export function from<T, U extends object>(source: T, targetType: Constructor<U>, generic?: Constructor[]): U {
+export function from<T, U extends object>(
+  source: T,
+  targetType: Constructor<U>,
+  generic?: Constructor[],
+): U {
   if (source === null) {
     throw new Error('Cannot convert null');
   }

@@ -77,10 +77,16 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.intersperse = function <T>(this: RustIter<T>, separator: T): IntersperseWithIter<T> {
+RustIter.prototype.intersperse = function <T>(
+  this: RustIter<T>,
+  separator: T,
+): IntersperseWithIter<T> {
   return new IntersperseWithIter(this, () => separator);
 };
 
-RustIter.prototype.intersperseWith = function <T>(this: RustIter<T>, f: () => T): IntersperseWithIter<T> {
+RustIter.prototype.intersperseWith = function <T>(
+  this: RustIter<T>,
+  f: () => T,
+): IntersperseWithIter<T> {
   return new IntersperseWithIter(this, f);
 };

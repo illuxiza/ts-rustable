@@ -59,6 +59,10 @@ RustIter.prototype.cmp = function <T>(this: RustIter<T>, other: RustIter<T>): nu
   }
 };
 
-RustIter.prototype.cmpBy = function <T, K>(this: RustIter<T>, other: RustIter<T>, f: (x: T) => K): number {
+RustIter.prototype.cmpBy = function <T, K>(
+  this: RustIter<T>,
+  other: RustIter<T>,
+  f: (x: T) => K,
+): number {
   return this.map(f).cmp(other.map(f));
 };

@@ -69,7 +69,9 @@ describe('Static Trait Features', () => {
       implTrait(DerivedClass, StaticInheritTrait);
 
       expect(useTrait(BaseClass, StaticInheritTrait).inheritMethod()).toBe('base inherit method');
-      expect(useTrait(DerivedClass, StaticInheritTrait).inheritMethod()).toBe('base inherit method');
+      expect(useTrait(DerivedClass, StaticInheritTrait).inheritMethod()).toBe(
+        'base inherit method',
+      );
       expect(hasTrait(DerivedClass, StaticInheritTrait)).toBe(true);
     });
 
@@ -83,7 +85,9 @@ describe('Static Trait Features', () => {
       implTrait(DerivedClass, StaticInheritTrait);
 
       expect(useTrait(BaseClass, StaticInheritTrait).inheritMethod()).toBe('base inherit method');
-      expect(useTrait(DerivedClass, StaticInheritTrait).inheritMethod()).toBe('derived inherit method');
+      expect(useTrait(DerivedClass, StaticInheritTrait).inheritMethod()).toBe(
+        'derived inherit method',
+      );
     });
   });
 });

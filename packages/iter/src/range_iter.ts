@@ -40,7 +40,10 @@ export class RangeIter extends RustIter<number> {
 
     return {
       next() {
-        if ((self.step > 0 && self.current >= self.end) || (self.step < 0 && self.current <= self.end)) {
+        if (
+          (self.step > 0 && self.current >= self.end) ||
+          (self.step < 0 && self.current <= self.end)
+        ) {
           return { done: true, value: undefined };
         }
         const value = self.current;

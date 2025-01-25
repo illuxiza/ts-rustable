@@ -87,6 +87,10 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.scan = function <T, U>(this: RustIter<T>, init: U, f: (state: U, item: T) => U): ScanIter<T, U> {
+RustIter.prototype.scan = function <T, U>(
+  this: RustIter<T>,
+  init: U,
+  f: (state: U, item: T) => U,
+): ScanIter<T, U> {
   return new ScanIter(this, init, f);
 };

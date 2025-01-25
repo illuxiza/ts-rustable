@@ -205,7 +205,10 @@ describe('createFactory with different class return', () => {
   }
 
   it('should handle custom function returning different class instance', () => {
-    const factory = createFactory(SourceClass, (value: number) => new TargetClass(`id_${value}`, value * 2));
+    const factory = createFactory(
+      SourceClass,
+      (value: number) => new TargetClass(`id_${value}`, value * 2),
+    );
 
     // When called without new, should return TargetClass instance
     const result = factory(50);

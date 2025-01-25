@@ -89,6 +89,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.filterMap = function <T, U>(this: RustIter<T>, f: (x: T) => Option<U>): FilterMapIter<T, U> {
+RustIter.prototype.filterMap = function <T, U>(
+  this: RustIter<T>,
+  f: (x: T) => Option<U>,
+): FilterMapIter<T, U> {
   return new FilterMapIter(this, f);
 };

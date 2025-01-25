@@ -79,6 +79,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.filter = function <T>(this: RustIter<T>, predicate: (x: T) => boolean): FilterIter<T> {
+RustIter.prototype.filter = function <T>(
+  this: RustIter<T>,
+  predicate: (x: T) => boolean,
+): FilterIter<T> {
   return new FilterIter(this, predicate);
 };

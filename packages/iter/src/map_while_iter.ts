@@ -87,6 +87,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.mapWhile = function <T, U>(this: RustIter<T>, predicate: (x: T) => Option<U>): MapWhileIter<T, U> {
+RustIter.prototype.mapWhile = function <T, U>(
+  this: RustIter<T>,
+  predicate: (x: T) => Option<U>,
+): MapWhileIter<T, U> {
   return new MapWhileIter(this, predicate);
 };

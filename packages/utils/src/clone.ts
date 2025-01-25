@@ -100,7 +100,10 @@ export function deepClone<T>(data: T, hash: WeakMap<object, any> = new WeakMap()
 // Copy all enumerable properties, including symbols
 function cloneProperties(source: any, target: any, hash: WeakMap<object, any>) {
   // Copy all enumerable properties, including symbols
-  for (const key of [...Object.getOwnPropertyNames(source), ...Object.getOwnPropertySymbols(source)]) {
+  for (const key of [
+    ...Object.getOwnPropertyNames(source),
+    ...Object.getOwnPropertySymbols(source),
+  ]) {
     const descriptor = Object.getOwnPropertyDescriptor(source, key);
     if (descriptor) {
       if (descriptor.get || descriptor.set) {

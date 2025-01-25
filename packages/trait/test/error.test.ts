@@ -203,7 +203,9 @@ describe('Trait Error Cases', () => {
       if (traitImpl) {
         // Access trait with symbol key
         const symbol = Symbol('test');
-        expect(() => (traitImpl as any)[symbol]).toThrow('Method Symbol(test) not implemented for trait');
+        expect(() => (traitImpl as any)[symbol]).toThrow(
+          'Method Symbol(test) not implemented for trait',
+        );
       }
     });
 

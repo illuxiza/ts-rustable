@@ -105,6 +105,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.chunkBy = function <T>(this: RustIter<T>, predicate: (prev: T, curr: T) => boolean): ChunkByIter<T> {
+RustIter.prototype.chunkBy = function <T>(
+  this: RustIter<T>,
+  predicate: (prev: T, curr: T) => boolean,
+): ChunkByIter<T> {
   return new ChunkByIter(this, predicate);
 };

@@ -74,6 +74,9 @@ declare module './rust_iter' {
   }
 }
 
-RustIter.prototype.interleave = function <T>(this: RustIter<T>, other: RustIter<T>): InterleaveIter<T> {
+RustIter.prototype.interleave = function <T>(
+  this: RustIter<T>,
+  other: RustIter<T>,
+): InterleaveIter<T> {
   return new InterleaveIter(this, other);
 };

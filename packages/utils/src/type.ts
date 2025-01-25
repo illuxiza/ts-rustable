@@ -54,7 +54,11 @@ export function Type<T extends MaybeGenericConstructor>(target: T, genericParams
     // Copy all static properties
     Object.getOwnPropertyNames(targetConstructor).forEach((prop) => {
       if (prop !== 'prototype' && prop !== 'name') {
-        Object.defineProperty(customType, prop, Object.getOwnPropertyDescriptor(targetConstructor, prop)!);
+        Object.defineProperty(
+          customType,
+          prop,
+          Object.getOwnPropertyDescriptor(targetConstructor, prop)!,
+        );
       }
     });
 

@@ -44,7 +44,9 @@ export class ArrayChunksIter<T, const N extends number> extends RustIter<T[]> {
         for (let i = 0; i < size; i++) {
           const result = iterator.next();
           if (result.done) {
-            return chunk.length === size ? { done: false, value: chunk } : { done: true, value: undefined };
+            return chunk.length === size
+              ? { done: false, value: chunk }
+              : { done: true, value: undefined };
           }
           chunk.push(result.value);
         }

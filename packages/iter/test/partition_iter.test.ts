@@ -26,7 +26,9 @@ describe('partition', () => {
   });
 
   test('should work with complex predicates', () => {
-    const [passed, failed] = iter([{ score: 75 }, { score: 50 }, { score: 90 }]).partition((x) => x.score >= 60);
+    const [passed, failed] = iter([{ score: 75 }, { score: 50 }, { score: 90 }]).partition(
+      (x) => x.score >= 60,
+    );
     expect(passed).toEqual([{ score: 75 }, { score: 90 }]);
     expect(failed).toEqual([{ score: 50 }]);
   });

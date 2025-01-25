@@ -100,7 +100,9 @@ export class RustIter<T> implements Iterable<T> {
   advanceBy(n: number): Result<void, Error> {
     for (let i = 0; i < n; i++) {
       if (this.next().isNone()) {
-        return Err(new Error(`Could not advance by ${n} elements, only ${i} elements were advanced`));
+        return Err(
+          new Error(`Could not advance by ${n} elements, only ${i} elements were advanced`),
+        );
       }
     }
     return Ok(undefined);

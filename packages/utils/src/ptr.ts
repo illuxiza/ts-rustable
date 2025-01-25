@@ -18,7 +18,9 @@ export function Ptr<T>(accessors: PtrAccessors<T>): Ptr<T> {
         return current;
       }
       const target = current as any;
-      return typeof target[prop] === 'function' ? (target[prop] as Function).bind(target) : target[prop];
+      return typeof target[prop] === 'function'
+        ? (target[prop] as Function).bind(target)
+        : target[prop];
     },
     set(_: any, prop: string | symbol, value: any) {
       const current = get();
