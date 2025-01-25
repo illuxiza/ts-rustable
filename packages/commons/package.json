@@ -1,6 +1,6 @@
 {
   "name": "@rustable/commons",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.",
   "keywords": [
     "typescript",
@@ -19,6 +19,7 @@
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
+      "types": "./lib/index.d.ts",
       "require": "./lib/index.js",
       "import": "./lib/index.mjs"
     }

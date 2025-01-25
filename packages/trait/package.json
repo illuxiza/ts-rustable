@@ -1,6 +1,6 @@
 {
   "name": "@rustable/trait",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "Powerful TypeScript implementation of Rust-like traits. Features type-safe interface definitions, generic traits, multiple implementations, default methods, and runtime trait checking. Perfect for building flexible and maintainable TypeScript applications with Rust-inspired patterns.",
   "keywords": [
     "typescript",
@@ -21,6 +21,7 @@
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
+      "types": "./lib/index.d.ts",
       "require": "./lib/index.js",
       "import": "./lib/index.mjs"
     }

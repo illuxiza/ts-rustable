@@ -1,6 +1,6 @@
 {
   "name": "@rustable/enum",
-  "version": "0.3.13",
+  "version": "0.3.14",
   "description": "Rust-inspired pattern matching and type-safe error handling for TypeScript. Includes Option<T> for null-safety and Result<T, E> for error handling, with comprehensive pattern matching support",
   "keywords": [
     "typescript",
@@ -20,6 +20,7 @@
   "types": "./lib/index.d.ts",
   "exports": {
     ".": {
+      "types": "./lib/index.d.ts",
       "require": "./lib/index.js",
       "import": "./lib/index.mjs"
     }
