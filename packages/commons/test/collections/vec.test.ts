@@ -236,22 +236,22 @@ describe('Vec', () => {
     test('dedupBy', () => {
       let vec = Vec.from(['foo', 'bar', 'Bar', 'baz', 'bar']);
 
-      vec.dedupBy((a, b) => a.toLowerCase() === b.toLowerCase());
+      vec.dedup((a, b) => a.toLowerCase() === b.toLowerCase());
 
       expect([...vec]).toEqual(['foo', 'bar', 'baz', 'bar']);
     });
 
     test('dedupByKey', () => {
       const vec = Vec.from([10, 20, 21, 30, 20]);
-      vec.dedupByKey((i) => Math.floor(i / 10));
+      vec.dedupBy((i) => Math.floor(i / 10));
       expect([...vec]).toEqual([10, 20, 30, 20]);
 
       const vec2 = Vec.from(['apple', 'banana', 'cherry', 'date', 'elderberry']);
-      vec2.dedupByKey((s) => s.length);
+      vec2.dedupBy((s) => s.length);
       expect([...vec2]).toEqual(['apple', 'banana', 'date', 'elderberry']);
 
       const vec3 = Vec.from([1.1, 1.2, 2.1, 2.2, 3.1]);
-      vec3.dedupByKey(Math.floor);
+      vec3.dedupBy(Math.floor);
       expect([...vec3]).toEqual([1.1, 2.1, 3.1]);
     });
   });
@@ -262,37 +262,6 @@ describe('Vec', () => {
       const right = vec.splitOff(3);
       expect([...vec]).toEqual([1, 2, 3]);
       expect([...right]).toEqual([4, 5]);
-    });
-
-    test('splitOffReserving', () => {
-      const vec = Vec.from([1, 2, 3, 4, 5]);
-      const right = vec.splitOffReserving(3);
-      expect([...vec]).toEqual([1, 2, 3]);
-      expect([...right]).toEqual([4, 5]);
-    });
-
-    test('splitBy', () => {
-      const vec = Vec.from([1, 2, 3, 4, 5]);
-      const evens = vec.splitBy((x) => x % 2 === 0);
-      expect([...vec]).toEqual([1, 3, 5]);
-      expect([...evens]).toEqual([2, 4]);
-    });
-
-    test('splitByKey', () => {
-      const vec = Vec.from([1, 2, 3, 4, 5, 6]);
-      const groups = vec.splitByKey((x) => x % 3);
-      expect([...groups.get(0).unwrapOr([])]).toEqual([3, 6]);
-      expect([...groups.get(1).unwrapOr([])]).toEqual([1, 4]);
-      expect([...groups.get(2).unwrapOr([])]).toEqual([2, 5]);
-    });
-
-    test('splitIntoChunks', () => {
-      const vec = Vec.from([1, 2, 3, 4, 5]);
-      const chunks = vec.splitIntoChunks(2);
-      expect([...chunks[0]]).toEqual([1, 2]);
-      expect([...chunks[1]]).toEqual([3, 4]);
-      expect([...chunks[2]]).toEqual([5]);
-      expect(vec.isEmpty()).toBe(true);
     });
   });
 
@@ -347,14 +316,6 @@ describe('Vec', () => {
     });
   });
 
-  describe('additional error cases', () => {
-    test('invalid chunk size in splitIntoChunks', () => {
-      const vec = Vec.from([1, 2, 3]);
-      expect(() => vec.splitIntoChunks(0)).toThrow('Chunk size must be positive');
-      expect(() => vec.splitIntoChunks(-1)).toThrow('Chunk size must be positive');
-    });
-  });
-
   describe('additional test cases', () => {
     test('resize with default value', () => {
       const v = Vec.new<number>();
@@ -375,15 +336,6 @@ describe('Vec', () => {
     test('splitOff with invalid index', () => {
       const v = Vec.from([1, 2, 3]);
       expect(() => v.splitOff(4)).toThrow();
-    });
-
-    test('complex splitByKey scenarios', () => {
-      const v = Vec.from(['a', 'bb', 'ccc', 'dd', 'e', 'fff']);
-      const groups = v.splitByKey((s) => s.length);
-      expect([...groups.get(1).unwrapOr([])]).toEqual(['a', 'e']);
-      expect([...groups.get(2).unwrapOr([])]).toEqual(['bb', 'dd']);
-      expect([...groups.get(3).unwrapOr([])]).toEqual(['ccc', 'fff']);
-      expect(v.isEmpty()).toBe(true);
     });
 
     test('sort edge cases', () => {
@@ -492,7 +444,7 @@ describe('Vec', () => {
       expect([...right]).toEqual([4, 5]);
 
       const vec2 = Vec.from([1, 2, 3, 4, 5]);
-      const [left, right2] = vec2.splitAt(2);
+      const [left, right2] = vec2.splitAtUnchecked(2);
       expect([...left]).toEqual([1, 2]);
       expect([...right2]).toEqual([3, 4, 5]);
     });

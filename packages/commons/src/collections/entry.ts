@@ -1,6 +1,11 @@
 import { Enum, None, Option, Some, variant } from '@rustable/enum';
 import type { HashMap } from '../collections/map';
 
+interface MatchOption<K, V, U> {
+  Occupied: (val: OccupiedEntry<K, V>) => U;
+  Vacant: (val: VacantEntry<K, V>) => U;
+}
+
 /**
  * Represents an occupied entry in the map, providing methods to access and modify the value.
  */
@@ -119,6 +124,33 @@ export class Entry<K, V> extends Enum {
   }
 
   /**
+   * Pattern matches on this Entry, providing access to either the occupied or vacant state.
+   * 
+   * # Examples
+   * ```ts
+   * let map = new HashMap<string, number>();
+   * map.insert("key", 1);
+   * 
+   * // Match with both patterns
+   * let result = map.entry("key").match({
+   *   Occupied: entry => entry.get() * 2,
+   *   Vacant: () => 0
+   * }); // result = 2
+   * 
+   * // Match with partial patterns
+   * let doubled = map.entry("key").match({
+   *   Occupied: entry => entry.get() * 2
+   * }); // doubled = 2
+   * 
+   * // Match with no patterns returns undefined
+   * let empty = map.entry("key").match({}); // empty = undefined
+   * ```
+   */
+  match<T>(patterns: Partial<MatchOption<K, V, T>>): T {
+    return super.match(patterns);
+  }
+
+  /**
    * Converts this Entry into an OccupiedEntry if it is occupied.
    */
   occupied(): Option<OccupiedEntry<K, V>> {
@@ -151,10 +183,10 @@ export class Entry<K, V> extends Enum {
   /**
    * Ensures a value is in the entry by inserting the default if empty.
    */
-  orInsert(default_: V): V {
+  orInsert(def: V): V {
     return this.match({
       Occupied: (entry) => entry.get(),
-      Vacant: (entry) => entry.insert(default_),
+      Vacant: (entry) => entry.insert(def),
     });
   }
 
@@ -169,10 +201,10 @@ export class Entry<K, V> extends Enum {
    * map.entry("key").orInsertWith(() => Math.random());
    * ```
    */
-  orInsertWith(default_: () => V): V {
+  orInsertWith(def: () => V): V {
     return this.match({
       Occupied: (entry) => entry.get(),
-      Vacant: (entry) => entry.insert(default_()),
+      Vacant: (entry) => entry.insert(def()),
     });
   }
 
@@ -188,10 +220,10 @@ export class Entry<K, V> extends Enum {
    * map.entry("hello").orInsertWithKey(key => key.length); // 5
    * ```
    */
-  orInsertWithKey(default_: (key: K) => V): V {
+  orInsertWithKey(def: (key: K) => V): V {
     return this.match({
       Occupied: (entry) => entry.get(),
-      Vacant: (entry) => entry.insert(default_(entry.getKey())),
+      Vacant: (entry) => entry.insert(def(entry.getKey())),
     });
   }
 

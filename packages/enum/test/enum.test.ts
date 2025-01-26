@@ -78,15 +78,6 @@ describe('Enum System', () => {
       const matchB = enumB.match({}, defaultPatterns);
       expect(matchB).toBe('default B');
     });
-
-    it('should throw on non-exhaustive pattern matching', () => {
-      const enumA = TestEnum.A();
-      expect(() =>
-        enumA.match({
-          B: (x: number, y: number) => `matched B with ${x}, ${y}`,
-        }),
-      ).toThrow('Non-exhaustive pattern matching');
-    });
   });
 
   describe('Custom Enum', () => {

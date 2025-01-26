@@ -91,5 +91,98 @@ describe('Entry API', () => {
       expect(value).toBe(5);
       expect(map.get('hello').unwrap()).toBe(5);
     });
+
+    test('match method with occupied entry', () => {
+      const map = new HashMap<string, number>();
+      map.insert('key', 1);
+
+      const entry = map.entry('key');
+      const result = entry.match({
+        Occupied: (entry) => entry.get() * 2,
+        Vacant: () => 0,
+      });
+
+      expect(result).toBe(2);
+    });
+
+    test('match method with vacant entry', () => {
+      const map = new HashMap<string, number>();
+      const entry = map.entry('key');
+
+      const result = entry.match({
+        Occupied: (entry) => entry.get() * 2,
+        Vacant: () => 0,
+      });
+
+      expect(result).toBe(0);
+    });
+
+    test('match method with partial patterns', () => {
+      const map = new HashMap<string, number>();
+      map.insert('key', 1);
+
+      const entry = map.entry('key');
+      
+      // Only Occupied pattern
+      const result1 = entry.match({
+        Occupied: (entry) => entry.get() * 2,
+      });
+      expect(result1).toBe(2);
+
+      // Only Vacant pattern
+      const result2 = entry.match({
+        Vacant: () => 0,
+      });
+      expect(result2).toBeUndefined();
+
+      // Empty pattern object
+      const result3 = entry.match({});
+      expect(result3).toBeUndefined();
+    });
+
+    test('chaining entry methods', () => {
+      const map = new HashMap<string, number>();
+
+      // Test orInsert followed by modify
+      map.entry('a')
+        .orInsert(1)
+      expect(map.get('a').unwrap()).toBe(1);
+
+      map.entry('a')
+        .match({
+          Occupied: entry => entry.modify(v => v * 2),
+          Vacant: () => {}
+        });
+      expect(map.get('a').unwrap()).toBe(2);
+
+      // Test orInsertWithKey followed by modify
+      const value = map.entry('hello')
+        .orInsertWithKey(key => key.length);
+      expect(value).toBe(5);
+
+      map.entry('hello')
+        .match({
+          Occupied: entry => entry.modify(v => v + 1),
+          Vacant: () => {}
+        });
+      expect(map.get('hello').unwrap()).toBe(6);
+    });
+
+    test('entry type checks', () => {
+      const map = new HashMap<string, number>();
+      map.insert('key', 1);
+
+      const occupied = map.entry('key');
+      expect(occupied.isOccupied()).toBe(true);
+      expect(occupied.isVacant()).toBe(false);
+      expect(occupied.occupied().isSome()).toBe(true);
+      expect(occupied.vacant().isNone()).toBe(true);
+
+      const vacant = map.entry('nonexistent');
+      expect(vacant.isOccupied()).toBe(false);
+      expect(vacant.isVacant()).toBe(true);
+      expect(vacant.occupied().isNone()).toBe(true);
+      expect(vacant.vacant().isSome()).toBe(true);
+    });
   });
 });

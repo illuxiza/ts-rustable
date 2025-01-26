@@ -228,18 +228,48 @@ describe('HashMap', () => {
     expect(map.len()).toBe(0);
     expect(map.isEmpty()).toBe(true);
   });
-});
 
-describe('error cases', () => {
-  test('getUnchecked on non-existent key', () => {
-    const map = new HashMap<string, number>();
-    expect(() => map.getUnchecked('nonexistent')).toThrow('Key not found');
+  test('should extend map with another map', () => {
+    const map1 = new HashMap<string, number>();
+    const map2 = new HashMap<string, number>();
+
+    map1.insert('a', 1);
+    map1.insert('b', 2);
+    map2.insert('b', 3);
+    map2.insert('c', 4);
+
+    // Test without resolver (default behavior)
+    map1.extend(map2);
+    expect(map1.get('a').unwrap()).toBe(1);
+    expect(map1.get('b').unwrap()).toBe(3); // Overwritten by map2
+    expect(map1.get('c').unwrap()).toBe(4);
+
+    // Test with resolver
+    const map3 = new HashMap<string, number>();
+    const map4 = new HashMap<string, number>();
+
+    map3.insert('a', 1);
+    map3.insert('b', 2);
+    map4.insert('b', 3);
+    map4.insert('c', 4);
+
+    map3.extend(map4, (v1, v2) => Math.min(v1, v2));
+    expect(map3.get('a').unwrap()).toBe(1);
+    expect(map3.get('b').unwrap()).toBe(2); // Kept smaller value
+    expect(map3.get('c').unwrap()).toBe(4);
   });
-});
 
-describe('static methods', () => {
-  test('fromKey', () => {
-    const map = HashMap.fromKey('hello', (k) => k.length);
-    expect(map.get('hello').unwrap()).toBe(5);
+  describe('error cases', () => {
+    test('getUnchecked on non-existent key', () => {
+      const map = new HashMap<string, number>();
+      expect(() => map.getUnchecked('nonexistent')).toThrow('Key not found');
+    });
+  });
+
+  describe('static methods', () => {
+    test('fromKey', () => {
+      const map = HashMap.fromKey('hello', (k) => k.length);
+      expect(map.get('hello').unwrap()).toBe(5);
+    });
   });
 });

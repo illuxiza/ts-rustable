@@ -153,4 +153,114 @@ export class HashSet<T> implements Iterable<T> {
       this.insert(value);
     }
   }
+
+  /**
+   * Returns true if the set contains no elements.
+   * 
+   * # Examples
+   * ```ts
+   * let set = new HashSet<string>();
+   * assert(set.isEmpty());
+   * set.insert("a");
+   * assert(!set.isEmpty());
+   * ```
+   */
+  isEmpty(): boolean {
+    return this.len() === 0;
+  }
+
+  /**
+   * Returns a new set containing all elements that are in both this set and the other set.
+   * 
+   * # Examples
+   * ```ts
+   * let set1 = new HashSet(["a", "b", "c"]);
+   * let set2 = new HashSet(["b", "c", "d"]);
+   * let intersection = set1.intersection(set2);
+   * assert.deepEqual([...intersection].sort(), ["b", "c"]);
+   * ```
+   */
+  intersection(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>();
+    for (const value of this) {
+      if (other.contains(value)) {
+        result.insert(value);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns a new set containing all elements that are in either this set or the other set.
+   * 
+   * # Examples
+   * ```ts
+   * let set1 = new HashSet(["a", "b"]);
+   * let set2 = new HashSet(["b", "c"]);
+   * let union = set1.union(set2);
+   * assert.deepEqual([...union].sort(), ["a", "b", "c"]);
+   * ```
+   */
+  union(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>(this);
+    result.extend(other);
+    return result;
+  }
+
+  /**
+   * Returns a new set containing all elements that are in this set but not in the other set.
+   * 
+   * # Examples
+   * ```ts
+   * let set1 = new HashSet(["a", "b", "c"]);
+   * let set2 = new HashSet(["b", "c", "d"]);
+   * let difference = set1.difference(set2);
+   * assert.deepEqual([...difference], ["a"]);
+   * ```
+   */
+  difference(other: HashSet<T>): HashSet<T> {
+    const result = new HashSet<T>();
+    for (const value of this) {
+      if (!other.contains(value)) {
+        result.insert(value);
+      }
+    }
+    return result;
+  }
+
+  /**
+   * Returns true if this set is a subset of the other set.
+   * 
+   * # Examples
+   * ```ts
+   * let set1 = new HashSet(["a", "b"]);
+   * let set2 = new HashSet(["a", "b", "c"]);
+   * assert(set1.isSubset(set2));
+   * assert(!set2.isSubset(set1));
+   * ```
+   */
+  isSubset(other: HashSet<T>): boolean {
+    for (const value of this) {
+      if (!other.contains(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Returns true if this set is a superset of the other set.
+   * 
+   * # Examples
+   * ```ts
+   * let set1 = new HashSet(["a", "b", "c"]);
+   * let set2 = new HashSet(["a", "b"]);
+   * assert(set1.isSuperset(set2));
+   * assert(!set2.isSuperset(set1));
+   * ```
+   */
+  isSuperset(other: HashSet<T>): boolean {
+    return other.isSubset(this);
+  }
+
 }

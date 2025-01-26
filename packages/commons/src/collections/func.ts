@@ -1,4 +1,5 @@
 import { Option } from '@rustable/enum';
+import { equals } from '@rustable/utils';
 
 /**
  * Interface for a collection-like object that supports array-like access to elements.
@@ -34,4 +35,14 @@ export function indexColl<T, C extends CollLike<T>>(coll: C): C {
       return false;
     },
   });
+}
+
+export function keysEqual<T>(a: T, b: T): boolean {
+  if (a === b) return true;
+  if (a === null || b === null) return false;
+  if (a === undefined || b === undefined) return false;
+  if (typeof a === 'object' && 'eq' in a) {
+    return a.eq(b);
+  }
+  return equals(a, b);
 }

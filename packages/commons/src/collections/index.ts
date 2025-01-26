@@ -1,3 +1,4 @@
 export { HashMap } from '../collections/map';
-export { Vec } from '../collections/vec';
 export { HashSet } from '../collections/set';
+export { Vec } from '../collections/vec';
+export { indexColl } from './func';

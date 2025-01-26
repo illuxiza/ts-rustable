@@ -216,9 +216,7 @@ export abstract class Enum {
       patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
 
     if (undefined === handler) {
-      throw new Error(
-        `Non-exhaustive pattern matching: missing handler for variant '${variantName}'`,
-      );
+      return undefined!;
     }
     if (typeof handler !== 'function') {
       return handler;
