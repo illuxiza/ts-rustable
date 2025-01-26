@@ -144,20 +144,20 @@ describe('Trait to Trait Implementation', () => {
     }
 
     // Implement ToString<number> for Debug<number>
-    implTrait(Debug, ToString, [Number]);
+    implTrait(Debug, Type(ToString, [Number]));
 
     // Create a class and implement Debug<number>
     class NumberClass {}
-    implTrait(NumberClass, Debug, [Number]);
+    implTrait(NumberClass, Type(Debug, [Number]));
 
     // NumberClass should have both Debug<number> and ToString<number> traits
-    expect(hasTrait(NumberClass, Debug, [Number])).toBe(true);
-    expect(hasTrait(NumberClass, ToString, [Number])).toBe(true);
+    expect(hasTrait(NumberClass, Type(Debug, [Number]))).toBe(true);
+    expect(hasTrait(NumberClass, Type(ToString, [Number]))).toBe(true);
 
     // Should be able to use both traits
     const instance = new NumberClass();
-    const debugTrait = useTrait(instance, Debug, [Number]);
-    const toStringTrait = useTrait(instance, ToString, [Number]);
+    const debugTrait = useTrait(instance, Type(Debug, [Number]));
+    const toStringTrait = useTrait(instance, Type(ToString, [Number]));
 
     expect(debugTrait.debug(42)).toBe('Debug(42)');
     expect(toStringTrait.toString(42)).toBe('42');
@@ -266,7 +266,7 @@ describe('Trait to Trait Implementation', () => {
     }
 
     // Implement ToString<number> for Debug<number> with custom implementation
-    implTrait(Debug<Number>, ToString, [Number], {
+    implTrait(Debug<Number>, Type(ToString, [Number]), {
       toString(this: Debug<Number>) {
         return this.debug();
       },
@@ -276,16 +276,16 @@ describe('Trait to Trait Implementation', () => {
     class NumberClass {
       constructor(public value: number) {}
     }
-    implTrait(NumberClass, Debug, [Number]);
+    implTrait(NumberClass, Type(Debug, [Number]));
 
     // NumberClass should have both Debug<number> and ToString<number> traits
-    expect(hasTrait(NumberClass, Debug, [Number])).toBe(true);
-    expect(hasTrait(NumberClass, ToString, [Number])).toBe(true);
+    expect(hasTrait(NumberClass, Type(Debug, [Number]))).toBe(true);
+    expect(hasTrait(NumberClass, Type(ToString, [Number]))).toBe(true);
 
     // Should be able to use both traits with the custom implementation
     const instance = new NumberClass(42);
-    const debugTrait = useTrait(instance, Debug, [Number]);
-    const toStringTrait = useTrait(instance, ToString, [Number]);
+    const debugTrait = useTrait(instance, Type(Debug, [Number]));
+    const toStringTrait = useTrait(instance, Type(ToString, [Number]));
 
     expect(instance.toString()).toBe('Debug(42)');
     expect(debugTrait.debug()).toBe('Debug(42)');
@@ -381,52 +381,52 @@ describe('Trait to Trait Implementation', () => {
     class NumberClass {
       constructor(public value: number) {}
     }
-    implTrait(NumberClass, Debug, [Number]);
+    implTrait(NumberClass, Type(Debug, [Number]));
 
     // Verify initial state
-    expect(hasTrait(NumberClass, Debug, [Number])).toBe(true);
-    expect(hasTrait(NumberClass, Display, [Number])).toBe(false);
-    expect(hasTrait(NumberClass, ToString, [Number])).toBe(false);
+    expect(hasTrait(NumberClass, Type(Debug, [Number]))).toBe(true);
+    expect(hasTrait(NumberClass, Type(Display, [Number]))).toBe(false);
+    expect(hasTrait(NumberClass, Type(ToString, [Number]))).toBe(false);
 
     // Now implement Display<T> for Debug<T>
-    implTrait(Type(Debug, [Number]), Display, [Number]);
+    implTrait(Type(Debug, [Number]), Type(Display, [Number]));
 
     // NumberClass should automatically get Display<number>
-    expect(hasTrait(NumberClass, Display, [Number])).toBe(true);
+    expect(hasTrait(NumberClass, Type(Display, [Number]))).toBe(true);
 
     // Create another class implementing Debug<string>
     class StringClass {
       constructor(public value: string) {}
     }
-    implTrait(StringClass, Debug, [String]);
-    implTrait(Type(Debug, [String]), Display, [String]);
+    implTrait(StringClass, Type(Debug, [String]));
+    implTrait(Type(Debug, [String]), Type(Display, [String]));
 
     // StringClass should get both Debug<string> and Display<string>
-    expect(hasTrait(StringClass, Debug, [String])).toBe(true);
-    expect(hasTrait(StringClass, Display, [String])).toBe(true);
+    expect(hasTrait(StringClass, Type(Debug, [String]))).toBe(true);
+    expect(hasTrait(StringClass, Type(Display, [String]))).toBe(true);
 
     // Now implement ToString<T> for Debug<T>
-    implTrait(Type(Debug, [Number]), ToString, [Number]);
-    implTrait(Type(Debug, [String]), ToString, [String]);
+    implTrait(Type(Debug, [Number]), Type(ToString, [Number]));
+    implTrait(Type(Debug, [String]), Type(ToString, [String]));
 
     // Both classes should automatically get ToString with their respective type parameters
-    expect(hasTrait(NumberClass, ToString, [Number])).toBe(true);
-    expect(hasTrait(StringClass, ToString, [String])).toBe(true);
+    expect(hasTrait(NumberClass, Type(ToString, [Number]))).toBe(true);
+    expect(hasTrait(StringClass, Type(ToString, [String]))).toBe(true);
 
     // Verify all traits are usable with correct types
     const numInstance = new NumberClass(42);
-    const debugTrait = useTrait(numInstance, Debug, [Number]);
-    const displayTrait = useTrait(numInstance, Display, [Number]);
-    const toStringTrait = useTrait(numInstance, ToString, [Number]);
+    const debugTrait = useTrait(numInstance, Type(Debug, [Number]));
+    const displayTrait = useTrait(numInstance, Type(Display, [Number]));
+    const toStringTrait = useTrait(numInstance, Type(ToString, [Number]));
 
     expect(debugTrait.debug(42)).toBe('Debug(42)');
     expect(displayTrait.display(42)).toBe('42');
     expect(toStringTrait.toString(42)).toBe('42');
 
     const strInstance = new StringClass('hello');
-    const strDebugTrait = useTrait(strInstance, Debug, [String]);
-    const strDisplayTrait = useTrait(strInstance, Display, [String]);
-    const strToStringTrait = useTrait(strInstance, ToString, [String]);
+    const strDebugTrait = useTrait(strInstance, Type(Debug, [String]));
+    const strDisplayTrait = useTrait(strInstance, Type(Display, [String]));
+    const strToStringTrait = useTrait(strInstance, Type(ToString, [String]));
 
     expect(strDebugTrait.debug('hello')).toBe('Debug(hello)');
     expect(strDisplayTrait.display('hello')).toBe('hello');

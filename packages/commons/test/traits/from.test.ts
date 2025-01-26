@@ -1,3 +1,4 @@
+import { Type } from '../../../utils';
 import { from, implFrom } from '../../src/traits/from';
 
 // Example classes for testing
@@ -187,7 +188,7 @@ describe('Type Conversion System', () => {
 
     test('implementation with single generic', () => {
       class Generic {}
-      implFrom(Target, Source, [Generic], {
+      implFrom(Target, Type(Source, [Generic]), {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -199,7 +200,7 @@ describe('Type Conversion System', () => {
     test('implementation with multiple generics', () => {
       class Generic1 {}
       class Generic2 {}
-      implFrom(Target, Source, [Generic1, Generic2], {
+      implFrom(Target, Type(Source, [Generic1, Generic2]), {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -221,16 +222,6 @@ describe('Type Conversion System', () => {
       });
       const source = new Source(42);
       expect(from(source, Target).value).toBe('42');
-    });
-
-    test('empty generic array', () => {
-      expect(() => {
-        implFrom(Target, Source, [], {
-          from(source: Source): Target {
-            return new Target(source.value.toString());
-          },
-        });
-      }).toThrow('At least one generic type of array parameter is required');
     });
   });
   describe('Complex Generic Scenarios', () => {
@@ -319,37 +310,6 @@ describe('Type Conversion System', () => {
       }
 
       expect(() => from(new Source(42), Number)).toThrow(/not implemented/);
-    });
-  });
-  describe('implFrom Error Cases', () => {
-    test('should throw error for invalid generic parameter', () => {
-      class Source {
-        constructor(public value: number) {}
-      }
-      class Target {
-        constructor(public value: string) {}
-      }
-
-      expect(() => {
-        implFrom(Target, Source, {} as any, {
-          from(source: Source): Target {
-            return new Target(source.value.toString());
-          },
-        });
-      }).toThrow('Invalid generic parameter');
-    });
-
-    test('should throw error for invalid implementation', () => {
-      class Source {
-        constructor(public value: number) {}
-      }
-      class Target {
-        constructor(public value: string) {}
-      }
-
-      expect(() => {
-        implFrom(Target, Source, undefined as any);
-      }).toThrow('Invalid implementation');
     });
   });
 });

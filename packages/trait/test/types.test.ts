@@ -104,13 +104,13 @@ describe('Trait Type System', () => {
       ) {}
     }
 
-    implTrait(Point, FormatTrait, [Number, String], {
+    implTrait(Point, Type(FormatTrait, [Number, String]), {
       format(this: Point, value: number, style: string): string {
         return `${style}: (${this.x}, ${this.y}) -> ${value}`;
       },
     });
 
-    implTrait(Point, MultiDisplayTrait, [Number, String, Boolean], {
+    implTrait(Point, Type(MultiDisplayTrait, [Number, String, Boolean]), {
       display(this: Point, value: number, format: string, extra: boolean): string {
         const coords = `(${this.x}, ${this.y})`;
         return extra ? `${format}: ${coords} -> ${value}` : coords;
@@ -118,19 +118,19 @@ describe('Trait Type System', () => {
     });
     test('should handle two generic parameters', () => {
       const point = new Point(1, 2);
-      expect(hasTrait(point, FormatTrait, [Number, String])).toBe(true);
-      expect(hasTrait(point, FormatTrait, [String, Number])).toBe(false);
+      expect(hasTrait(point, Type(FormatTrait, [Number, String]))).toBe(true);
+      expect(hasTrait(point, Type(FormatTrait, [String, Number]))).toBe(false);
 
-      const format = useTrait(point, FormatTrait, [Number, String]);
+      const format = useTrait(point, Type(FormatTrait, [Number, String]));
       expect(format?.format(42, 'Point')).toBe('Point: (1, 2) -> 42');
     });
 
     test('should handle three generic parameters', () => {
       const point = new Point(3, 4);
-      expect(hasTrait(point, MultiDisplayTrait, [Number, String, Boolean])).toBe(true);
-      expect(hasTrait(point, MultiDisplayTrait, [String, Number, Boolean])).toBe(false);
+      expect(hasTrait(point, Type(MultiDisplayTrait, [Number, String, Boolean]))).toBe(true);
+      expect(hasTrait(point, Type(MultiDisplayTrait, [String, Number, Boolean]))).toBe(false);
 
-      const display = useTrait(point, MultiDisplayTrait, [Number, String, Boolean]);
+      const display = useTrait(point, Type(MultiDisplayTrait, [Number, String, Boolean]));
       expect(display?.display(42, 'Point', true)).toBe('Point: (3, 4) -> 42');
       expect(display?.display(42, 'Point', false)).toBe('(3, 4)');
     });
@@ -158,67 +158,10 @@ describe('Trait Type System', () => {
     }
 
     class TypeContainer<T> extends Container<T> {}
-
-    const StringTypeContainer = Type(TypeContainer, [String]);
-
-    implTrait(TypeContainer<string>, Transform, [String], {
-      transform<U extends number | string>(this: TypeContainer<string>, value: U): string {
-        return `${this.getValue()}_${String(value)}`;
-      },
-      convertTo<U>(this: TypeContainer<string>, converter: (value: string) => U): U {
-        return converter(this.getValue());
-      },
-    });
-
-    test('should handle generic method constraints', () => {
-      const container = new TypeContainer('base');
-      expect(hasTrait(container, Transform, [String])).toBe(true);
-      const trait = useTrait(container, Transform<string>, [String]);
-
-      const stringContainer = new StringTypeContainer('base');
-      expect(hasTrait(stringContainer, Transform, [String])).toBe(true);
-      const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
-
-      expect(trait?.transform(42)).toBe('base_42');
-      expect(trait?.transform('test')).toBe('base_test');
-      expect(trait?.convertTo((value) => value.length)).toBe(4);
-      expect(useTrait(TypeContainer, Transform, [String])?.version()).toBe('1.0.0');
-
-      expect(stringTrait?.transform(42)).toBe('base_42');
-      expect(stringTrait?.transform('test')).toBe('base_test');
-      expect(stringTrait?.convertTo((value) => value.length)).toBe(4);
-      expect(useTrait(StringTypeContainer, Transform, [String])?.version()).toBe('1.0.0');
-    });
-  });
-
-  describe('Generic Method Constraints2', () => {
-    interface Transformable<T> {
-      transform<U extends number | string>(value: U): T;
-      convertTo<U>(converter: (value: T) => U): U;
-    }
-
-    @trait
-    class Transform<T> implements Transformable<T> {
-      transform<U extends number | string>(_value: U): T {
-        throw new Error('Not implemented');
-      }
-
-      convertTo<U>(_converter: (value: T) => U): U {
-        throw new Error('Not implemented');
-      }
-
-      static version(): string {
-        return '1.0.0';
-      }
-    }
-
-    class TypeContainer<T> extends Container<T> {}
-
     const StringTypeContainer = Type(TypeContainer<string>, [String]);
-
     interface StringTypeContainer extends TypeContainer<string> {}
 
-    implTrait(StringTypeContainer, Transform, [String], {
+    implTrait(StringTypeContainer, Type(Transform, [String]), {
       transform<U extends number | string>(this: StringTypeContainer, value: U): string {
         return `${this.getValue()}_${String(value)}`;
       },
@@ -227,45 +170,37 @@ describe('Trait Type System', () => {
       },
     });
 
-    test('should handle generic method constraints', () => {
+    test('should handle generic method constraints with proper type checking', () => {
       const container = new TypeContainer('base');
-      expect(hasTrait(container, Transform<string>, [String])).toBe(false);
-
       const stringContainer = new StringTypeContainer('base');
-      expect(hasTrait(stringContainer, Transform, [String])).toBe(true);
-      const stringTrait = useTrait(stringContainer, Transform<string>, [String]);
+      const StringTransform = Type(Transform<string>, [String]);
 
-      expect(hasTrait(TypeContainer, Transform, [String])).toBe(false);
+      // Type checking
+      expect(hasTrait(container, StringTransform)).toBe(false);
+      expect(hasTrait(stringContainer, StringTransform)).toBe(true);
+      expect(hasTrait(TypeContainer, StringTransform)).toBe(false);
 
+      // Method implementations
+      const stringTrait = useTrait(stringContainer, StringTransform);
       expect(stringTrait?.transform(42)).toBe('base_42');
       expect(stringTrait?.transform('test')).toBe('base_test');
       expect(stringTrait?.convertTo((value) => value.length)).toBe(4);
-      expect(useTrait(StringTypeContainer, Transform, [String])?.version()).toBe('1.0.0');
+      expect(useTrait(StringTypeContainer, StringTransform)?.version()).toBe('1.0.0');
     });
   });
 
   describe('Default Generic Trait Implementation', () => {
-    test('should use default implementation when no implementation is provided', () => {
+    test('should handle default implementations with single and multiple type parameters', () => {
       @trait
-      class TestTrait<T, U> {
+      class MultiParamTrait<T, U> {
         test(t: T, u: U): string {
           return `${t},${u}`;
         }
       }
 
-      class Target {}
-
-      implTrait(Target, TestTrait, [String, Number]);
-
-      const target = new Target();
-      const impl = useTrait(target, TestTrait, [String, Number]);
-      expect(impl?.test('hello', 42)).toBe('hello,42');
-    });
-
-    test('should use single generic type parameter', () => {
-      @trait
+      @trait      
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      class TestTrait<T> {
+      class SingleParamTrait<T> {
         test(): string {
           return 'default';
         }
@@ -273,23 +208,17 @@ describe('Trait Type System', () => {
 
       class Target {}
 
-      implTrait(Target, Type(TestTrait, [String]));
+      // Test multi-parameter implementation
+      implTrait(Target, Type(MultiParamTrait, [String, Number]));
+      const multiTarget = new Target();
+      const multiImpl = useTrait(multiTarget, Type(MultiParamTrait, [String, Number]));
+      expect(multiImpl?.test('hello', 42)).toBe('hello,42');
 
-      const target = new Target();
-      const impl = useTrait(target, TestTrait, [String]);
-      expect(impl?.test()).toBe('default');
-    });
-  });
-
-  describe('Trait Implementation Edge Cases', () => {
-    test('should throw error for invalid generic parameter', () => {
-      class TestClass {}
-      @trait
-      class TestTrait {}
-
-      expect(() => {
-        implTrait(TestClass, TestTrait, {} as any, {});
-      }).toThrow('Invalid generic parameter');
+      // Test single-parameter implementation
+      implTrait(Target, Type(SingleParamTrait, [String]));
+      const singleTarget = new Target();
+      const singleImpl = useTrait(singleTarget, Type(SingleParamTrait, [String]));
+      expect(singleImpl?.test()).toBe('default');
     });
   });
 });

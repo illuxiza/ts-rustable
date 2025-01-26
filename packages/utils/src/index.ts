@@ -1,5 +1,5 @@
 export { deepClone } from './clone';
-export { Constructor } from './common';
+export { Constructor, NOT_IMPLEMENTED } from './common';
 export { MarcoFn, applyMacros, derive } from './derive';
 export { equals } from './eq';
 export { createFactory } from './factory';
@@ -9,3 +9,4 @@ export { stringify } from './stringify';
 export { MaybeGenericConstructor, Type, isGenericType, named, typeName } from './type';
 export { TypeId, typeId } from './type_id';
 export { Val } from './val';
+

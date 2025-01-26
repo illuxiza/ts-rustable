@@ -33,11 +33,8 @@ export const Default = macroTrait(DefaultTrait);
 
 export interface Default extends DefaultTrait {}
 
-export function defaultVal<T extends object>(
-  target: Constructor<T>,
-  generic?: Constructor<any>[],
-): T {
-  return useTrait(target, Default, generic).default<T>();
+export function defaultVal<T extends object>(target: Constructor<T>): T {
+  return useTrait(target, Default).default<T>();
 }
 
 implTrait(Number, Default, {

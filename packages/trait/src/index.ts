@@ -8,3 +8,4 @@ export {
   trait,
   useTrait,
 } from './trait';
+export { TraitWrapper } from './wrapper';

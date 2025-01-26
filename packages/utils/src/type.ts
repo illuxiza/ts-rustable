@@ -23,30 +23,30 @@ export interface MaybeGenericConstructor extends Constructor {
 /**
  * Creates a type constructor with generic type parameters.
  * This function is used to create type-safe constructors that maintain generic type information at runtime.
- * 
+ *
  * @template T - The constructor type that may include generic parameters
  * @param target - The target constructor to create a generic type from
  * @param genericParams - Optional array of type parameters to apply to the generic type
  * @param newWithTypes - Optional flag to indicate if the constructor should receive type parameters (default: false)
  * @returns A new constructor with the specified generic type parameters
- * 
+ *
  * @example
  * ```typescript
  * // Define a generic class
  * class Container<T> {
  *   constructor(public value: T) {}
  * }
- * 
+ *
  * // Create specific type constructors
  * const StringContainer = Type(Container, [String]);
  * const NumberContainer = Type(Container, [Number]);
- * 
+ *
  * // Type-safe instantiation
  * const strContainer = new StringContainer("hello"); // OK
  * const numContainer = new NumberContainer(42);      // OK
  * const error = new StringContainer(123);           // Type Error
  * ```
- * 
+ *
  * @example
  * ```typescript
  * // Using newWithTypes flag
@@ -55,19 +55,22 @@ export interface MaybeGenericConstructor extends Constructor {
  *     // Initialize with type information
  *   }
  * }
- * 
+ *
  * const StringNumberMap = Type(TypedMap, [String, Number], true);
  * // Constructor will receive [String, Number] as first arguments
- * new StringNumberMap(); 
+ * new StringNumberMap();
  * ```
- * 
+ *
  * @throws {Error} When generic parameters are specified for a non-generic type
  */
 export function Type<T extends MaybeGenericConstructor>(
   target: T,
-  genericParams?: any[],
+  genericParams?: Constructor[],
   newWithTypes: boolean = false,
 ): T {
+  if (genericParams && !Array.isArray(genericParams)) {
+    throw new Error('Generic parameters must be an array');
+  }
   // If no generic parameters, return the target directly
   if (target[genericType]) {
     if (!genericParams || genericParams.length === 0) {

@@ -1,3 +1,4 @@
+import { Type } from '@rustable/utils';
 import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
 
 describe('Trait Error Cases', () => {
@@ -97,7 +98,7 @@ describe('Trait Error Cases', () => {
       }
 
       const point = new Point(1, 2);
-      expect(() => useTrait(point, MultiGeneric, [String, Number])).toThrow(
+      expect(() => useTrait(point, Type(MultiGeneric, [String, Number]))).toThrow(
         'Trait MultiGeneric<String,Number> not implemented for Point',
       );
     });
