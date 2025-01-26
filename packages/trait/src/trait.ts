@@ -189,20 +189,19 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   // Handle generic parameters
   let { generics, implementation } = parseParams(arg3, arg4);
   trait = Type(trait, generics);
-  const traitConstructor = trait.prototype.constructor;
-  if (!traitConstructor[traitSymbol]) {
-    throw new Error(traitConstructor.name + ' must be implemented using the trait function');
+  target = Type(target);
+  if (!trait[traitSymbol]) {
+    throw new Error(trait.name + ' must be implemented using the trait function');
   }
 
   const targetProto = target.prototype;
-  const targetConstructor = target.prototype.constructor;
 
   // Add static trait methods to target class
   const staticImpl = getStaticTraitBound(target, trait, implementation);
 
   Object.keys(staticImpl).forEach((name) => {
-    if (!(name in targetConstructor)) {
-      Object.defineProperty(targetConstructor, name, {
+    if (!(name in target)) {
+      Object.defineProperty(target, name, {
         value: function (this: Constructor<C>, ...args: any[]) {
           if (typeof staticImpl[name] === 'function') {
             return staticImpl[name].call(this, ...args);
@@ -216,23 +215,21 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   });
 
   // Store static implementation
-  const staticImplMap = staticTraitRegistry.get(targetConstructor) || new WeakMap();
+  const staticImplMap = staticTraitRegistry.get(target) || new WeakMap();
   staticImplMap.set(trait, staticImpl);
-  staticTraitRegistry.set(targetConstructor, staticImplMap);
+  staticTraitRegistry.set(target, staticImplMap);
 
   // Check if target is a trait
-  const isTraitTarget = traitSymbol in targetConstructor;
+  const isTraitTarget = traitSymbol in target;
   if (isTraitTarget) {
+    const traitTarget = target as TraitConstructor;
     // Record trait-to-trait implementation
-    let implMap = traitToTraitRegistry.get(targetConstructor);
-    if (!implMap) {
-      implMap = new Map();
-      traitToTraitRegistry.set(targetConstructor, implMap);
-    }
+    const implMap = traitToTraitRegistry.get(traitTarget) || new Map();
+    traitToTraitRegistry.set(traitTarget, implMap);
     implMap.set(trait, { implementation });
 
     // Auto-propagate this trait-to-trait implementation to all classes that implement the source trait
-    const implementers = traitImplementersRegistry.get(target) || [];
+    const implementers = traitImplementersRegistry.get(traitTarget) || [];
     for (const implementer of implementers) {
       // The class has implemented the source trait, so it should also implement the target trait
       // Use the same generics as the class used to implement the source trait
@@ -243,16 +240,14 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
     return;
   }
 
-  const selfBoundImpl = getSelfBound(targetProto, targetConstructor);
+  const selfBoundImpl = getSelfBound(targetProto, target);
 
   // Get or create implementation map for target
   const implMap = traitRegistry.get(targetProto) || new WeakMap();
   traitRegistry.set(targetProto, implMap);
 
   if (implMap.has(trait)) {
-    throw new Error(
-      `Trait ${traitConstructor.name} already implemented for ${targetConstructor.name}`,
-    );
+    throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
   }
 
   // Check parent commons
@@ -260,7 +255,7 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   parents.forEach((parent) => {
     const parentId = Type(parent, generics);
     if (!implMap.has(parentId)) {
-      throw new Error(`Parent trait ${parent.name} not implemented for ${targetConstructor.name}`);
+      throw new Error(`Parent trait ${parent.name} not implemented for ${target.name}`);
     }
   });
 
@@ -306,25 +301,23 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   });
 
   // Auto-implement traits that this trait implements
-  if (!isTraitTarget) {
-    if (isGenericType(trait)) {
-      const traitImplMap = traitToTraitRegistry.get(
-        Object.getPrototypeOf(trait).prototype.constructor,
-      );
-      if (traitImplMap) {
-        for (const [traitToTrait, implInfo] of traitImplMap) {
-          if (!hasTrait(target, traitToTrait)) {
-            implTrait(target, traitToTrait, implInfo.implementation);
-          }
-        }
-      }
-    }
-    const traitImplMap = traitToTraitRegistry.get(traitConstructor);
+  if (isGenericType(trait)) {
+    const traitImplMap = traitToTraitRegistry.get(
+      Object.getPrototypeOf(trait).prototype.constructor,
+    );
     if (traitImplMap) {
       for (const [traitToTrait, implInfo] of traitImplMap) {
         if (!hasTrait(target, traitToTrait)) {
           implTrait(target, traitToTrait, implInfo.implementation);
         }
+      }
+    }
+  }
+  const traitImplMap = traitToTraitRegistry.get(trait);
+  if (traitImplMap) {
+    for (const [traitToTrait, implInfo] of traitImplMap) {
+      if (!hasTrait(target, traitToTrait)) {
+        implTrait(target, traitToTrait, implInfo.implementation);
       }
     }
   }
