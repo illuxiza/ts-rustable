@@ -1,4 +1,4 @@
-import { macroTrait, trait, useTrait } from '@rustable/trait';
+import { implTrait, macroTrait, trait, useTrait } from '@rustable/trait';
 import { Constructor, named } from '@rustable/utils';
 
 /**
@@ -39,3 +39,27 @@ export function defaultVal<T extends object>(
 ): T {
   return useTrait(target, Default, generic).default<T>();
 }
+
+implTrait(Number, Default, {
+  static: {
+    default(): number {
+      return 0;
+    },
+  },
+});
+
+implTrait(Boolean, Default, {
+  static: {
+    default(): boolean {
+      return false;
+    },
+  },
+});
+
+implTrait(String, Default, {
+  static: {
+    default(): string {
+      return '';
+    },
+  },
+});
