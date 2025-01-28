@@ -10,9 +10,10 @@ import { RustIter } from './rust_iter';
  * Similar to Rust's dedup() iterator adapter
  */
 export class UniqIter<T> extends RustIter<T> {
-  private lastItem: T | undefined;
+  private l?: T;
   private hasLast = false;
-  constructor(private iter: RustIter<T>) {
+
+  constructor(private iter: IterableIterator<T>) {
     super([]);
   }
 
@@ -21,20 +22,16 @@ export class UniqIter<T> extends RustIter<T> {
    * @returns Iterator interface with deduplication logic
    */
   [Symbol.iterator](): IterableIterator<T> {
-    const iterator = this.iter[Symbol.iterator]();
-    const self = this;
-
     return {
-      next() {
+      next: () => {
         while (true) {
-          const result = iterator.next();
-          if (result.done) {
-            return result;
-          }
-          if (!self.hasLast || self.lastItem !== result.value) {
-            self.lastItem = result.value;
-            self.hasLast = true;
-            return result;
+          const item = this.iter.next();
+          if (item.done) return item;
+
+          if (!this.hasLast || this.l !== item.value) {
+            this.l = item.value;
+            this.hasLast = true;
+            return item;
           }
         }
       },
@@ -51,9 +48,10 @@ export class UniqIter<T> extends RustIter<T> {
  */
 export class UniqByIter<T, K> extends RustIter<T> {
   private seen = new Set<K>();
+
   constructor(
-    private iter: RustIter<T>,
-    private f: (x: T) => K,
+    private iter: IterableIterator<T>,
+    private key: (x: T) => K,
   ) {
     super([]);
   }
@@ -63,21 +61,16 @@ export class UniqByIter<T, K> extends RustIter<T> {
    * @returns Iterator interface with key-based deduplication logic
    */
   [Symbol.iterator](): IterableIterator<T> {
-    const iterator = this.iter[Symbol.iterator]();
-    const f = this.f;
-    const self = this;
-
     return {
-      next() {
+      next: () => {
         while (true) {
-          const result = iterator.next();
-          if (result.done) {
-            return result;
-          }
-          const key = f(result.value);
-          if (!self.seen.has(key)) {
-            self.seen.add(key);
-            return result;
+          const item = this.iter.next();
+          if (item.done) return item;
+
+          const k = this.key(item.value);
+          if (!this.seen.has(k)) {
+            this.seen.add(k);
+            return item;
           }
         }
       },
@@ -91,53 +84,36 @@ export class UniqByIter<T, K> extends RustIter<T> {
 declare module './rust_iter' {
   interface RustIter<T> {
     /**
-     * Creates an iterator that removes consecutive duplicate elements
-     * @returns A new iterator yielding unique consecutive elements
-     *
+     * Removes consecutive duplicate elements
      * @example
      * ```ts
      * // Remove consecutive duplicates
-     * iter([1, 1, 2, 3, 3, 3, 4])
-     *   .uniq()
-     *   .collect() // [1, 2, 3, 4]
-     *
+     * iter([1, 1, 2, 3, 3, 4]).uniq() // [1, 2, 3, 4]
      * // Non-consecutive duplicates remain
-     * iter([1, 2, 1, 2])
-     *   .uniq()
-     *   .collect() // [1, 2, 1, 2]
+     * iter([1, 2, 1, 2]).uniq() // [1, 2, 1, 2]
      * ```
      */
     uniq(): UniqIter<T>;
 
     /**
-     * Creates an iterator that removes duplicates based on a key function
-     * @param f Function that determines the uniqueness key for each element
-     * @returns A new iterator yielding elements with unique keys
-     *
+     * Removes duplicates based on a key function
      * @example
      * ```ts
      * // Unique by length
-     * iter(['a', 'b', 'aa', 'bb', 'c'])
-     *   .uniqBy(s => s.length)
-     *   .collect() // ['a', 'aa', 'c']
-     *
+     * iter(['a', 'bb', 'c']).uniqBy(s => s.length) // ['a', 'bb']
      * // Unique by property
-     * iter([
-     *   { id: 1, name: 'A' },
-     *   { id: 1, name: 'B' },
-     *   { id: 2, name: 'C' }
-     * ]).uniqBy(x => x.id)
-     *   .collect() // [{ id: 1, name: 'A' }, { id: 2, name: 'C' }]
+     * iter([{id: 1, v: 'A'}, {id: 1, v: 'B'}])
+     *   .uniqBy(x => x.id) // [{id: 1, v: 'A'}]
      * ```
      */
-    uniqBy<K>(f: (x: T) => K): UniqByIter<T, K>;
+    uniqBy<K>(key: (x: T) => K): UniqByIter<T, K>;
   }
 }
 
 RustIter.prototype.uniq = function <T>(this: RustIter<T>): UniqIter<T> {
-  return new UniqIter(this);
+  return new UniqIter(this[Symbol.iterator]());
 };
 
-RustIter.prototype.uniqBy = function <T, K>(this: RustIter<T>, f: (x: T) => K): UniqByIter<T, K> {
-  return new UniqByIter(this, f);
+RustIter.prototype.uniqBy = function <T, K>(this: RustIter<T>, key: (x: T) => K): UniqByIter<T, K> {
+  return new UniqByIter(this[Symbol.iterator](), key);
 };

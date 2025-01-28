@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('Rev', () => {
   test('should reverse iterator', () => {

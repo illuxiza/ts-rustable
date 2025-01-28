@@ -1,181 +1,104 @@
 /**
- * Sort Iterator Module
- * Provides functionality to sort elements and check sorting order
+ * Sort elements and check sorting order
  */
-
+import { defaultCmp } from './func';
 import { RustIter } from './rust_iter';
 
 declare module './rust_iter' {
   interface RustIter<T> {
     /**
-     * Creates an iterator that yields elements in natural sorted order
-     * @returns A new iterator yielding sorted elements
-     *
+     * Creates an iterator that yields elements in sorted order
+     * @param cmp Optional comparison function, defaults to natural order
      * @example
      * ```ts
-     * iter([3, 1, 4, 1, 5])
-     *   .sort()
-     *   .collect() // [1, 1, 3, 4, 5]
+     * // Natural order
+     * iter([3, 1, 4]).sort() // [1, 3, 4]
+     * // Custom compare
+     * iter([3, 1, 4]).sort((a, b) => b - a) // [4, 3, 1]
      * ```
      */
-    sort(): RustIter<T>;
-
-    /**
-     * Creates an iterator that yields elements sorted by a comparison function
-     * @param compare Function that defines sorting order
-     * @returns A new iterator yielding sorted elements
-     *
-     * @example
-     * ```ts
-     * iter(['banana', 'apple', 'cherry'])
-     *   .sortBy((a, b) => a.length - b.length)
-     *   .collect() // ['apple', 'banana', 'cherry']
-     * ```
-     */
-    sortBy(compare: (a: T, b: T) => number): RustIter<T>;
+    sort(cmp?: (a: T, b: T) => number): RustIter<T>;
 
     /**
      * Creates an iterator that yields elements sorted by a key function
-     * @param f Function that extracts the sorting key
-     * @returns A new iterator yielding sorted elements
-     *
      * @example
      * ```ts
-     * iter([{ id: 3 }, { id: 1 }, { id: 2 }])
-     *   .sortByKey(x => x.id)
-     *   .collect() // [{ id: 1 }, { id: 2 }, { id: 3 }]
+     * // Sort by length
+     * iter(['ccc', 'a', 'bb']).sortBy(s => s.length) // ['a', 'bb', 'ccc']
+     * // Sort by property
+     * iter([{id: 3}, {id: 1}]).sortBy(x => x.id) // [{id: 1}, {id: 3}]
      * ```
      */
-    sortByKey<K>(f: (x: T) => K): RustIter<T>;
+    sortBy<K>(key: (x: T) => K): RustIter<T>;
 
     /**
-     * Checks if elements are in natural sorted order
-     * @returns true if sorted, false otherwise
-     *
+     * Checks if elements are sorted
+     * @param cmp Optional comparison function, defaults to natural order
      * @example
      * ```ts
+     * // Natural order
      * iter([1, 2, 3]).isSorted() // true
-     * iter([2, 1, 3]).isSorted() // false
+     * // Custom compare (descending)
+     * iter([3, 2, 1]).isSorted((a, b) => b - a) // true
      * ```
      */
-    isSorted(): boolean;
-
-    /**
-     * Checks if elements are sorted according to a comparison function
-     * @param compare Function that defines sorting order
-     * @returns true if sorted, false otherwise
-     *
-     * @example
-     * ```ts
-     * iter(['a', 'bb', 'ccc'])
-     *   .isSortedBy((a, b) => a.length - b.length) // true
-     * ```
-     */
-    isSortedBy(compare: (a: T, b: T) => number): boolean;
+    isSorted(cmp?: (a: T, b: T) => number): boolean;
 
     /**
      * Checks if elements are sorted by a key function
-     * @param f Function that extracts the sorting key
-     * @returns true if sorted, false otherwise
-     *
      * @example
      * ```ts
-     * iter([{ id: 1 }, { id: 2 }, { id: 3 }])
-     *   .isSortedByKey(x => x.id) // true
+     * // Check sort by length
+     * iter(['a', 'bb', 'ccc']).isSortedBy(s => s.length) // true
+     * // Check sort by property
+     * iter([{id: 1}, {id: 2}]).isSortedBy(x => x.id) // true
      * ```
      */
-    isSortedByKey<K>(f: (x: T) => K): boolean;
+    isSortedBy<K>(key: (x: T) => K): boolean;
   }
 }
 
-RustIter.prototype.sort = function <T>(this: RustIter<T>): RustIter<T> {
-  const items = [...this];
-  items.sort();
-  return new RustIter(items);
-};
-
-RustIter.prototype.sortBy = function <T>(
+RustIter.prototype.sort = function <T>(
   this: RustIter<T>,
-  compare: (a: T, b: T) => number,
+  cmp: (a: T, b: T) => number = defaultCmp,
 ): RustIter<T> {
   const items = [...this];
-  items.sort(compare);
+  items.sort(cmp);
   return new RustIter(items);
 };
 
-RustIter.prototype.sortByKey = function <T, K>(this: RustIter<T>, f: (x: T) => K): RustIter<T> {
+RustIter.prototype.sortBy = function <T, K>(this: RustIter<T>, key: (x: T) => K): RustIter<T> {
   const items = [...this];
   items.sort((a, b) => {
-    const ka = f(a);
-    const kb = f(b);
+    const ka = key(a);
+    const kb = key(b);
     return ka < kb ? -1 : ka > kb ? 1 : 0;
   });
   return new RustIter(items);
 };
 
-RustIter.prototype.isSorted = function <T>(this: RustIter<T>): boolean {
-  const iterator = this[Symbol.iterator]();
-  const first = iterator.next();
-  if (first.done) {
-    return true;
-  }
-
-  let prev = first.value;
-  while (true) {
-    const result = iterator.next();
-    if (result.done) {
-      break;
-    }
-    if (result.value < prev) {
-      return false;
-    }
-    prev = result.value;
-  }
-  return true;
-};
-
-RustIter.prototype.isSortedBy = function <T>(
+RustIter.prototype.isSorted = function <T>(
   this: RustIter<T>,
-  compare: (a: T, b: T) => number,
+  cmp: (a: T, b: T) => number = defaultCmp,
 ): boolean {
-  const iterator = this[Symbol.iterator]();
-  const first = iterator.next();
-  if (first.done) {
-    return true;
-  }
+  const iter = this[Symbol.iterator]();
+  const first = iter.next();
+  if (first.done) return true;
 
   let prev = first.value;
   while (true) {
-    const result = iterator.next();
-    if (result.done) {
-      break;
-    }
-    if (compare(result.value, prev) < 0) {
-      return false;
-    }
-    prev = result.value;
+    const curr = iter.next();
+    if (curr.done) break;
+    if (cmp(curr.value, prev) < 0) return false;
+    prev = curr.value;
   }
   return true;
 };
 
-RustIter.prototype.isSortedByKey = function <T, K>(this: RustIter<T>, f: (x: T) => K): boolean {
-  const iterator = this[Symbol.iterator]();
-  const first = iterator.next();
-  if (first.done) {
-    return true;
-  }
-
-  let prevKey = f(first.value);
-  while (true) {
-    const result = iterator.next();
-    if (result.done) {
-      break;
-    }
-    const key = f(result.value);
-    if (key < prevKey) {
-      return false;
-    }
-    prevKey = key;
-  }
-  return true;
+RustIter.prototype.isSortedBy = function <T, K>(this: RustIter<T>, key: (x: T) => K): boolean {
+  return this.isSorted((a, b) => {
+    const ka = key(a);
+    const kb = key(b);
+    return ka < kb ? -1 : ka > kb ? 1 : 0;
+  });
 };

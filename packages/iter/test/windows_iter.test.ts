@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('WindowsIter', () => {
   test('should create sliding windows', () => {

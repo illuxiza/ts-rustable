@@ -1,5 +1,6 @@
 import { iter } from '../src';
 import { None, Some } from '@rustable/enum';
+import '../src/advanced';
 
 describe('max_by_key_iter', () => {
   describe('max', () => {
@@ -40,12 +41,12 @@ describe('max_by_key_iter', () => {
 
   describe('maxByKey', () => {
     it('should return None for empty iterator', () => {
-      expect(iter([]).maxByKey((x) => x)).toEqual(None);
+      expect(iter([]).maxBy((x) => x)).toEqual(None);
     });
 
     it('should find max by string length', () => {
       const words = ['a', 'abc', 'ab'];
-      expect(iter(words).maxByKey((s) => s.length)).toEqual(Some('abc'));
+      expect(iter(words).maxBy((s) => s.length)).toEqual(Some('abc'));
     });
 
     it('should find max by object property', () => {
@@ -54,22 +55,22 @@ describe('max_by_key_iter', () => {
         { id: 2, value: 30 },
         { id: 3, value: 20 },
       ];
-      expect(iter(items).maxByKey((item) => item.value)).toEqual(Some({ id: 2, value: 30 }));
+      expect(iter(items).maxBy((item) => item.value)).toEqual(Some({ id: 2, value: 30 }));
     });
 
     it('should work with single element', () => {
-      expect(iter(['test']).maxByKey((s) => s.length)).toEqual(Some('test'));
+      expect(iter(['test']).maxBy((s) => s.length)).toEqual(Some('test'));
     });
   });
 
   describe('maxBy', () => {
     it('should return None for empty iterator', () => {
-      expect(iter([]).maxBy((a, b) => a - b)).toEqual(None);
+      expect(iter([]).max((a, b) => a - b)).toEqual(None);
     });
 
     it('should find max using custom comparator', () => {
       const numbers = [1, -5, 10, -2];
-      expect(iter(numbers).maxBy((a, b) => Math.abs(a) - Math.abs(b))).toEqual(Some(10));
+      expect(iter(numbers).max((a, b) => Math.abs(a) - Math.abs(b))).toEqual(Some(10));
     });
 
     it('should work with objects using custom comparator', () => {
@@ -78,18 +79,18 @@ describe('max_by_key_iter', () => {
         { x: 3, y: 4 },
         { x: 2, y: 1 },
       ];
-      expect(iter(items).maxBy((a, b) => a.x + a.y - (b.x + b.y))).toEqual(Some({ x: 3, y: 4 }));
+      expect(iter(items).max((a, b) => a.x + a.y - (b.x + b.y))).toEqual(Some({ x: 3, y: 4 }));
     });
   });
 
   describe('minByKey', () => {
     it('should return None for empty iterator', () => {
-      expect(iter([]).minByKey((x) => x)).toEqual(None);
+      expect(iter([]).minBy((x) => x)).toEqual(None);
     });
 
     it('should find min by string length', () => {
       const words = ['abc', 'a', 'ab'];
-      expect(iter(words).minByKey((s) => s.length)).toEqual(Some('a'));
+      expect(iter(words).minBy((s) => s.length)).toEqual(Some('a'));
     });
 
     it('should find min by object property', () => {
@@ -98,18 +99,18 @@ describe('max_by_key_iter', () => {
         { id: 2, value: 10 },
         { id: 3, value: 20 },
       ];
-      expect(iter(items).minByKey((item) => item.value)).toEqual(Some({ id: 2, value: 10 }));
+      expect(iter(items).minBy((item) => item.value)).toEqual(Some({ id: 2, value: 10 }));
     });
   });
 
   describe('minBy', () => {
     it('should return None for empty iterator', () => {
-      expect(iter([]).minBy((a, b) => a - b)).toEqual(None);
+      expect(iter([]).min((a, b) => a - b)).toEqual(None);
     });
 
     it('should find min using custom comparator', () => {
       const numbers = [1, -5, 10, -2];
-      expect(iter(numbers).minBy((a, b) => Math.abs(a) - Math.abs(b))).toEqual(Some(1));
+      expect(iter(numbers).min((a, b) => Math.abs(a) - Math.abs(b))).toEqual(Some(1));
     });
 
     it('should work with objects using custom comparator', () => {
@@ -118,7 +119,7 @@ describe('max_by_key_iter', () => {
         { x: 3, y: 4 },
         { x: 2, y: 1 },
       ];
-      expect(iter(items).minBy((a, b) => a.x + a.y - (b.x + b.y))).toEqual(Some({ x: 1, y: 2 }));
+      expect(iter(items).min((a, b) => a.x + a.y - (b.x + b.y))).toEqual(Some({ x: 1, y: 2 }));
     });
 
     it('should maintain stability for equal elements', () => {
@@ -127,7 +128,7 @@ describe('max_by_key_iter', () => {
         { id: 2, value: 10 },
         { id: 3, value: 10 },
       ];
-      expect(iter(items).minBy((a, b) => a.value - b.value)).toEqual(Some({ id: 1, value: 10 }));
+      expect(iter(items).min((a, b) => a.value - b.value)).toEqual(Some({ id: 1, value: 10 }));
     });
   });
 });

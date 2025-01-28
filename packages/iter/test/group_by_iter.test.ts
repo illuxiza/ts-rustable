@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('GroupBy', () => {
   test('should group by key', () => {

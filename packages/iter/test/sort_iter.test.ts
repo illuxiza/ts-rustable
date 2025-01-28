@@ -8,7 +8,7 @@ describe('Sort Operations', () => {
 
   test('should sort with custom comparator', () => {
     const result = iter([3, 1, 4, 1, 5])
-      .sortBy((a, b) => b - a)
+      .sort((a, b) => b - a)
       .collect();
     expect(result).toEqual([5, 4, 3, 1, 1]);
   });
@@ -20,7 +20,7 @@ describe('Sort Operations', () => {
       { id: 2, name: 'b' },
     ];
     const result = iter(items)
-      .sortByKey((x) => x.id)
+      .sortBy((x) => x.id)
       .collect();
     expect(result).toEqual([
       { id: 1, name: 'a' },
@@ -35,8 +35,8 @@ describe('Sort Operations', () => {
   });
 
   test('should check if sorted by custom comparator', () => {
-    expect(iter([4, 3, 2, 1]).isSortedBy((a, b) => b - a)).toBe(true);
-    expect(iter([4, 2, 3, 1]).isSortedBy((a, b) => b - a)).toBe(false);
+    expect(iter([4, 3, 2, 1]).isSorted((a, b) => b - a)).toBe(true);
+    expect(iter([4, 2, 3, 1]).isSorted((a, b) => b - a)).toBe(false);
   });
 
   test('should check if sorted by key', () => {
@@ -45,15 +45,15 @@ describe('Sort Operations', () => {
       { id: 2, name: 'b' },
       { id: 3, name: 'c' },
     ];
-    expect(iter(items).isSortedByKey((x) => x.id)).toBe(true);
-    expect(iter(items).isSortedByKey((x) => x.name)).toBe(true);
+    expect(iter(items).isSortedBy((x) => x.id)).toBe(true);
+    expect(iter(items).isSortedBy((x) => x.name)).toBe(true);
 
     const unsorted = [
       { id: 2, name: 'b' },
       { id: 1, name: 'a' },
       { id: 3, name: 'c' },
     ];
-    expect(iter(unsorted).isSortedByKey((x) => x.id)).toBe(false);
-    expect(iter(unsorted).isSortedByKey((x) => x.name)).toBe(false);
+    expect(iter(unsorted).isSortedBy((x) => x.id)).toBe(false);
+    expect(iter(unsorted).isSortedBy((x) => x.name)).toBe(false);
   });
 });

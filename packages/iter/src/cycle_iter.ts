@@ -1,48 +1,48 @@
 /**
- * Cycle Iterator Module
- * Provides functionality to create an infinite iterator that cycles through a sequence
+ * Cycle through iterator elements infinitely
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that cycles infinitely through a sequence of values
- * Similar to Rust's cycle() iterator adapter
- */
-export class CycleIter<T> extends RustIter<T> {
-  private values: T[];
-  private index: number = 0;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Create an infinite iterator cycling through elements
+     * @example
+     * ```ts
+     * // Basic cycling
+     * iter([1, 2])
+     *   .cycle()
+     *   .take(5) // [1, 2, 1, 2, 1]
+     *
+     * // With strings
+     * iter(['a', 'b'])
+     *   .cycle()
+     *   .take(3) // ['a', 'b', 'a']
+     * ```
+     */
+    cycle(): RustIter<T>;
+  }
+}
 
-  /**
-   * Creates a new cycling iterator
-   * @param iter Source iterator whose values will be cycled through
-   * @throws Error if the source iterator is empty
-   */
-  constructor(iter: RustIter<T>) {
+class CycleIter<T> extends RustIter<T> {
+  private items: T[];
+  private i = 0;
+
+  constructor(source: RustIter<T>) {
     super([]);
-    this.values = [];
-    for (const item of iter) {
-      this.values.push(item);
-    }
-    if (this.values.length === 0) {
-      throw new Error('Cannot cycle an empty iterator');
+    this.items = [...source];
+    if (this.items.length === 0) {
+      throw new Error('Cannot cycle empty iterator');
     }
   }
 
-  /**
-   * Implementation of Iterator protocol that cycles through values
-   * @returns Iterator interface with cycling logic
-   */
   [Symbol.iterator](): IterableIterator<T> {
-    const values = this.values;
-    const self = this;
-
     return {
-      next() {
-        if (self.index >= values.length) {
-          self.index = 0;
+      next: () => {
+        if (this.i >= this.items.length) {
+          this.i = 0;
         }
-        return { done: false, value: values[self.index++] };
+        return { done: false, value: this.items[this.i++] };
       },
       [Symbol.iterator]() {
         return this;
@@ -51,26 +51,6 @@ export class CycleIter<T> extends RustIter<T> {
   }
 }
 
-// Extension to add cycle() method to base iterator
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that endlessly repeats the sequence of values
-     * @returns A new iterator that cycles through the original sequence infinitely
-     * @throws Error if the source iterator is empty
-     *
-     * @example
-     * ```ts
-     * iter([1, 2, 3])
-     *   .cycle()
-     *   .take(8)
-     *   .collect() // [1, 2, 3, 1, 2, 3, 1, 2]
-     * ```
-     */
-    cycle(): CycleIter<T>;
-  }
-}
-
-RustIter.prototype.cycle = function <T>(this: RustIter<T>): CycleIter<T> {
+RustIter.prototype.cycle = function <T>(this: RustIter<T>): RustIter<T> {
   return new CycleIter(this);
 };

@@ -1,5 +1,6 @@
 import { None, Some } from '@rustable/enum';
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('Transform Operations', () => {
   describe('fold and reduce', () => {

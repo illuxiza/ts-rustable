@@ -10,21 +10,19 @@ import { RustIter } from './rust_iter';
  * Similar to Rust's chunk_by() iterator adapter
  */
 export class ChunkByIter<T> extends RustIter<T[]> {
-  private old: IterableIterator<T>;
-  private currentChunk: T[] = [];
-  private nextValue: T | undefined;
+  private chunk: T[] = [];
+  private nv?: T;
 
   /**
    * Creates a new chunk by iterator
    * @param iter Source iterator to group elements from
-   * @param predicate Function that determines if two consecutive elements belong in the same group
+   * @param pred Function that determines if two consecutive elements belong in the same group
    */
   constructor(
-    iter: RustIter<T>,
-    private predicate: (prev: T, curr: T) => boolean,
+    private iter: IterableIterator<T>,
+    private pred: (prev: T, curr: T) => boolean,
   ) {
     super([]);
-    this.old = iter[Symbol.iterator]();
   }
 
   /**
@@ -32,46 +30,36 @@ export class ChunkByIter<T> extends RustIter<T[]> {
    * @returns Iterator interface with grouping logic
    */
   [Symbol.iterator](): IterableIterator<T[]> {
-    const iterator = this.old;
-    const self = this;
-
     return {
-      next() {
-        // If there's a cached next value, start a new chunk
-        if (self.nextValue !== undefined) {
-          self.currentChunk = [self.nextValue];
-          self.nextValue = undefined;
-        }
-        // If there's no current chunk, get the first element
-        else if (self.currentChunk.length === 0) {
-          const first = iterator.next();
-          if (first.done) {
-            return { done: true, value: undefined };
-          }
-          self.currentChunk = [first.value];
+      next: () => {
+        if (this.nv !== undefined) {
+          this.chunk = [this.nv];
+          this.nv = undefined;
+        } else if (!this.chunk.length) {
+          const first = this.iter.next();
+          if (first.done) return { done: true, value: undefined };
+          this.chunk = [first.value];
         }
 
-        // Try to extend the current chunk
         while (true) {
-          const next = iterator.next();
-          if (next.done) {
-            if (self.currentChunk.length > 0) {
-              const chunk = self.currentChunk;
-              self.currentChunk = [];
-              return { done: false, value: chunk };
-            }
-            return { done: true, value: undefined };
+          const curr = this.iter.next();
+          if (curr.done) {
+            if (!this.chunk.length) return { done: true, value: undefined };
+            const res = this.chunk;
+            this.chunk = [];
+            return { done: false, value: res };
           }
 
-          // Check if we should continue the current chunk
-          if (self.predicate(self.currentChunk[self.currentChunk.length - 1], next.value)) {
-            self.currentChunk.push(next.value);
-          } else {
-            const chunk = self.currentChunk;
-            self.nextValue = next.value;
-            self.currentChunk = [];
-            return { done: false, value: chunk };
+          const last = this.chunk[this.chunk.length - 1];
+          if (this.pred(last, curr.value)) {
+            this.chunk.push(curr.value);
+            continue;
           }
+
+          const res = this.chunk;
+          this.nv = curr.value;
+          this.chunk = [];
+          return { done: false, value: res };
         }
       },
       [Symbol.iterator]() {
@@ -85,7 +73,7 @@ declare module './rust_iter' {
   interface RustIter<T> {
     /**
      * Groups consecutive elements that satisfy the predicate into chunks
-     * @param predicate Function that returns true if two consecutive elements should be in the same group
+     * @param pred Function that returns true if two consecutive elements should be in the same group
      * @returns A new iterator yielding arrays of grouped elements
      *
      * @example
@@ -101,13 +89,13 @@ declare module './rust_iter' {
      *   .collect() // [['ant', 'apple'], ['bear', 'bee']]
      * ```
      */
-    chunkBy(predicate: (prev: T, curr: T) => boolean): ChunkByIter<T>;
+    chunkBy(pred: (prev: T, curr: T) => boolean): ChunkByIter<T>;
   }
 }
 
 RustIter.prototype.chunkBy = function <T>(
   this: RustIter<T>,
-  predicate: (prev: T, curr: T) => boolean,
+  pred: (prev: T, curr: T) => boolean,
 ): ChunkByIter<T> {
-  return new ChunkByIter(this, predicate);
+  return new ChunkByIter(this[Symbol.iterator](), pred);
 };

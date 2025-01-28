@@ -1,50 +1,58 @@
 /**
- * Scan Iterator Module
- * Provides functionality to produce a running computation over an iterator
+ * Produce a running computation over elements
  */
-
 import { deepClone } from '@rustable/utils';
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that maintains state while transforming elements
- * Similar to Rust's scan() iterator adapter
- */
-export class ScanIter<T, U> extends RustIter<U> {
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Maintain state while transforming elements
+     * @example
+     * ```ts
+     * // Running sum
+     * iter([1, 2, 3])
+     *   .scan(0, (sum, x) => sum + x) // [1, 3, 6]
+     *
+     * // Running average
+     * iter([2, 4, 6])
+     *   .scan(
+     *     { sum: 0, count: 0 },
+     *     (s, x) => ({
+     *       sum: s.sum + x,
+     *       count: s.count + 1
+     *     })
+     *   )
+     *   .map(s => s.sum / s.count) // [2, 3, 4]
+     * ```
+     */
+    scan<U>(init: U, f: (state: U, item: T) => U): RustIter<U>;
+  }
+}
+
+class ScanIter<T, U> extends RustIter<U> {
+  private iter: IterableIterator<T>;
   private state: U;
 
-  /**
-   * Creates a new scan iterator
-   * @param iter Source iterator to scan
-   * @param state Initial state for the computation
-   * @param f Function that updates state and produces next value
-   */
   constructor(
-    private iter: RustIter<T>,
-    state: U,
+    source: RustIter<T>,
+    init: U,
     private f: (state: U, item: T) => U,
   ) {
     super([]);
-    this.state = deepClone(state);
+    this.iter = source[Symbol.iterator]();
+    this.state = deepClone(init);
   }
 
-  /**
-   * Implementation of Iterator protocol that maintains state while iterating
-   * @returns Iterator interface with scanning logic
-   */
   [Symbol.iterator](): IterableIterator<U> {
-    const iterator = this.iter[Symbol.iterator]();
-    const f = this.f;
-    const self = this;
-
     return {
-      next() {
-        const result = iterator.next();
-        if (result.done) {
+      next: () => {
+        const item = this.iter.next();
+        if (item.done) {
           return { done: true, value: undefined };
         }
-        self.state = f(deepClone(self.state), result.value);
-        return { done: false, value: self.state };
+        this.state = this.f(deepClone(this.state), item.value);
+        return { done: false, value: this.state };
       },
       [Symbol.iterator]() {
         return this;
@@ -53,44 +61,10 @@ export class ScanIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that maintains state while transforming elements
-     * @param init Initial state value
-     * @param f Function that takes current state and item, returns new state
-     * @returns A new iterator yielding updated state values
-     *
-     * @example
-     * ```ts
-     * // Running sum
-     * iter([1, 2, 3, 4])
-     *   .scan(0, (sum, x) => sum + x)
-     *   .collect() // [1, 3, 6, 10]
-     *
-     * // Running average
-     * iter([1, 2, 3, 4])
-     *   .scan({ sum: 0, count: 0 }, (state, x) => ({
-     *     sum: state.sum + x,
-     *     count: state.count + 1
-     *   }))
-     *   .map(state => state.sum / state.count)
-     *   .collect() // [1, 1.5, 2, 2.5]
-     *
-     * // Accumulate strings
-     * iter(['a', 'b', 'c'])
-     *   .scan('', (acc, x) => acc + x)
-     *   .collect() // ['a', 'ab', 'abc']
-     * ```
-     */
-    scan<U>(init: U, f: (state: U, item: T) => U): ScanIter<T, U>;
-  }
-}
-
 RustIter.prototype.scan = function <T, U>(
   this: RustIter<T>,
   init: U,
   f: (state: U, item: T) => U,
-): ScanIter<T, U> {
+): RustIter<U> {
   return new ScanIter(this, init, f);
 };

@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('InspectIter', () => {
   test('should inspect values without modifying them', () => {

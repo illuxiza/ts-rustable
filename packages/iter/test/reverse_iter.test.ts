@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('ReverseIter', () => {
   test('should reverse array elements', () => {

@@ -1,51 +1,52 @@
 /**
- * Skip While Iterator Module
- * Provides functionality to skip elements while a condition is true
+ * Skip elements while a condition is true
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that skips elements while a predicate returns true
- * Similar to Rust's skip_while() iterator adapter
- */
-export class SkipWhileIter<T> extends RustIter<T> {
-  private done: boolean = false;
-  private old: IterableIterator<T>;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Skip elements while predicate returns true
+     * @example
+     * ```ts
+     * // Skip while less than 3
+     * iter([1, 2, 3, 4, 2])
+     *   .skipWhile(x => x < 3) // [3, 4, 2]
+     *
+     * // Skip while short strings
+     * iter(['a', 'bb', 'ccc', 'dd'])
+     *   .skipWhile(s => s.length < 3) // ['ccc', 'dd']
+     * ```
+     */
+    skipWhile(f: (x: T) => boolean): RustIter<T>;
+  }
+}
 
-  /**
-   * Creates a new skip while iterator
-   * @param iter Source iterator to skip from
-   * @param predicate Function that determines which elements to skip
-   */
+class SkipWhileIter<T> extends RustIter<T> {
+  private done = false;
+
   constructor(
-    iter: RustIter<T>,
-    private predicate: (x: T) => boolean,
+    source: RustIter<T>,
+    private f: (x: T) => boolean,
   ) {
-    super([]);
-    this.old = iter[Symbol.iterator]();
+    super(source);
   }
 
-  /**
-   * Implementation of Iterator protocol that skips elements conditionally
-   * @returns Iterator interface with conditional skipping logic
-   */
   [Symbol.iterator](): IterableIterator<T> {
-    const self = this;
     return {
-      next() {
-        if (self.done) {
-          return self.old.next();
+      next: () => {
+        if (this.done) {
+          return this.iterator.next();
         }
 
         while (true) {
-          const result = self.old.next();
-          if (result.done) {
-            return result;
+          const item = this.iterator.next();
+          if (item.done) {
+            return item;
           }
-          if (!self.predicate(result.value)) {
-            self.done = true;
-            return result;
+          if (!this.f(item.value)) {
+            this.done = true;
+            return item;
           }
         }
       },
@@ -56,38 +57,6 @@ export class SkipWhileIter<T> extends RustIter<T> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that skips elements while a predicate returns true
-     * @param predicate Function that determines which elements to skip
-     * @returns A new iterator starting with the first element where predicate returns false
-     *
-     * @example
-     * ```ts
-     * // Skip while less than 3
-     * iter([1, 2, 3, 4, 2, 1])
-     *   .skipWhile(x => x < 3)
-     *   .collect() // [3, 4, 2, 1]
-     *
-     * // Skip while string length < 3
-     * iter(['a', 'bb', 'ccc', 'dd', 'e'])
-     *   .skipWhile(s => s.length < 3)
-     *   .collect() // ['ccc', 'dd', 'e']
-     *
-     * // Skip nothing if first element fails predicate
-     * iter([5, 1, 2, 3])
-     *   .skipWhile(x => x < 3)
-     *   .collect() // [5, 1, 2, 3]
-     * ```
-     */
-    skipWhile(predicate: (x: T) => boolean): SkipWhileIter<T>;
-  }
-}
-
-RustIter.prototype.skipWhile = function <T>(
-  this: RustIter<T>,
-  predicate: (x: T) => boolean,
-): SkipWhileIter<T> {
-  return new SkipWhileIter(this, predicate);
+RustIter.prototype.skipWhile = function <T>(this: RustIter<T>, f: (x: T) => boolean): RustIter<T> {
+  return new SkipWhileIter(this, f);
 };

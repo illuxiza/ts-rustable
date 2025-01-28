@@ -1,47 +1,53 @@
 /**
- * Map While Iterator Module
- * Provides functionality to transform elements while a condition holds
+ * Transform elements while a condition holds
  */
-
 import { RustIter } from './rust_iter';
 import { Option } from '@rustable/enum';
 
-/**
- * Iterator that transforms elements until a condition fails
- * Similar to Rust's map_while() iterator adapter
- */
-export class MapWhileIter<T, U> extends RustIter<U> {
-  private old: IterableIterator<T>;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Transform elements until None is returned
+     * @example
+     * ```ts
+     * // Take while positive
+     * iter([1, 2, -3, 4])
+     *   .mapWhile(x =>
+     *     x > 0 ? Some(x * 2) : None
+     *   ) // [2, 4]
+     *
+     * // Parse until invalid
+     * iter(['1', '2', 'x', '4'])
+     *   .mapWhile(s => {
+     *     const n = parseInt(s);
+     *     return isNaN(n) ? None : Some(n);
+     *   }) // [1, 2]
+     * ```
+     */
+    mapWhile<U>(f: (x: T) => Option<U>): RustIter<U>;
+  }
+}
 
-  /**
-   * Creates a new map while iterator
-   * @param iter Source iterator to transform
-   * @param predicate Function that determines whether to continue mapping
-   * @param mapper Function to transform elements
-   */
+class MapWhileIter<T, U> extends RustIter<U> {
+  private iter: IterableIterator<T>;
+
   constructor(
-    iter: RustIter<T>,
-    private predicate: (x: T) => Option<U>,
+    source: RustIter<T>,
+    private f: (x: T) => Option<U>,
   ) {
     super([]);
-    this.old = iter[Symbol.iterator]();
+    this.iter = source[Symbol.iterator]();
   }
 
-  /**
-   * Implementation of Iterator protocol that maps elements while predicate holds
-   * @returns Iterator interface with conditional mapping logic
-   */
   [Symbol.iterator](): IterableIterator<U> {
-    const self = this;
-
     return {
-      next() {
-        const result = self.old.next();
-        if (result.done) {
+      next: () => {
+        const item = this.iter.next();
+        if (item.done) {
           return { done: true, value: undefined };
         }
 
-        const mapped = self.predicate(result.value);
+        const mapped = this.f(item.value);
         if (mapped.isNone()) {
           return { done: true, value: undefined };
         }
@@ -55,41 +61,9 @@ export class MapWhileIter<T, U> extends RustIter<U> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that transforms elements while a predicate holds
-     * Stops when predicate returns false
-     * @param predicate Function that determines whether to continue mapping
-     * @param mapper Function to transform elements
-     * @returns A new iterator yielding transformed elements until predicate fails
-     *
-     * @example
-     * ```ts
-     * // Map while numbers are positive
-     * iter([1, 2, -3, 4, 5])
-     *   .mapWhile(
-     *     x => x > 0,
-     *     x => x * 2
-     *   )
-     *   .collect() // [2, 4]
-     *
-     * // Transform strings until invalid format
-     * iter(['a1', 'b2', 'c', 'd4'])
-     *   .mapWhile(
-     *     s => s.length === 2,
-     *     s => s[0].toUpperCase() + s[1]
-     *   )
-     *   .collect() // ['A1', 'B2']
-     * ```
-     */
-    mapWhile<U>(predicate: (x: T) => Option<U>): MapWhileIter<T, U>;
-  }
-}
-
 RustIter.prototype.mapWhile = function <T, U>(
   this: RustIter<T>,
-  predicate: (x: T) => Option<U>,
-): MapWhileIter<T, U> {
-  return new MapWhileIter(this, predicate);
+  f: (x: T) => Option<U>,
+): RustIter<U> {
+  return new MapWhileIter(this, f);
 };

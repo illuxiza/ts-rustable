@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('MapWindows', () => {
   test('should map over windows', () => {

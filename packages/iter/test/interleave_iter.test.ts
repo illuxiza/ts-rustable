@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('InterleaveIter', () => {
   test('should interleave two iterators', () => {

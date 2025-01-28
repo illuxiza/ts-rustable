@@ -1,53 +1,61 @@
 /**
- * Intersperse Iterator Module
- * Inserts separators between elements in an iterator.
+ * Insert separators between iterator elements
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Yields elements with dynamic separators between them.
- * Mimics Rust's intersperse_with() iterator adapter.
- */
-export class IntersperseWithIter<T> extends RustIter<T> {
-  private started = false;
-  private nextItem?: T;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Insert a constant separator between elements
+     * @example
+     * ```ts
+     * iter([1, 2, 3]).intersperse(',') // [1, ',', 2, ',', 3]
+     * ```
+     */
+    intersperse(separator: T): RustIter<T>;
 
-  /**
-   * @param iter Source iterator
-   * @param separator Function generating separator values
-   */
+    /**
+     * Insert dynamic separators between elements
+     * @example
+     * ```ts
+     * let i = 0;
+     * iter(['a', 'b']).intersperseWith(() => i++) // ['a', 0, 'b']
+     * ```
+     */
+    intersperseWith(f: () => T): RustIter<T>;
+  }
+}
+
+class IntersperseIter<T> extends RustIter<T> {
+  private started = false;
+  private n?: T;
+
   constructor(
     iter: RustIter<T>,
-    private separator: () => T,
+    private sep: () => T,
   ) {
     super(iter);
   }
 
-  /**
-   * Implements Iterator protocol with interspersing logic
-   */
   [Symbol.iterator](): IterableIterator<T> {
-    const self = this;
-
     return {
-      next() {
-        if (self.started) {
-          if (self.nextItem) {
-            const value = self.nextItem;
-            self.nextItem = undefined;
-            return { done: false, value };
-          }
-          const result = self.iterator.next();
-          if (result.done) {
-            return { done: true, value: undefined };
-          }
-          self.nextItem = result.value;
-          return { done: false, value: self.separator() };
-        } else {
-          self.started = true;
-          return self.iterator.next();
+      next: () => {
+        if (!this.started) {
+          this.started = true;
+          return this.iterator.next();
         }
+
+        if (this.n !== undefined) {
+          const value = this.n;
+          this.n = undefined;
+          return { done: false, value };
+        }
+
+        const item = this.iterator.next();
+        if (item.done) return item;
+
+        this.n = item.value;
+        return { done: false, value: this.sep() };
       },
       [Symbol.iterator]() {
         return this;
@@ -56,37 +64,10 @@ export class IntersperseWithIter<T> extends RustIter<T> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Inserts a constant separator between elements
-     * @param separator Value to insert
-     * @example
-     * iter([1, 2, 3]).intersperse(',').collect() // [1, ',', 2, ',', 3]
-     */
-    intersperse(separator: T): IntersperseWithIter<T>;
-
-    /**
-     * Inserts dynamic separators between elements
-     * @param f Function generating separator values
-     * @example
-     * let i = 0;
-     * iter(['a', 'b', 'c']).intersperseWith(() => i++).collect() // ['a', 0, 'b', 1, 'c']
-     */
-    intersperseWith(f: () => T): IntersperseWithIter<T>;
-  }
-}
-
-RustIter.prototype.intersperse = function <T>(
-  this: RustIter<T>,
-  separator: T,
-): IntersperseWithIter<T> {
-  return new IntersperseWithIter(this, () => separator);
+RustIter.prototype.intersperse = function <T>(this: RustIter<T>, separator: T): RustIter<T> {
+  return new IntersperseIter(this, () => separator);
 };
 
-RustIter.prototype.intersperseWith = function <T>(
-  this: RustIter<T>,
-  f: () => T,
-): IntersperseWithIter<T> {
-  return new IntersperseWithIter(this, f);
+RustIter.prototype.intersperseWith = function <T>(this: RustIter<T>, f: () => T): RustIter<T> {
+  return new IntersperseIter(this, f);
 };

@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('Uniq', () => {
   test('should remove consecutive duplicates', () => {

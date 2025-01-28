@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('ArrayChunks', () => {
   test('should create fixed-size chunks', () => {

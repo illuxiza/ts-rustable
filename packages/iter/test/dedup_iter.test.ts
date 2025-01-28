@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('DedupIter', () => {
   test('should remove consecutive duplicates', () => {

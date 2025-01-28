@@ -1,45 +1,46 @@
 /**
- * Skip Iterator Module
- * Provides functionality to skip a number of elements from the start
+ * Skip a number of elements from the start
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that skips a specified number of elements
- * Similar to Rust's skip() iterator adapter
- */
-export class SkipIter<T> extends RustIter<T> {
-  private remaining: number;
-  private old: IterableIterator<T>;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Skip the first n elements
+     * @example
+     * ```ts
+     * // Skip first two
+     * iter([1, 2, 3, 4])
+     *   .skip(2) // [3, 4]
+     *
+     * // Skip all
+     * iter([1, 2])
+     *   .skip(3) // []
+     * ```
+     */
+    skip(n: number): RustIter<T>;
+  }
+}
 
-  /**
-   * Creates a new skip iterator
-   * @param iter Source iterator to skip from
-   * @param n Number of elements to skip
-   */
-  constructor(iter: RustIter<T>, n: number) {
-    super([]);
-    this.remaining = n;
-    this.old = iter[Symbol.iterator]();
+class SkipIter<T> extends RustIter<T> {
+  constructor(
+    source: RustIter<T>,
+    private n: number,
+  ) {
+    super(source);
   }
 
-  /**
-   * Implementation of Iterator protocol that skips elements
-   * @returns Iterator interface with skipping logic
-   */
   [Symbol.iterator](): IterableIterator<T> {
-    const self = this;
     return {
-      next() {
-        while (self.remaining > 0) {
-          const skipped = self.old.next();
+      next: () => {
+        while (this.n > 0) {
+          const skipped = this.iterator.next();
           if (skipped.done) {
             return { done: true, value: undefined };
           }
-          self.remaining--;
+          this.n--;
         }
-        return self.old.next();
+        return this.iterator.next();
       },
       [Symbol.iterator]() {
         return this;
@@ -48,36 +49,6 @@ export class SkipIter<T> extends RustIter<T> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that skips the first n elements
-     * @param n Number of elements to skip
-     * @returns A new iterator starting after the skipped elements
-     *
-     * @example
-     * ```ts
-     * // Skip first two elements
-     * iter([1, 2, 3, 4, 5])
-     *   .skip(2)
-     *   .collect() // [3, 4, 5]
-     *
-     * // Skip more than length
-     * iter([1, 2, 3])
-     *   .skip(5)
-     *   .collect() // []
-     *
-     * // Skip with transformation
-     * iter(['a', 'b', 'c', 'd'])
-     *   .skip(1)
-     *   .map(s => s.toUpperCase())
-     *   .collect() // ['B', 'C', 'D']
-     * ```
-     */
-    skip(n: number): SkipIter<T>;
-  }
-}
-
-RustIter.prototype.skip = function <T>(this: RustIter<T>, n: number): SkipIter<T> {
+RustIter.prototype.skip = function <T>(this: RustIter<T>, n: number): RustIter<T> {
   return new SkipIter(this, n);
 };

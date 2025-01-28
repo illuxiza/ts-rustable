@@ -86,6 +86,7 @@ export class RustIter<T> implements Iterable<T> {
   last(): Option<T> {
     return this.reduce((_, x) => x);
   }
+
   /**
    * Advances the iterator by n elements, returning an error if the iterator ends before advancing the full amount
    * @param n Number of elements to advance
@@ -164,91 +165,6 @@ export class RustIter<T> implements Iterable<T> {
       current = this.next();
     }
     return result;
-  }
-
-  /**
-   * Consumes the iterator, partitioning elements into two groups
-   * @param predicate Function that determines group membership
-   * @returns Tuple of arrays [matches, non-matches]
-   *
-   * @example
-   * ```ts
-   * // Split numbers by evenness
-   * iter([1, 2, 3, 4, 5])
-   *   .partition(x => x % 2 === 0) // [[2, 4], [1, 3, 5]]
-   *
-   * // Group strings by length
-   * iter(['a', 'bb', 'c', 'dd'])
-   *   .partition(s => s.length === 2) // [['bb', 'dd'], ['a', 'c']]
-   *
-   * // Filter objects by property
-   * iter([
-   *   { name: 'Alice', age: 25 },
-   *   { name: 'Bob', age: 17 },
-   *   { name: 'Charlie', age: 30 }
-   * ]).partition(p => p.age >= 18)
-   * // [[{ name: 'Alice', ... }, { name: 'Charlie', ... }], [{ name: 'Bob', ... }]]
-   * ```
-   */
-  partition(predicate: (x: T) => boolean): [T[], T[]] {
-    let left: T[] = [];
-    let right: T[] = [];
-    this.fold(undefined, (_, x) => {
-      if (predicate(x)) {
-        left.push(x);
-      } else {
-        right.push(x);
-      }
-      return undefined;
-    });
-    return [left, right];
-  }
-
-  /**
-   * Reorders the iterator's elements in-place according to the given predicate
-   * Elements that match the predicate are placed at the start
-   * @param predicate Function to determine element placement
-   * @returns The index where the partition occurs (first element that returns false)
-   */
-  partitionInPlace(predicate: (x: T) => boolean): number {
-    // Cast source to array to ensure we can modify it
-    const arr = this.source as unknown as T[];
-    if (!Array.isArray(arr)) {
-      throw new Error('partitionInPlace can only be used with array sources');
-    }
-
-    // Use existing partition method to get the two groups
-    const [matches, nonMatches] = this.partition(predicate);
-
-    // Copy elements back to original array in order
-    const pivot = matches.length;
-    for (let i = 0; i < matches.length; i++) {
-      arr[i] = matches[i];
-    }
-    for (let i = 0; i < nonMatches.length; i++) {
-      arr[pivot + i] = nonMatches[i];
-    }
-
-    // Reset iterator to start from beginning of modified array
-    this.iterator = arr[Symbol.iterator]();
-
-    return pivot;
-  }
-
-  /**
-   * Tests if the iterator is partitioned by a predicate
-   * @param predicate Function to determine element placement
-   * @returns true if the iterator is partitioned by the predicate, false otherwise
-   *
-   * @example
-   * ```ts
-   * iter([2, 4, 1, 3, 5]).isPartitioned(x => x % 2 === 0) // true
-   * iter([1, 2, 3, 4, 5]).isPartitioned(x => x % 2 === 0) // false
-   * ```
-   * ```
-   */
-  isPartitioned(predicate: (x: T) => boolean): boolean {
-    return this.all(predicate) || !this.any(predicate);
   }
 
   /**
@@ -523,156 +439,6 @@ export class RustIter<T> implements Iterable<T> {
   }
 
   /**
-   * Finds the maximum element in the iterator
-   * @returns Option containing the maximum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * iter([1, 4, 2, 3]).max() // Some(4)
-   * iter(['a', 'c', 'b']).max() // Some('c')
-   * iter([]).max() // None
-   * ```
-   */
-  max(): Option<T> {
-    return this.maxBy((a, b) => (a > b ? 1 : -1));
-  }
-
-  /**
-   * Finds the minimum element in the iterator
-   * @returns Option containing the minimum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * iter([1, 4, 2, 3]).min() // Some(1)
-   * iter(['a', 'c', 'b']).min() // Some('a')
-   * iter([]).min() // None
-   * ```
-   */
-  min(): Option<T> {
-    return this.minBy((a, b) => (a > b ? 1 : -1));
-  }
-
-  /**
-   * Finds the maximum element by comparing the values returned by the key function
-   * @param f Function that returns the value to compare
-   * @returns Option containing the maximum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * // Find string with max length
-   * iter(['a', 'abc', 'ab'])
-   *   .maxByKey(s => s.length) // Some('abc')
-   *
-   * // Find person with max age
-   * iter([
-   *   { name: 'Alice', age: 25 },
-   *   { name: 'Bob', age: 30 },
-   *   { name: 'Charlie', age: 20 }
-   * ]).maxByKey(p => p.age) // Some({ name: 'Bob', age: 30 })
-   * ```
-   */
-  maxByKey<K>(f: (x: T) => K): Option<T> {
-    let ret = this.map<[K, T]>((x) => [f(x), x]).maxBy((a, b) => (a[0] > b[0] ? 1 : -1));
-    return ret.map((x) => x[1]);
-  }
-
-  /**
-   * Finds the maximum element using a comparison function
-   * @param compare Function that compares two elements, returns positive if first is larger
-   * @returns Option containing the maximum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * // Custom comparison
-   * iter([1, 4, 2, 3])
-   *   .maxBy((a, b) => a - b) // Some(4)
-   *
-   * // Case-insensitive string comparison
-   * iter(['A', 'c', 'B'])
-   *   .maxBy((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())) // Some('c')
-   * ```
-   */
-  maxBy(compare: (a: T, b: T) => number): Option<T> {
-    return this.reduce((a, b) => (compare(a, b) > 0 ? a : b));
-  }
-
-  /**
-   * Finds the minimum element by comparing the values returned by the key function
-   * @param f Function that returns the value to compare
-   * @returns Option containing the minimum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * // Find string with min length
-   * iter(['abc', 'a', 'ab'])
-   *   .minByKey(s => s.length) // Some('a')
-   *
-   * // Find person with min age
-   * iter([
-   *   { name: 'Alice', age: 25 },
-   *   { name: 'Bob', age: 30 },
-   *   { name: 'Charlie', age: 20 }
-   * ]).minByKey(p => p.age) // Some({ name: 'Charlie', age: 20 })
-   * ```
-   */
-  minByKey<K>(f: (x: T) => K): Option<T> {
-    let ret = this.map<[K, T]>((x) => [f(x), x]).minBy((a, b) => (a[0] > b[0] ? 1 : -1));
-    return ret.map((x) => x[1]);
-  }
-
-  /**
-   * Finds the minimum element using a comparison function
-   * @param compare Function that compares two elements, returns negative if first is smaller
-   * @returns Option containing the minimum element, or None if iterator is empty
-   *
-   * @example
-   * ```ts
-   * // Custom comparison
-   * iter([1, 4, 2, 3])
-   *   .minBy((a, b) => a - b) // Some(1)
-   *
-   * // Case-insensitive string comparison
-   * iter(['A', 'c', 'B'])
-   *   .minBy((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())) // Some('A')
-   * ```
-   */
-  minBy(compare: (a: T, b: T) => number): Option<T> {
-    return this.reduce((a, b) => (compare(a, b) <= 0 ? a : b));
-  }
-
-  /**
-   * Calculates the sum of all elements
-   * Only available for numeric iterators
-   * @returns Sum of all elements, or 0 if iterator is empty
-   *
-   * @example
-   * ```ts
-   * iter([1, 2, 3, 4]).sum() // 10
-   * iter<number>([]).sum() // 0
-   * iter([1n, 2n, 3n]).sum() // 6n
-   * ```
-   */
-  sum<T extends number | bigint>(this: RustIter<T>): T {
-    return this.fold(0 as T, (a, b) => (a as any) + (b as any));
-  }
-
-  /**
-   * Calculates the product of all elements
-   * Only available for numeric iterators
-   * @returns Product of all elements, or 1 if iterator is empty
-   *
-   * @example
-   * ```ts
-   * iter([1, 2, 3, 4]).product() // 24
-   * iter<number>([]).product() // 1
-   * iter([2n, 3n, 4n]).product() // 24n
-   * ```
-   */
-  product<T extends number | bigint>(this: RustIter<T>): T {
-    return this.fold(1 as T, (a, b) => ((a as any) * (b as any)) as T);
-  }
-
-  /**
    * Collects elements into a new collection using a collector function
    * @param f Function that creates the new collection
    * @returns The new collection
@@ -695,14 +461,6 @@ export class RustIter<T> implements Iterable<T> {
   /**
    * Creates a new iterator which clones all of its elements
    * @returns A new iterator with cloned elements
-   *
-   * @example
-   * ```ts
-   * const original = [{ value: 1 }, { value: 2 }];
-   * const cloned = iter(original).cloned().collect();
-   * cloned[0].value = 3;
-   * console.log(original[0].value); // Still 1
-   * ```
    */
   cloned<T>(this: RustIter<T>, hash = new WeakMap<object, any>()): RustIter<T> {
     return this.map((x) => deepClone(x, hash));

@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('IntersperseWith', () => {
   test('should intersperse with generated values', () => {

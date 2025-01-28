@@ -1,44 +1,47 @@
 /**
- * Enumerate Iterator Module
- * Provides functionality to pair each element with its index
+ * Pair each element with its index
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that yields pairs of index and value
- * Similar to Rust's enumerate() iterator adapter
- */
-export class EnumerateIter<T> extends RustIter<[number, T]> {
-  private old: IterableIterator<T>;
-  private index: number = 0;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Create iterator yielding [index, value] pairs
+     * @example
+     * ```ts
+     * // Basic enumeration
+     * iter(['a', 'b'])
+     *   .enumerate() // [[0, 'a'], [1, 'b']]
+     *
+     * // Find by index
+     * iter(['x', 'y', 'z'])
+     *   .enumerate()
+     *   .find(([_, v]) => v === 'y') // [1, 'y']
+     * ```
+     */
+    enumerate(): RustIter<[number, T]>;
+  }
+}
 
-  /**
-   * Creates a new enumerate iterator
-   * @param iter Source iterator to enumerate
-   */
-  constructor(private iter: RustIter<T>) {
+class EnumerateIter<T> extends RustIter<[number, T]> {
+  private iter: IterableIterator<T>;
+  private i = 0;
+
+  constructor(source: RustIter<T>) {
     super([]);
-    this.old = iter[Symbol.iterator]();
+    this.iter = source[Symbol.iterator]();
   }
 
-  /**
-   * Implementation of Iterator protocol that yields index-value pairs
-   * @returns Iterator interface with enumeration logic
-   */
   [Symbol.iterator](): IterableIterator<[number, T]> {
-    const self = this;
-
     return {
-      next() {
-        const result = self.old.next();
-        if (result.done) {
+      next: () => {
+        const item = this.iter.next();
+        if (item.done) {
           return { done: true, value: undefined };
         }
-
         return {
           done: false,
-          value: [self.index++, result.value],
+          value: [this.i++, item.value],
         };
       },
       [Symbol.iterator]() {
@@ -48,37 +51,6 @@ export class EnumerateIter<T> extends RustIter<[number, T]> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that yields pairs of index and value
-     * The index starts at 0 and increments by 1 for each element
-     * @returns A new iterator yielding [index, value] pairs
-     *
-     * @example
-     * ```ts
-     * iter(['a', 'b', 'c'])
-     *   .enumerate()
-     *   .collect() // [[0, 'a'], [1, 'b'], [2, 'c']]
-     *
-     * // Useful for finding element positions
-     * iter(['x', 'y', 'z'])
-     *   .enumerate()
-     *   .find(([_, val]) => val === 'y') // Some([1, 'y'])
-     *
-     * // Convert to Map of index -> value
-     * iter(['a', 'b', 'c'])
-     *   .enumerate()
-     *   .collectInto(Collector.toMap(
-     *     ([idx, _]) => idx,
-     *     ([_, val]) => val
-     *   )) // Map { 0 => 'a', 1 => 'b', 2 => 'c' }
-     * ```
-     */
-    enumerate(): EnumerateIter<T>;
-  }
-}
-
-RustIter.prototype.enumerate = function <T>(this: RustIter<T>): EnumerateIter<T> {
+RustIter.prototype.enumerate = function <T>(this: RustIter<T>): RustIter<[number, T]> {
   return new EnumerateIter(this);
 };

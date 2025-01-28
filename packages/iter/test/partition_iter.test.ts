@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/partition_iter';
 
 describe('partition', () => {
   test('should partition based on predicate', () => {

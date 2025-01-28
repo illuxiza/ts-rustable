@@ -1,47 +1,48 @@
 /**
- * Interleave Iterator Module
- * Provides functionality to alternate elements from two iterators
+ * Alternate elements from two iterators
  */
-
 import { RustIter } from './rust_iter';
 
-/**
- * Iterator that alternates between elements from two iterators
- * Similar to Rust's interleave() iterator adapter
- */
-export class InterleaveIter<T> extends RustIter<T> {
-  private firstIter: IterableIterator<T>;
-  private secondIter: IterableIterator<T>;
-  private useFirst: boolean = true;
+declare module './rust_iter' {
+  interface RustIter<T> {
+    /**
+     * Alternate elements with another iterator
+     * @example
+     * ```ts
+     * // Equal length
+     * iter([1, 2])
+     *   .interleave(iter(['a', 'b'])) // [1, 'a', 2, 'b']
+     *
+     * // Different lengths
+     * iter([1])
+     *   .interleave(iter(['a', 'b'])) // [1, 'a', 'b']
+     * ```
+     */
+    interleave(other: RustIter<T>): RustIter<T>;
+  }
+}
 
-  /**
-   * Creates a new interleave iterator
-   * @param firstIter First iterator to interleave
-   * @param secondIter Second iterator to interleave
-   */
-  constructor(firstIter: RustIter<T>, secondIter: RustIter<T>) {
+class InterleaveIter<T> extends RustIter<T> {
+  private a: IterableIterator<T>;
+  private b: IterableIterator<T>;
+  private useFirst = true;
+
+  constructor(first: RustIter<T>, second: RustIter<T>) {
     super([]);
-    this.firstIter = firstIter[Symbol.iterator]();
-    this.secondIter = secondIter[Symbol.iterator]();
+    this.a = first[Symbol.iterator]();
+    this.b = second[Symbol.iterator]();
   }
 
-  /**
-   * Implementation of Iterator protocol that alternates elements
-   * @returns Iterator interface with interleaving logic
-   */
   [Symbol.iterator](): IterableIterator<T> {
-    const self = this;
-
     return {
-      next() {
-        const currentIterator = self.useFirst ? self.firstIter : self.secondIter;
-        const result = currentIterator.next();
-        if (!result.done) {
-          self.useFirst = !self.useFirst;
-          return result;
+      next: () => {
+        const curr = this.useFirst ? this.a : this.b;
+        const item = curr.next();
+        if (!item.done) {
+          this.useFirst = !this.useFirst;
+          return item;
         }
-        // If one iterator is done, continue with the other
-        return self.useFirst ? self.secondIter.next() : self.firstIter.next();
+        return this.useFirst ? this.b.next() : this.a.next();
       },
       [Symbol.iterator]() {
         return this;
@@ -50,33 +51,6 @@ export class InterleaveIter<T> extends RustIter<T> {
   }
 }
 
-declare module './rust_iter' {
-  interface RustIter<T> {
-    /**
-     * Creates an iterator that alternates between elements from two iterators
-     * @param other Iterator to interleave with
-     * @returns A new iterator yielding alternating elements
-     *
-     * @example
-     * ```ts
-     * // Basic interleaving
-     * iter([1, 2, 3])
-     *   .interleave(iter(['a', 'b', 'c']))
-     *   .collect() // [1, 'a', 2, 'b', 3, 'c']
-     *
-     * // Different length iterators
-     * iter([1, 2])
-     *   .interleave(iter(['a', 'b', 'c']))
-     *   .collect() // [1, 'a', 2, 'b', 'c']
-     * ```
-     */
-    interleave(other: RustIter<T>): InterleaveIter<T>;
-  }
-}
-
-RustIter.prototype.interleave = function <T>(
-  this: RustIter<T>,
-  other: RustIter<T>,
-): InterleaveIter<T> {
+RustIter.prototype.interleave = function <T>(this: RustIter<T>, other: RustIter<T>): RustIter<T> {
   return new InterleaveIter(this, other);
 };

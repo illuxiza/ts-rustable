@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('ScanIter', () => {
   test('should accumulate running sum', () => {

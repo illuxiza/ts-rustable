@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('Numeric Iterator Operations', () => {
   describe('sum', () => {

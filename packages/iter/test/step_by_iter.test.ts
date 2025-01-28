@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('StepByIter', () => {
   test('should step through iterator with given step size', () => {

@@ -4,9 +4,16 @@
  * inspired by Rust's Iterator trait
  */
 
-import './iter_imports';
-import { RangeIter } from './range_iter';
 import { RustIter } from './rust_iter';
+
+import './iter_imports';
+
+export { range } from './range_iter';
+
+/**
+ * Rust Iterator Class
+ */
+export { RustIter };
 
 /**
  * Creates a new iterator from an iterable
@@ -29,35 +36,4 @@ import { RustIter } from './rust_iter';
  */
 export function iter<T>(items: Iterable<T>): RustIter<T> {
   return RustIter.from(items);
-}
-
-/**
- * Rust Iterator Class
- */
-export { RustIter };
-
-/**
- * Creates a new range iterator
- * @param start Starting value (inclusive)
- * @param end Ending value (exclusive)
- * @param step Step size between values (default: 1)
- * @returns A new iterator yielding range values
- *
- * @example
- * ```ts
- * // Basic range
- * range(0, 5)
- *   .collect() // [0, 1, 2, 3, 4]
- *
- * // Range with step
- * range(0, 10, 2)
- *   .collect() // [0, 2, 4, 6, 8]
- *
- * // Descending range
- * range(5, 0, -1)
- *   .collect() // [5, 4, 3, 2, 1]
- * ```
- */
-export function range(start: number, end: number, step: number = 1): RangeIter {
-  return new RangeIter(start, end, step);
 }
