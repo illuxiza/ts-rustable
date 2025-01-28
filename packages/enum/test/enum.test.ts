@@ -113,7 +113,7 @@ describe('Enum System', () => {
       expect(matchRgb).toBe('rgb(255, 128, 0)');
     });
   });
-  describe('Enum.equals', () => {
+  describe('Enum.eq', () => {
     class TestEnum extends Enum {
       @variant static A(): TestEnum {
         return undefined as any;
@@ -132,37 +132,37 @@ describe('Enum System', () => {
     test('same variants with no args should be equal', () => {
       const a1 = TestEnum.A();
       const a2 = TestEnum.A();
-      expect(a1.equals(a2)).toBe(true);
+      expect(a1.eq(a2)).toBe(true);
     });
 
     test('different variants should not be equal', () => {
       const a = TestEnum.A();
       const b = TestEnum.B(1);
-      expect(a.equals(b)).toBe(false);
+      expect(a.eq(b)).toBe(false);
     });
 
     test('same variants with same args should be equal', () => {
       const b1 = TestEnum.B(42);
       const b2 = TestEnum.B(42);
-      expect(b1.equals(b2)).toBe(true);
+      expect(b1.eq(b2)).toBe(true);
     });
 
     test('same variants with different args should not be equal', () => {
       const b1 = TestEnum.B(42);
       const b2 = TestEnum.B(24);
-      expect(b1.equals(b2)).toBe(false);
+      expect(b1.eq(b2)).toBe(false);
     });
 
     test('same variants with multiple same args should be equal', () => {
       const c1 = TestEnum.C(1, 'hello');
       const c2 = TestEnum.C(1, 'hello');
-      expect(c1.equals(c2)).toBe(true);
+      expect(c1.eq(c2)).toBe(true);
     });
 
     test('same variants with multiple different args should not be equal', () => {
       const c1 = TestEnum.C(1, 'hello');
       const c2 = TestEnum.C(1, 'world');
-      expect(c1.equals(c2)).toBe(false);
+      expect(c1.eq(c2)).toBe(false);
     });
 
     test('should handle nested enums', () => {
@@ -170,16 +170,16 @@ describe('Enum System', () => {
       const nested2 = TestEnum.B(42);
       const d1 = TestEnum.D(nested1);
       const d2 = TestEnum.D(nested2);
-      expect(d1.equals(d2)).toBe(true);
+      expect(d1.eq(d2)).toBe(true);
 
       const differentNested = TestEnum.B(24);
       const d3 = TestEnum.D(differentNested);
-      expect(d1.equals(d3)).toBe(false);
+      expect(d1.eq(d3)).toBe(false);
     });
 
     test('should handle non-enum values', () => {
       const b = TestEnum.B(42);
-      expect(b.equals({} as any)).toBe(false);
+      expect(b.eq({} as any)).toBe(false);
     });
 
     test('should handle complex objects as args', () => {
@@ -193,26 +193,9 @@ describe('Enum System', () => {
       const e2 = ComplexEnum.Data({ x: 1, y: 'test' });
       const e3 = ComplexEnum.Data({ x: 2, y: 'test' });
 
-      expect(e1.equals(e2)).toBe(true);
-      expect(e1.equals(e3)).toBe(false);
+      expect(e1.eq(e2)).toBe(true);
+      expect(e1.eq(e3)).toBe(false);
     });
-  });
-});
-
-describe('Enum.replace', () => {
-  it('should replace the current variant and return the old one', () => {
-    const a = TestEnum.A();
-    const b = TestEnum.B(42, 24);
-    const oldVariant = a.replace(b);
-
-    expect(a.is('B')).toBe(true);
-    expect(oldVariant.is('A')).toBe(true);
-    expect(a.unwrap()).toBe(42);
-  });
-
-  it('should throw an error if replacing with an invalid instance', () => {
-    const a = TestEnum.A();
-    expect(() => a.replace({} as any)).toThrow('Invalid instance: must be of the same enum type');
   });
 });
 

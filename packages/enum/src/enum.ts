@@ -90,10 +90,10 @@ export namespace Enums {
   export function create<U extends EnumParam>(variants: U): CustomEnum<U>;
   export function create<U extends EnumParam>(name: string, variants: U): CustomEnum<U>;
   export function create<U extends EnumParam>(arg1: string | U, arg2?: U): CustomEnum<U> {
-    const AnonymousEnum = class extends Enum {};
+    const Anonymous = class extends Enum {};
     if (arg2) {
       if (typeof arg1 === 'string') {
-        Object.defineProperty(AnonymousEnum, 'name', {
+        Object.defineProperty(Anonymous, 'name', {
           value: arg1,
           writable: false,
           configurable: false,
@@ -104,18 +104,14 @@ export namespace Enums {
     } else if (typeof arg1 === 'string') {
       throw new Error('Invalid arguments for create function');
     }
-
     const variants = arg2 || (arg1 as U);
-
     for (const [variantName, _variantFunc] of Object.entries(variants)) {
-      Object.defineProperty(AnonymousEnum, variantName, {
-        value: (...args: Parameters<typeof _variantFunc>) =>
-          new AnonymousEnum(variantName, ...args),
+      Object.defineProperty(Anonymous, variantName, {
+        value: (...args: Parameters<typeof _variantFunc>) => new Anonymous(variantName, ...args),
         writable: false,
         configurable: false,
       });
-
-      Object.defineProperty(AnonymousEnum.prototype, `is${variantName}`, {
+      Object.defineProperty(Anonymous.prototype, `is${variantName}`, {
         value: function () {
           return this.is(variantName);
         },
@@ -123,8 +119,7 @@ export namespace Enums {
         configurable: false,
       });
     }
-
-    return AnonymousEnum as CustomEnum<U>;
+    return Anonymous as CustomEnum<U>;
   }
 }
 
@@ -144,10 +139,10 @@ export namespace Enums {
  * }
  */
 export abstract class Enum {
-  private variant: EnumVariant;
+  private _variant: EnumVariant;
 
   constructor(name: string, ...args: any[]) {
-    this.variant = { name, args };
+    this._variant = { name, args };
   }
 
   /**
@@ -156,7 +151,7 @@ export abstract class Enum {
    * @returns true if the enum is the specified variant
    */
   is(variant: string): boolean {
-    return this.variant.name === variant;
+    return this._variant.name === variant;
   }
 
   /**
@@ -165,10 +160,10 @@ export abstract class Enum {
    * @returns The first argument of the variant
    */
   unwrap<T>(): T {
-    if (!this.variant.args || this.variant.args.length === 0) {
+    if (!this._variant.args || this._variant.args.length === 0) {
       throw new Error('Cannot unwrap a variant without arguments');
     }
-    return this.variant.args[0] as T;
+    return this._variant.args[0] as T;
   }
 
   /**
@@ -177,10 +172,10 @@ export abstract class Enum {
    * @returns Tuple of all variant arguments
    */
   unwrapTuple<T extends any[]>(): T {
-    if (!this.variant.args || this.variant.args.length === 0) {
+    if (!this._variant.args || this._variant.args.length === 0) {
       throw new Error('Cannot unwrap a variant without arguments');
     }
-    return this.variant.args as T;
+    return [...this._variant.args] as T;
   }
 
   /**
@@ -189,10 +184,10 @@ export abstract class Enum {
    * Format: VariantName(arg1, arg2, ...) for variants with arguments
    */
   toString(): string {
-    if (!this.variant.args || this.variant.args.length === 0) {
-      return this.variant.name;
+    if (!this._variant.args || this._variant.args.length === 0) {
+      return this._variant.name;
     }
-    return `${this.variant.name}(${this.variant.args.join(', ')})`;
+    return `${this._variant.name}(${this._variant.args.join(', ')})`;
   }
 
   /**
@@ -211,22 +206,17 @@ export abstract class Enum {
    * ```
    */
   match<U>(patterns: Partial<EnumMatch<U>>, defaultPatterns?: EnumMatch<U>): U {
-    const variantName = this.variant.name;
+    const variantName = this._variant.name;
     const handler =
       patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
-
-    if (undefined === handler) {
-      return undefined!;
-    }
     if (typeof handler !== 'function') {
-      return handler;
+      return handler!;
     }
-
-    const fn = handler as (...args: any[]) => U;
-    if (!this.variant.args || this.variant.args.length === 0) {
+    const fn = handler as Function;
+    if (!this._variant.args || this._variant.args.length === 0) {
       return fn();
     }
-    return fn(...this.variant.args);
+    return fn(...this._variant.args);
   }
 
   /**
@@ -237,32 +227,28 @@ export abstract class Enum {
     if (!(other instanceof Enum)) {
       return false;
     }
-
+    const { name: thisName, args: thisArgs } = this._variant;
+    const { name: otherName, args: otherArgs } = other._variant;
     // Compare variant names
-    if (this.variant.name !== other.variant.name) {
+    if (thisName !== otherName) {
       return false;
     }
-
     // If no arguments in both, they are equal
-    if (!this.variant.args && !other.variant.args) {
+    if (!thisArgs && !otherArgs) {
       return true;
     }
-
     // If one has args and other doesn't, they are not equal
-    if (!this.variant.args || !other.variant.args) {
+    if (!thisArgs || !otherArgs) {
       return false;
     }
-
     // Compare argument lengths
-    if (this.variant.args.length !== other.variant.args.length) {
+    if (thisArgs.length !== otherArgs.length) {
       return false;
     }
-
     // Compare each argument
-    return this.variant.args.every((arg, index) => {
-      const otherArg = other.variant.args![index];
-      // Handle nested enums
-      if (arg instanceof Enum && otherArg instanceof Enum) {
+    return thisArgs.every((arg, i) => {
+      const otherArg = otherArgs![i];
+      if (typeof arg === 'object' && 'eq' in arg) {
         return arg.eq(otherArg);
       }
       // Handle primitive values and objects
@@ -271,43 +257,16 @@ export abstract class Enum {
   }
 
   /**
-   * Checks if this enum instance equals another enum instance
-   * Compares both variant names and their arguments
-   */
-  equals(other: any): boolean {
-    return this.eq(other);
-  }
-
-  /**
    * Creates a deep clone of the current enum instance
    * @returns A new instance of the enum with the same variant and cloned arguments
    */
   clone(hash = new WeakMap<object, any>()): this {
-    if (!this.variant.args || this.variant.args.length === 0) {
+    if (!this._variant.args || this._variant.args.length === 0) {
       return this;
     }
     const Constructor = this.constructor as new (name: string, ...args: any[]) => this;
-    const clonedArgs = this.variant.args.map((v) => deepClone(v, hash));
-    return new Constructor(this.variant.name, ...clonedArgs);
-  }
-
-  /**
-   * Replaces the current variant with a new one, returning the old variant
-   * @param newVariant The new variant to replace with
-   * @param ...args Arguments for the new variant
-   * @throws Error if the new variant is not a valid variant of this enum
-   * @returns The old variant instance
-   */
-  replace(newInstance: Enum): this {
-    if (!(newInstance instanceof this.constructor)) {
-      throw new Error('Invalid instance: must be of the same enum type');
-    }
-    const oldVariant = new (this.constructor as new (...args: any[]) => this)(
-      this.variant.name,
-      ...(this.variant.args || []),
-    );
-    this.variant = { ...newInstance.variant };
-    return oldVariant;
+    const clonedArgs = this._variant.args.map((v) => deepClone(v, hash));
+    return new Constructor(this._variant.name, ...clonedArgs);
   }
 
   /**
@@ -316,18 +275,15 @@ export abstract class Enum {
    * @throws Error if no matching pattern is found for the current variant
    */
   modify(patterns: EnumModify): void {
-    const variantName = this.variant.name;
+    const variantName = this._variant.name;
     const modifier = patterns[variantName];
-
     if (!modifier) {
       return;
     }
-
-    if (!this.variant.args || this.variant.args.length === 0) {
+    if (!this._variant.args || this._variant.args.length === 0) {
       return;
     }
-
-    this.variant.args = modifier(...this.variant.args);
+    this._variant.args = modifier(...this._variant.args);
   }
 
   [Symbol('ENUM')]() {

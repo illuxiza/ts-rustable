@@ -329,11 +329,11 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
    * ```ts
    * let map1 = new HashMap([["a", 1], ["b", 2]]);
    * let map2 = new HashMap([["b", 3], ["c", 4]]);
-   * 
+   *
    * // Without resolver - overwrites existing values
    * map1.extend(map2);
    * assert(map1.get("b").unwrap() === 3);
-   * 
+   *
    * // With resolver - keeps larger value
    * map1.extend(map2, (v1, v2) => Math.max(v1, v2));
    * ```
@@ -409,26 +409,26 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
   /**
    * Gets the entry for the given key for in-place manipulation.
    * Returns an Entry enum that can be either Occupied or Vacant.
-   * 
+   *
    * # Examples
    * ```ts
    * let map = new HashMap<string, number>();
-   * 
+   *
    * // Insert a value if it doesn't exist
    * map.entry("key").match({
    *   Occupied: entry => entry.get(),
    *   Vacant: entry => entry.insert(1)
    * });
-   * 
+   *
    * // Modify an existing value
    * map.entry("key").match({
    *   Occupied: entry => entry.modify(v => v * 2),
    *   Vacant: () => {}
    * });
-   * 
+   *
    * // Get or insert with a default value
    * let value = map.entry("key").orInsert(42);
-   * 
+   *
    * // Get or compute value based on key
    * let length = map.entry("hello").orInsertWithKey(key => key.length);
    * ```

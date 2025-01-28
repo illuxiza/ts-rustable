@@ -1,5 +1,5 @@
 import { Option } from '@rustable/enum';
-import { equals } from '@rustable/utils';
+import { Constructor, equals } from '@rustable/utils';
 
 /**
  * Interface for a collection-like object that supports array-like access to elements.
@@ -8,13 +8,15 @@ import { equals } from '@rustable/utils';
 export interface CollLike<T> {
   get(index: number): Option<T>;
   set(index: number, value: T): void;
+  contains(value: T): boolean;
+  remove(index: number): void;
 }
 
 /**
  * Creates a proxy for the CollLike that allows array-like access to elements.
  * @returns A proxy object that wraps the CollLike
  */
-export function indexColl<T, C extends CollLike<T>>(coll: C): C {
+function indexInstance<C extends CollLike<any>>(coll: C): C {
   return new Proxy(coll, {
     get: (_, index) => {
       if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
@@ -33,6 +35,23 @@ export function indexColl<T, C extends CollLike<T>>(coll: C): C {
         return true;
       }
       return false;
+    },
+    deleteProperty: (_, index) => {
+      if (typeof index === 'string' && !isNaN(parseInt(index, 10))) {
+        const numIndex = parseInt(index, 10);
+        coll.remove(numIndex);
+        return true;
+      }
+      return false;
+    },
+  });
+}
+
+export function indexColl<T extends Constructor<CollLike<any>>>(collType: T): T {
+  return new Proxy(collType, {
+    construct(target, args, newTarget) {
+      const val = Reflect.construct(target, args, newTarget);
+      return indexInstance(val);
     },
   });
 }

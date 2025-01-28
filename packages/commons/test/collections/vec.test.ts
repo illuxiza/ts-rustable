@@ -1,6 +1,6 @@
 import { None, Some } from '@rustable/enum';
 import { Ptr } from '@rustable/utils';
-import { Vec, vec } from '../../src/collections/vec';
+import { Vec } from '../../src/collections/vec';
 
 describe('Vec', () => {
   let array: Vec<number>;
@@ -16,6 +16,8 @@ describe('Vec', () => {
     array.push(1);
     array.push(2);
     expect(array.len()).toBe(2);
+    expect(array.clone()[0]).toEqual(1);
+    expect(array.clone()[1]).toEqual(2);
     expect(array.get(0)).toEqual(Some(1));
     expect(array.get(1)).toEqual(Some(2));
 
@@ -169,22 +171,22 @@ describe('Vec', () => {
     expect(negativeIndex.isNone()).toBe(true);
   });
 
-  test('creation using vec() global method', () => {
+  test('creation using Vec() global method', () => {
     const array = [1, 2, 3, 4, 5];
-    const vector = vec(array);
+    const vector = new Vec(array);
 
     expect(vector.len()).toBe(5);
     expect(vector[0]).toBe(1);
     expect(vector[4]).toBe(5);
 
-    const emptyVector = vec([]);
+    const emptyVector = new Vec([]);
     expect(emptyVector.isEmpty()).toBe(true);
 
-    const stringVector = vec('hello');
+    const stringVector = new Vec('hello');
     expect(stringVector.len()).toBe(5);
     expect(stringVector[0]).toBe('h');
 
-    const setVector = vec(new Set([1, 2, 3]));
+    const setVector = new Vec(new Set([1, 2, 3]));
     expect(setVector.len()).toBe(3);
     expect(setVector.contains(2)).toBe(true);
   });

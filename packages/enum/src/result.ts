@@ -30,20 +30,20 @@ interface MatchResult<T, E, U> {
    * @param val Ok value to handle
    * @returns Result of handling the Ok value
    */
-  Ok?: (val: T) => U;
+  Ok: (val: T) => U;
   /**
    * Handler for Err values
    * @param val Err value to handle
    * @returns Result of handling the Err value
    */
-  Err?: (val: E) => U;
+  Err: (val: E) => U;
 }
 
 /**
  * Default enum patterns that preserve the original value
  * @internal
  */
-const defaultMatchResult: MatchResult<any, any, any> = {
+const defMatch: MatchResult<any, any, any> = {
   Ok: (val) => val,
   Err: (val) => val,
 };
@@ -149,7 +149,7 @@ export class Result<T, E> extends Enum {
    * @returns T Ok value or default
    */
   unwrapOr(def: T): T {
-    return this.isOk() ? this.unwrap() : def;
+    return this.isOk() ? super.unwrap() : def;
   }
 
   /**
@@ -158,7 +158,7 @@ export class Result<T, E> extends Enum {
    * @returns T Ok value or computed value
    */
   unwrapOrElse(fn: (err: E) => T): T {
-    return this.isOk() ? this.unwrap() : fn(super.unwrap());
+    return this.isOk() ? super.unwrap() : fn(super.unwrap());
   }
 
   /**
@@ -167,9 +167,7 @@ export class Result<T, E> extends Enum {
    * @returns T Ok value
    */
   unwrapOrThrow(): T {
-    if (this.isOk()) {
-      return this.unwrap();
-    }
+    if (this.isOk()) return super.unwrap();
     throw super.unwrap();
   }
 
@@ -179,9 +177,7 @@ export class Result<T, E> extends Enum {
    * @returns E Err value
    */
   unwrapErr(): E {
-    if (this.isErr()) {
-      return super.unwrap();
-    }
+    if (this.isErr()) return super.unwrap();
     throw new ReferenceError('Cannot unwrap Err value of Result.Ok');
   }
 
@@ -191,15 +187,10 @@ export class Result<T, E> extends Enum {
    * @returns Result of matching the Result
    */
   match<U>(fn: Partial<MatchResult<T, E, U>>): U {
-    const patterns = {
-      Ok: fn.Ok,
-      Err: fn.Err,
-    };
-    const defaults = {
-      Ok: defaultMatchResult.Ok,
-      Err: defaultMatchResult.Err,
-    };
-    return super.match(patterns, defaults);
+    return super.match(fn, {
+      Ok: defMatch.Ok,
+      Err: defMatch.Err,
+    });
   }
 
   /**
@@ -208,7 +199,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<U, E> mapped Result
    */
   map<U>(fn: (val: T) => U): Result<U, E> {
-    return this.isOk() ? Result.Ok(fn(this.unwrap())) : Result.Err(this.unwrapErr());
+    return this.isOk() ? Result.Ok(fn(super.unwrap())) : Result.Err(super.unwrap());
   }
 
   /**
@@ -218,7 +209,7 @@ export class Result<T, E> extends Enum {
    * @returns U mapped value or default
    */
   mapOr<U>(defaultValue: U, fn: (val: T) => U): U {
-    return this.isOk() ? fn(this.unwrap()) : defaultValue;
+    return this.isOk() ? fn(super.unwrap()) : defaultValue;
   }
 
   /**
@@ -227,7 +218,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<T, U> mapped Result
    */
   mapErr<F>(fn: (err: E) => F): Result<T, F> {
-    return this.isOk() ? Result.Ok(this.unwrap()) : Result.Err(fn(this.unwrapErr()));
+    return this.isOk() ? Result.Ok(super.unwrap()) : Result.Err(fn(super.unwrap()));
   }
 
   /**
@@ -236,12 +227,8 @@ export class Result<T, E> extends Enum {
    * @returns T Ok value
    */
   expect(msg: string): T {
-    return this.match({
-      Ok: (val) => val,
-      Err: (err) => {
-        throw new Error(`${msg}: ${err}`);
-      },
-    });
+    if (this.isOk()) return super.unwrap();
+    throw new Error(`${msg}: ${super.unwrap()}`);
   }
 
   /**
@@ -250,10 +237,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<U, E> chained Result
    */
   and<U>(res: Result<U, E>): Result<U, E> {
-    return this.match({
-      Ok: () => res,
-      Err: (e) => Result.Err(e),
-    });
+    return this.isOk() ? res : Result.Err(super.unwrap());
   }
 
   /**
@@ -262,10 +246,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<U, E> chained Result
    */
   andThen<U>(op: (val: T) => Result<U, E>): Result<U, E> {
-    return this.match({
-      Ok: (val) => op(val),
-      Err: (err) => Result.Err(err),
-    });
+    return this.isOk() ? op(super.unwrap()) : Result.Err(super.unwrap());
   }
 
   /**
@@ -274,10 +255,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<T, F> chained Result
    */
   or<F>(res: Result<T, F>): Result<T, F> {
-    return this.match({
-      Ok: (val) => Result.Ok(val),
-      Err: () => res,
-    });
+    return this.isOk() ? Result.Ok(super.unwrap()) : res;
   }
 
   /**
@@ -286,10 +264,7 @@ export class Result<T, E> extends Enum {
    * @returns Result<T, E> or Result<U, E> computed Result
    */
   orElse<F>(fn: (err: E) => Result<T, F>): Result<T, F> {
-    return this.match({
-      Ok: (val) => Result.Ok(val),
-      Err: (e) => fn(e),
-    });
+    return this.isOk() ? Result.Ok(super.unwrap()) : fn(super.unwrap());
   }
 }
 

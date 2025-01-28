@@ -213,7 +213,7 @@ describe('Option', () => {
     test('should use default None pattern', () => {
       const opt = None;
       const some = Some(42);
-      expect(opt.match({})).toBe(null);
+      expect(opt.match({})).toBe(undefined);
       expect(some.match({})).toBe(42);
     });
   });

@@ -17,8 +17,8 @@ import { Enum } from './enum';
  * ```
  */
 interface MatchOption<T, U> {
-  Some?: (val: T) => U;
-  None?: (() => U) | U;
+  Some: (val: T) => U;
+  None: (() => U) | U;
 }
 
 /**
@@ -26,9 +26,9 @@ interface MatchOption<T, U> {
  * Used when partial enum patterns are provided
  * @internal
  */
-const defaultMatchOption: MatchOption<any, any> = {
+const defMatch: MatchOption<any, any> = {
   Some: (val) => val,
-  None: null,
+  None: undefined,
 };
 
 /**
@@ -56,7 +56,7 @@ const defaultMatchOption: MatchOption<any, any> = {
  * ```
  */
 export class Option<T> extends Enum {
-  protected static readonly NONE_INSTANCE = new Option<any>('None');
+  protected static readonly NI = new Option<any>('None');
 
   /**
    * Creates a Some variant containing a value.
@@ -86,7 +86,7 @@ export class Option<T> extends Enum {
    * ```
    */
   static None<T>(): Option<T> {
-    return Option.NONE_INSTANCE;
+    return Option.NI;
   }
 
   /**
@@ -106,11 +106,10 @@ export class Option<T> extends Enum {
    * ```
    */
   match<U>(patterns: Partial<MatchOption<T, U>>): U {
-    const defaults = {
-      Some: defaultMatchOption.Some,
-      None: defaultMatchOption.None,
-    };
-    return super.match(patterns, defaults);
+    return super.match(patterns, {
+      Some: defMatch.Some,
+      None: defMatch.None,
+    });
   }
 
   /**
@@ -143,10 +142,7 @@ export class Option<T> extends Enum {
    * ```
    */
   isSomeAnd(fn: (val: T) => boolean): boolean {
-    return this.match({
-      Some: (val) => fn(val),
-      None: () => false,
-    });
+    return this.isSome() ? fn(super.unwrap()) : false;
   }
 
   /**
@@ -179,10 +175,7 @@ export class Option<T> extends Enum {
    * ```
    */
   isNoneOr(fn: (val: T) => boolean): boolean {
-    return this.match({
-      None: () => true,
-      Some: (val) => fn(val),
-    });
+    return this.isSome() ? fn(super.unwrap()) : true;
   }
 
   /**
@@ -197,9 +190,7 @@ export class Option<T> extends Enum {
    * ```
    */
   expect(msg: string): T {
-    if (this.isSome()) {
-      return super.unwrap();
-    }
+    if (this.isSome()) return super.unwrap();
     throw new Error(msg);
   }
 
@@ -215,9 +206,7 @@ export class Option<T> extends Enum {
    * ```
    */
   unwrap<U = T>(): U {
-    if (this.isSome()) {
-      return super.unwrap<U>();
-    }
+    if (this.isSome()) return super.unwrap<U>();
     throw new ReferenceError('Called unwrap on a None value');
   }
 
@@ -233,7 +222,7 @@ export class Option<T> extends Enum {
    * ```
    */
   unwrapOr<U>(def: U): U {
-    return this.isSome() ? this.unwrap() : def;
+    return this.isSome() ? super.unwrap() : def;
   }
 
   /**
@@ -248,7 +237,7 @@ export class Option<T> extends Enum {
    * ```
    */
   unwrapOrElse<U>(fn: () => U): U {
-    return this.isSome() ? this.unwrap() : fn();
+    return this.isSome() ? super.unwrap() : fn();
   }
 
   /**
@@ -263,7 +252,7 @@ export class Option<T> extends Enum {
    * ```
    */
   map<U>(fn: (val: T) => U): Option<U> {
-    return this.isSome() ? Option.Some(fn(this.unwrap())) : Option.None();
+    return this.isSome() ? Option.Some(fn(super.unwrap())) : Option.NI;
   }
 
   /**
@@ -278,9 +267,7 @@ export class Option<T> extends Enum {
    * ```
    */
   inspect(fn: (val: T) => void): Option<T> {
-    if (this.isSome()) {
-      fn(this.unwrap());
-    }
+    if (this.isSome()) fn(super.unwrap());
     return this;
   }
 
@@ -297,10 +284,7 @@ export class Option<T> extends Enum {
    * ```
    */
   mapOr<U>(def: U, fn: (val: T) => U): U {
-    return this.match<U>({
-      Some: (val) => fn(val),
-      None: () => def,
-    });
+    return this.isSome() ? fn(super.unwrap()) : def;
   }
 
   /**
@@ -316,10 +300,7 @@ export class Option<T> extends Enum {
    * ```
    */
   mapOrElse<U>(def: () => U, fn: (val: T) => U): U {
-    return this.match<U>({
-      Some: (val) => fn(val),
-      None: def,
-    });
+    return this.isSome() ? fn(super.unwrap()) : def();
   }
 
   /**
@@ -334,10 +315,7 @@ export class Option<T> extends Enum {
    * ```
    */
   and<U>(opt: Option<U>): Option<U> {
-    return this.match<Option<U>>({
-      Some: () => opt,
-      None: () => Option.None(),
-    });
+    return this.isSome() ? opt : Option.NI;
   }
 
   /**
@@ -352,10 +330,7 @@ export class Option<T> extends Enum {
    * ```
    */
   andThen<U>(fn: (val: T) => Option<U>): Option<U> {
-    return this.match<Option<U>>({
-      Some: (val) => fn(val),
-      None: () => Option.None(),
-    });
+    return this.isSome() ? fn(this.unwrap()) : Option.NI;
   }
 
   /**
@@ -370,7 +345,7 @@ export class Option<T> extends Enum {
    * ```
    */
   filter(fn: (val: T) => boolean): Option<T> {
-    return this.isSome() && fn(this.unwrap()) ? this : Option.None();
+    return this.isSome() && fn(this.unwrap()) ? this : Option.NI;
   }
 
   /**
@@ -385,10 +360,7 @@ export class Option<T> extends Enum {
    * ```
    */
   or<U extends T>(opt: Option<U>): Option<T> {
-    return this.match<Option<T>>({
-      Some: () => this,
-      None: () => opt,
-    });
+    return this.isSome() ? this : opt;
   }
 
   /**
@@ -403,10 +375,7 @@ export class Option<T> extends Enum {
    * ```
    */
   orElse<U>(fn: () => Option<U>): Option<T | U> {
-    return this.match<Option<T | U>>({
-      Some: () => this,
-      None: () => fn(),
-    });
+    return this.isSome() ? this : fn();
   }
 
   /**
@@ -426,12 +395,12 @@ export class Option<T> extends Enum {
       Some: () =>
         opt.match<Option<T | U>>({
           Some: () => Option.None(),
-          None: () => this,
+          None: this,
         }),
       None: () =>
         opt.match<Option<T | U>>({
           Some: () => opt,
-          None: () => Option.None(),
+          None: Option.NI,
         }),
     });
   }

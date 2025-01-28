@@ -125,23 +125,23 @@ export class Entry<K, V> extends Enum {
 
   /**
    * Pattern matches on this Entry, providing access to either the occupied or vacant state.
-   * 
+   *
    * # Examples
    * ```ts
    * let map = new HashMap<string, number>();
    * map.insert("key", 1);
-   * 
+   *
    * // Match with both patterns
    * let result = map.entry("key").match({
    *   Occupied: entry => entry.get() * 2,
    *   Vacant: () => 0
    * }); // result = 2
-   * 
+   *
    * // Match with partial patterns
    * let doubled = map.entry("key").match({
    *   Occupied: entry => entry.get() * 2
    * }); // doubled = 2
-   * 
+   *
    * // Match with no patterns returns undefined
    * let empty = map.entry("key").match({}); // empty = undefined
    * ```

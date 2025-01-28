@@ -12,19 +12,19 @@ interface MatchControlFlow<B, C, R> {
    * Handler for Continue variant
    * @param value The continue value
    */
-  Continue?: (value?: C) => R;
+  Continue: (value?: C) => R;
   /**
    * Handler for Break variant
    * @param value The break value
    */
-  Break?: (value: B) => R;
+  Break: (value: B) => R;
 }
 
 /**
  * Default match patterns that preserve the original value
  * @internal
  */
-const defaultMatchControlFlow: MatchControlFlow<any, any, any> = {
+const defMatch: MatchControlFlow<any, any, any> = {
   Continue: (val) => val,
   Break: (val) => val,
 };
@@ -54,10 +54,6 @@ const defaultMatchControlFlow: MatchControlFlow<any, any, any> = {
  * ```
  */
 export class ControlFlow<B, C = void> extends Enum {
-  protected constructor(name: string, ...args: any[]) {
-    super(name, ...args);
-  }
-
   static Continue<B, C>(value?: C): ControlFlow<B, C> {
     return new ControlFlow('Continue', value);
   }
@@ -81,11 +77,10 @@ export class ControlFlow<B, C = void> extends Enum {
    * ```
    */
   match<R>(patterns: Partial<MatchControlFlow<B, C, R>>): R {
-    const defaults = {
-      Continue: defaultMatchControlFlow.Continue,
-      Break: defaultMatchControlFlow.Break,
-    };
-    return super.match(patterns, defaults);
+    return super.match(patterns, {
+      Continue: defMatch.Continue,
+      Break: defMatch.Break,
+    });
   }
 
   /**
@@ -107,10 +102,7 @@ export class ControlFlow<B, C = void> extends Enum {
    * @throws Error if this is not a Break variant
    */
   breakValue(): Option<B> {
-    return this.match({
-      Break: (val) => Some(val),
-      Continue: () => None,
-    });
+    return this.isBreak() ? Some(super.unwrap()) : None;
   }
 
   /**
@@ -118,10 +110,7 @@ export class ControlFlow<B, C = void> extends Enum {
    * @throws Error if this is not a Continue variant
    */
   continueValue(): Option<C> {
-    return this.match({
-      Break: () => None,
-      Continue: (val) => Some(val),
-    });
+    return this.isContinue() ? Some(super.unwrap()) : None;
   }
 
   /**
@@ -136,10 +125,9 @@ export class ControlFlow<B, C = void> extends Enum {
    * ```
    */
   mapBreak<U>(fn: (val: B) => U): ControlFlow<U, C> {
-    return this.match({
-      Break: (val) => ControlFlow.Break(fn(val)),
-      Continue: (val) => ControlFlow.Continue(val),
-    });
+    return this.isBreak()
+      ? ControlFlow.Break(fn(super.unwrap()))
+      : ControlFlow.Continue(super.unwrap());
   }
 
   /**
@@ -154,10 +142,9 @@ export class ControlFlow<B, C = void> extends Enum {
    * ```
    */
   mapContinue<U>(fn: (val?: C) => U): ControlFlow<B, U> {
-    return this.match({
-      Break: (val) => ControlFlow.Break(val),
-      Continue: (val) => ControlFlow.Continue(fn(val)),
-    });
+    return this.isContinue()
+      ? ControlFlow.Continue(fn(super.unwrap()))
+      : ControlFlow.Break(super.unwrap());
   }
 }
 

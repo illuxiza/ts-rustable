@@ -156,7 +156,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns true if the set contains no elements.
-   * 
+   *
    * # Examples
    * ```ts
    * let set = new HashSet<string>();
@@ -171,7 +171,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns a new set containing all elements that are in both this set and the other set.
-   * 
+   *
    * # Examples
    * ```ts
    * let set1 = new HashSet(["a", "b", "c"]);
@@ -192,7 +192,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns a new set containing all elements that are in either this set or the other set.
-   * 
+   *
    * # Examples
    * ```ts
    * let set1 = new HashSet(["a", "b"]);
@@ -209,7 +209,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns a new set containing all elements that are in this set but not in the other set.
-   * 
+   *
    * # Examples
    * ```ts
    * let set1 = new HashSet(["a", "b", "c"]);
@@ -230,7 +230,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns true if this set is a subset of the other set.
-   * 
+   *
    * # Examples
    * ```ts
    * let set1 = new HashSet(["a", "b"]);
@@ -250,7 +250,7 @@ export class HashSet<T> implements Iterable<T> {
 
   /**
    * Returns true if this set is a superset of the other set.
-   * 
+   *
    * # Examples
    * ```ts
    * let set1 = new HashSet(["a", "b", "c"]);
@@ -262,5 +262,4 @@ export class HashSet<T> implements Iterable<T> {
   isSuperset(other: HashSet<T>): boolean {
     return other.isSubset(this);
   }
-
 }

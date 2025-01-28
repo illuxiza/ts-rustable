@@ -13,7 +13,7 @@ export function equals(a: any, b: any): boolean {
   if (typeof a !== typeof b) {
     return false;
   }
-  if (a.constructor !== b.constructor) {
+  if (a?.constructor !== b?.constructor) {
     return false;
   }
   return stringify(a) === stringify(b);
