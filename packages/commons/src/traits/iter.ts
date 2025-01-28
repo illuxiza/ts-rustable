@@ -65,7 +65,7 @@ export const Iter = macroTrait(IterTrait);
 export interface Iter<T> extends IterTrait<T> {}
 
 declare module '../collections' {
-  interface VecInner<T> extends Iter<T> {}
+  interface Vec<T> extends Iter<T> {}
   interface HashMap<K, V> extends Iter<[K, V]> {}
   interface HashSet<T> extends Iter<T> {}
 }

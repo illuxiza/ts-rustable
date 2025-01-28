@@ -288,7 +288,7 @@ describe('Vec', () => {
 
     test('unstableSort', () => {
       const vec = Vec.from([3, 1, 4, 1, 5]);
-      vec.unstableSort();
+      vec.sortUnstable();
       expect([...vec]).toEqual([1, 1, 3, 4, 5]);
     });
 
@@ -352,11 +352,11 @@ describe('Vec', () => {
 
     test('unstableSort edge cases', () => {
       const v = Vec.from([1]);
-      v.unstableSort(); // Should handle single element
+      v.sortUnstable(); // Should handle single element
       expect([...v]).toEqual([1]);
 
       const empty = Vec.new<number>();
-      empty.unstableSort(); // Should handle empty vector
+      empty.sortUnstable(); // Should handle empty vector
       expect([...empty]).toEqual([]);
     });
 

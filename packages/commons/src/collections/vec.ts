@@ -807,11 +807,11 @@ export class Vec<T> implements Iterable<T> {
    * # Examples
    * ```ts
    * let vec = Vec.from([3, 1, 4, 1, 5]);
-   * vec.unstableSort();
+   * vec.sortUnstable();
    * assert.deepEqual([...vec], [1, 1, 3, 4, 5]);  // Order of equal elements (1, 1) may vary
    * ```
    */
-  unstableSort(compare: (a: T, b: T) => number = defaultCmp): void {
+  sortUnstable(compare: (a: T, b: T) => number = defaultCmp): void {
     if (this.__len <= 1) return;
     const swap = (i: number, j: number) => {
       [this.__buffer[i], this.__buffer[j]] = [this.__buffer[j], this.__buffer[i]];
@@ -869,13 +869,11 @@ export class Vec<T> implements Iterable<T> {
    * assert(vec.isSortedBy(x => x.id));
    * ```
    */
-  isSortedBy<K>(keyFn: (value: T) => K): boolean {
+  isSortedBy<K>(key: (value: T) => K): boolean {
     return this.isSorted((a, b) => {
-      const keyA = keyFn(a);
-      const keyB = keyFn(b);
-      if (keyA < keyB) return -1;
-      if (keyA > keyB) return 1;
-      return 0;
+      const ka = key(a);
+      const kb = key(b);
+      return ka < kb ? -1 : ka > kb ? 1 : 0;
     });
   }
 
