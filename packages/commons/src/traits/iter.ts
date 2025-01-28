@@ -1,11 +1,10 @@
 import { iter, RustIter } from '@rustable/iter';
-import { implTrait, macroTrait, trait } from '@rustable/trait';
+import { macroTrait, Trait } from '@rustable/trait';
 import { named } from '@rustable/utils';
 import { HashMap, HashSet, Vec } from '../collections';
 
-@trait
 @named('Iter')
-class IterTrait<T> implements Iterable<T> {
+class IterTrait<T> extends Trait implements Iterable<T> {
   [Symbol.iterator](): IterableIterator<T> {
     throw new Error('Method not implemented.');
   }
@@ -77,9 +76,9 @@ declare global {
   interface Map<K, V> extends Iter<[K, V]> {}
 }
 
-implTrait(Vec, Iter);
-implTrait(HashMap, Iter);
-implTrait(HashSet, Iter);
-implTrait(Set, Iter);
-implTrait(Map, Iter);
-implTrait(Array, Iter);
+Iter.implFor(Vec);
+Iter.implFor(HashMap);
+Iter.implFor(HashSet);
+Iter.implFor(Set);
+Iter.implFor(Map);
+Iter.implFor(Array);

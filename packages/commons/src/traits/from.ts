@@ -1,5 +1,5 @@
-import { hasTrait, implTrait, trait, TraitStaticMethods, useTrait } from '@rustable/trait';
-import { Constructor, named, Type } from '@rustable/utils';
+import { Trait, TraitStaticMethods } from '@rustable/trait';
+import { Constructor, createFactory, named, NOT_IMPLEMENTED, type, Type } from '@rustable/utils';
 
 /**
  * From trait for type conversion.
@@ -36,9 +36,8 @@ import { Constructor, named, Type } from '@rustable/utils';
  *
  * @template T The type to convert from
  */
-@trait
 @named('From')
-export class From {
+class FromTrait extends Trait {
   /**
    * Creates a new instance of this type from the provided value.
    * Must be implemented by types that want to support conversion.
@@ -48,9 +47,49 @@ export class From {
    * @throws {Error} If conversion is not implemented
    */
   static from<T>(_value: T): any {
-    throw new Error('Not implemented');
+    throw NOT_IMPLEMENTED;
+  }
+  static implInto<C extends Constructor>(
+    _target: C,
+    _implementation?: TraitStaticMethods<C, typeof FromTrait>,
+  ): void {
+    throw NOT_IMPLEMENTED;
   }
 }
+
+type FormType<T, C extends Constructor> = Constructor<FromTrait> & {
+  from(_value: T): InstanceType<C>;
+};
+
+type FormTraitType<T> = {
+  implInto<C extends Constructor>(
+    target: C,
+    implementation?: TraitStaticMethods<C, FormType<T, C>>,
+  ): void;
+  wrap<C extends Constructor>(target: C): FormType<T, C>;
+} & Constructor<FromTrait>;
+
+export const From = createFactory(FromTrait, (sourceType: Constructor): Constructor => {
+  const FromType = Type(FromTrait, [sourceType]);
+  if (FromType.implInto === FromTrait.implInto) {
+    FromType.implInto = function implInto(
+      target: Constructor,
+      implementation?: TraitStaticMethods<Constructor, typeof FromTrait>,
+    ) {
+      FromType.implFor(target, { static: implementation });
+      Into(target).implFor(sourceType, {
+        into() {
+          return from(this, target);
+        },
+      });
+    };
+  }
+  return FromType;
+}) as unknown as Constructor<FromTrait> & (<T>(targetType: Constructor<T>) => FormTraitType<T>);
+
+export interface Form extends FromTrait {}
+
+export interface Into<T> extends IntoTrait<T> {}
 
 /**
  * Into trait for type conversion.
@@ -59,9 +98,8 @@ export class From {
  *
  * @template T The type to convert into
  */
-@trait
 @named('Into')
-export class Into<T> {
+class IntoTrait<T> extends Trait {
   /**
    * Converts this value into the target type.
    *
@@ -69,14 +107,16 @@ export class Into<T> {
    * @throws {Error} If conversion is not implemented
    * @param targetType
    */
-  into<U extends object>(this: T, targetType: Constructor<U>): U {
-    return from(this, targetType) as U;
+  into(): T {
+    throw NOT_IMPLEMENTED;
   }
 }
 
-declare global {
-  interface Object extends Into<any> {}
-}
+export const Into = createFactory(IntoTrait, (targetType: Constructor): Constructor => {
+  return Type(IntoTrait, [targetType]);
+}) as typeof IntoTrait & (<T>(targetType: Constructor<T>) => typeof IntoTrait<T>);
+
+export interface Into<T> extends IntoTrait<T> {}
 
 /**
  * Helper function to convert a value using the From trait.
@@ -93,36 +133,6 @@ declare global {
  * @returns The converted value
  * @throws {Error} If no From implementation is found
  */
-export function from<T, U extends object>(source: T, targetType: Constructor<U>): U {
-  if (source === null) {
-    throw new Error('Cannot convert null');
-  }
-  if (source === undefined) {
-    throw new Error('Cannot convert undefined');
-  }
-  if (typeof targetType !== 'function' || !targetType.prototype) {
-    throw new Error('Invalid target type');
-  }
-  let wrapped: any = source;
-  if (typeof source === 'string') {
-    wrapped = String(source);
-  } else if (typeof source === 'number') {
-    wrapped = Number(source);
-  } else if (typeof source === 'boolean') {
-    wrapped = Boolean(source);
-  }
-  const sourceType = wrapped.constructor as Constructor<T>;
-  const impl = useTrait(targetType, Type(From, [sourceType]));
-  return impl.from(source);
-}
-
-export function implFrom<T extends Constructor, U extends Constructor>(
-  targetType: T,
-  sourceType: U,
-  implementation?: TraitStaticMethods<T, typeof From>,
-): void {
-  implTrait(targetType, Type(From, [sourceType]), { static: implementation });
-  if (!hasTrait(sourceType, Into)) {
-    implTrait(sourceType, Into);
-  }
+export function from<T, U>(source: T, targetType: Constructor<U>): U {
+  return From(type(source)).wrap(targetType).from(source);
 }

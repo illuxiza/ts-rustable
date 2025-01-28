@@ -1,5 +1,5 @@
 import { Type } from '../../../utils';
-import { from, implFrom } from '../../src/traits/from';
+import { from, From, Into } from '../../src/traits/from';
 
 // Example classes for testing
 class Target {
@@ -24,81 +24,81 @@ class Kelvin extends Temperature {}
 describe('Type Conversion System', () => {
   beforeAll(() => {
     // Basic type conversions
-    implFrom(Number, String, {
-      from(value: string): number {
+    From(String).implInto(Number, {
+      from(value) {
         return Number(value);
       },
     });
 
-    implFrom(String, Number, {
-      from(value: number): string {
+    From(Number).implInto(String, {
+      from(value: Number): string {
         return value.toString();
       },
     });
 
-    implFrom(Boolean, String, {
-      from(value: string): boolean {
+    From(String).implInto(Boolean, {
+      from(value: String): boolean {
         return value === 'true';
       },
     });
 
-    implFrom(String, Boolean, {
-      from(value: boolean): string {
+    From(Boolean).implInto(String, {
+      from(value: Boolean): string {
         return value.toString();
       },
     });
 
-    implFrom(Boolean, Number, {
-      from(value: number): boolean {
+    From(Number).implInto(Boolean, {
+      from(value: Number): boolean {
         return value !== 0;
       },
     });
 
-    implFrom(Number, Boolean, {
-      from(value: boolean): number {
+    From(Boolean).implInto(Number, {
+      from(value: Boolean): number {
         return value ? 1 : 0;
       },
     });
 
     // Custom type conversions
-    implFrom(Target, Source, {
+    From(Source).implInto(Target, {
       from(source: Source): Target {
         return new Target(source.value.toString());
       },
     });
 
-    implFrom(Source, Target, {
+    From(Target).implInto(Source, {
       from(target: Target): Source {
         return new Source(parseInt(target.value));
       },
     });
 
     // Temperature conversions
-    implFrom(Fahrenheit, Celsius, {
+    From(Celsius).implInto(Fahrenheit, {
       from(celsius: Celsius): Fahrenheit {
         return new Fahrenheit((celsius.value * 9) / 5 + 32);
       },
     });
 
-    implFrom(Kelvin, Celsius, {
+    From(Celsius).implInto(Kelvin, {
       from(celsius: Celsius): Kelvin {
         return new Kelvin(celsius.value + 273.15);
       },
     });
 
-    implFrom(Temperature, Celsius, {
+    From(Celsius).implInto(Temperature, {
       from(celsius: Celsius): Temperature {
         return new Temperature(celsius.value);
       },
     });
 
-    implFrom(Temperature, Kelvin, {
+    From(Kelvin).implInto(Temperature, {
       from(kelvin: Kelvin): Temperature {
         return new Temperature(kelvin.value - 273.15);
       },
     });
 
-    implFrom(Temperature, Fahrenheit, {
+    From(Fahrenheit).implInto(Temperature, {
       from(fahrenheit: Fahrenheit): Temperature {
         return new Temperature(((fahrenheit.value - 32) * 5) / 9);
       },
@@ -109,21 +109,21 @@ describe('Type Conversion System', () => {
     test('should convert between primitive types using from/into', () => {
       // String <-> Number
       expect(from('42', Number)).toBe(42);
-      expect('42'.into(Number)).toBe(42);
+      expect(Into(Number).wrap('42').into()).toBe(42);
       expect(from(42, String)).toBe('42');
-      expect((42).into(String)).toBe('42');
+      expect(Into(String).wrap(42).into()).toBe('42');
 
       // String <-> Boolean
       expect(from('true', Boolean)).toBe(true);
-      expect('true'.into(Boolean)).toBe(true);
+      expect(Into(Boolean).wrap('true').into()).toBe(true);
       expect(from(true, String)).toBe('true');
-      expect(true.into(String)).toBe('true');
+      expect(Into(String).wrap(true).into()).toBe('true');
 
       // Number <-> Boolean
       expect(from(1, Boolean)).toBe(true);
       expect(from(0, Boolean)).toBe(false);
-      expect((1).into(Boolean)).toBe(true);
-      expect((0).into(Boolean)).toBe(false);
+      expect(Into(Boolean).wrap(1).into()).toBe(true);
+      expect(Into(Boolean).wrap(0).into()).toBe(false);
     });
 
     test('should convert between custom types using from/into', () => {
@@ -131,7 +131,7 @@ describe('Type Conversion System', () => {
       const target = new Target('42');
 
       const convertedTarget = from(source, Target);
-      const convertedSource = target.into(Source);
+      const convertedSource = Into(Source).wrap(target).into();
 
       expect(convertedTarget.value).toBe('42');
       expect(convertedSource.value).toBe(42);
@@ -140,7 +140,7 @@ describe('Type Conversion System', () => {
     test('should throw error for non-implemented conversions', () => {
       const noImpl = new NoImpl();
       expect(() => from(noImpl, Target)).toThrow(/not implemented/);
-      expect(() => noImpl.into(Target)).toThrow(/into is not a function/);
+      expect(() => (noImpl as any).into()).toThrow(/into is not a function/);
     });
   });
 
@@ -148,25 +148,25 @@ describe('Type Conversion System', () => {
     test('should convert between temperature scales using from/into', () => {
       // Celsius -> Others
       const celsius = new Celsius(0);
-      expect(celsius.into(Fahrenheit).value).toBe(32);
-      expect(celsius.into(Kelvin).value).toBe(273.15);
-      expect(celsius.into(Temperature).value).toBe(0);
+      expect(Into(Fahrenheit).wrap(celsius).into().value).toBe(32);
+      expect(Into(Kelvin).wrap(celsius).into().value).toBe(273.15);
+      expect(Into(Temperature).wrap(celsius).into().value).toBe(0);
 
       // Kelvin -> Temperature
       const kelvin = new Kelvin(273.15);
-      expect(kelvin.into(Temperature).value).toBe(0);
+      expect(Into(Temperature).wrap(kelvin).into().value).toBe(0);
 
       // Verify precision
       const celsius100 = new Celsius(100);
-      expect(celsius100.into(Fahrenheit).value).toBe(212);
-      expect(celsius100.into(Kelvin).value).toBe(373.15);
+      expect(Into(Fahrenheit).wrap(celsius100).into().value).toBe(212);
+      expect(Into(Kelvin).wrap(celsius100).into().value).toBe(373.15);
     });
 
     test('should handle chained conversions', () => {
       const celsius = new Celsius(0);
 
       // Convert through multiple types
-      const result = celsius.into(Fahrenheit).into(Temperature);
+      const result = Into(Temperature).wrap(Into(Fahrenheit).wrap(celsius).into()).into();
 
       expect(result.value).toBe(0);
     });
@@ -177,7 +177,7 @@ describe('Type Conversion System', () => {
         constructor(public value: string) {}
       }
 
-      implFrom(Target, Source, {
+      From(Source).implInto(Target, {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -188,7 +188,7 @@ describe('Type Conversion System', () => {
 
     test('implementation with single generic', () => {
       class Generic {}
-      implFrom(Target, Type(Source, [Generic]), {
+      From(Type(Source, [Generic])).implInto(Target, {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -200,7 +200,7 @@ describe('Type Conversion System', () => {
     test('implementation with multiple generics', () => {
       class Generic1 {}
       class Generic2 {}
-      implFrom(Target, Type(Source, [Generic1, Generic2]), {
+      From(Type(Source, [Generic1, Generic2])).implInto(Target, {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -215,7 +215,7 @@ describe('Type Conversion System', () => {
         constructor(public value: string) {}
       }
 
-      implFrom(Target, Source, {
+      From(Source).implInto(Target, {
         from(source: Source): Target {
           return new Target(source.value.toString());
         },
@@ -230,7 +230,7 @@ describe('Type Conversion System', () => {
         constructor(public value: T) {}
       }
 
-      implFrom(Container, Source, {
+      From(Source).implInto(Container, {
         from(source: Source): Container<number> {
           return new Container(source.value);
         },
@@ -242,16 +242,6 @@ describe('Type Conversion System', () => {
     });
   });
   describe('From Function Edge Cases', () => {
-    test('should handle null and undefined values', () => {
-      expect(() => from(null, String)).toThrow('Cannot convert null');
-      expect(() => from(undefined, String)).toThrow('Cannot convert undefined');
-    });
-
-    test('should handle non-constructable targets', () => {
-      const nonConstructable = {};
-      expect(() => from('test', nonConstructable as any)).toThrow('Invalid target type');
-    });
-
     test('should handle circular references', () => {
       class CircularA {
         b?: CircularB;

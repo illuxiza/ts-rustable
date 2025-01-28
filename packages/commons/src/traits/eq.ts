@@ -1,4 +1,4 @@
-import { macroTrait, trait } from '@rustable/trait';
+import { macroTrait, Trait } from '@rustable/trait';
 import { equals, named } from '@rustable/utils';
 
 /**
@@ -24,9 +24,8 @@ import { equals, named } from '@rustable/utils';
  * - Type-safe comparison with runtime checks
  * - Handles special JavaScript values (NaN, undefined)
  */
-@trait
 @named('Eq')
-class EqTrait {
+class EqTrait extends Trait {
   /**
    * Compare this object with another for equality
    * @param other Object to compare with

@@ -122,7 +122,7 @@ describe('Entry API', () => {
       map.insert('key', 1);
 
       const entry = map.entry('key');
-      
+
       // Only Occupied pattern
       const result1 = entry.match({
         Occupied: (entry) => entry.get() * 2,
@@ -144,27 +144,23 @@ describe('Entry API', () => {
       const map = new HashMap<string, number>();
 
       // Test orInsert followed by modify
-      map.entry('a')
-        .orInsert(1)
+      map.entry('a').orInsert(1);
       expect(map.get('a').unwrap()).toBe(1);
 
-      map.entry('a')
-        .match({
-          Occupied: entry => entry.modify(v => v * 2),
-          Vacant: () => {}
-        });
+      map.entry('a').match({
+        Occupied: (entry) => entry.modify((v) => v * 2),
+        Vacant: () => {},
+      });
       expect(map.get('a').unwrap()).toBe(2);
 
       // Test orInsertWithKey followed by modify
-      const value = map.entry('hello')
-        .orInsertWithKey(key => key.length);
+      const value = map.entry('hello').orInsertWithKey((key) => key.length);
       expect(value).toBe(5);
 
-      map.entry('hello')
-        .match({
-          Occupied: entry => entry.modify(v => v + 1),
-          Vacant: () => {}
-        });
+      map.entry('hello').match({
+        Occupied: (entry) => entry.modify((v) => v + 1),
+        Vacant: () => {},
+      });
       expect(map.get('hello').unwrap()).toBe(6);
     });
 

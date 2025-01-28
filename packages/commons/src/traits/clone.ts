@@ -1,4 +1,4 @@
-import { macroTrait, trait } from '@rustable/trait';
+import { macroTrait, Trait } from '@rustable/trait';
 import { deepClone, named } from '@rustable/utils';
 
 /**
@@ -24,9 +24,8 @@ import { deepClone, named } from '@rustable/utils';
  * - Preserves prototype chain
  * - Thread-safe and memory efficient
  */
-@trait
 @named('Clone')
-class CloneTrait {
+class CloneTrait extends Trait {
   clone(hash = new WeakMap<object, any>()): this {
     if (hash.has(this)) {
       return hash.get(this);

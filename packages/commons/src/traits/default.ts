@@ -1,4 +1,4 @@
-import { implTrait, macroTrait, trait, useTrait } from '@rustable/trait';
+import { macroTrait, Trait } from '@rustable/trait';
 import { Constructor, named } from '@rustable/utils';
 
 /**
@@ -21,9 +21,8 @@ import { Constructor, named } from '@rustable/utils';
  * - Preserves prototype chain
  * - Thread-safe and memory efficient
  */
-@trait
 @named('Default')
-class DefaultTrait {
+class DefaultTrait extends Trait {
   static default<T>(): T {
     return new this() as T;
   }
@@ -34,10 +33,10 @@ export const Default = macroTrait(DefaultTrait);
 export interface Default extends DefaultTrait {}
 
 export function defaultVal<T extends object>(target: Constructor<T>): T {
-  return useTrait(target, Default).default<T>();
+  return Default.staticWrap(target).default();
 }
 
-implTrait(Number, Default, {
+Default.implFor(Number, {
   static: {
     default(): number {
       return 0;
@@ -45,7 +44,7 @@ implTrait(Number, Default, {
   },
 });
 
-implTrait(Boolean, Default, {
+Default.implFor(Boolean, {
   static: {
     default(): boolean {
       return false;
@@ -53,7 +52,7 @@ implTrait(Boolean, Default, {
   },
 });
 
-implTrait(String, Default, {
+Default.implFor(String, {
   static: {
     default(): string {
       return '';

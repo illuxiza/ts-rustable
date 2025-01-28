@@ -1,4 +1,4 @@
-import { implFrom } from '../../src/traits/from';
+import { From, Into } from 'packages/commons/src/traits';
 
 // Example classes for testing
 class Celsius {
@@ -20,28 +20,28 @@ class Kelvin {
 describe('Type Conversion', () => {
   beforeAll(() => {
     // Implement From<Celsius> for Fahrenheit
-    implFrom(Fahrenheit, Celsius, {
+    From(Celsius).implInto(Fahrenheit, {
       from(celsius: Celsius): Fahrenheit {
         return new Fahrenheit((celsius.value * 9) / 5 + 32);
       },
     });
 
     // Implement From<Fahrenheit> for Celsius
-    implFrom(Celsius, Fahrenheit, {
+    From(Fahrenheit).implInto(Celsius, {
       from(fahrenheit: Fahrenheit): Celsius {
         return new Celsius(((fahrenheit.value - 32) * 5) / 9);
       },
     });
 
     // Implement From<Celsius> for Kelvin
-    implFrom(Kelvin, Celsius, {
+    From(Celsius).implInto(Kelvin, {
       from(celsius: Celsius): Kelvin {
         return new Kelvin(celsius.value + 273.15);
       },
     });
 
     // Implement From<Fahrenheit> for Kelvin
-    implFrom(Kelvin, Fahrenheit, {
+    From(Fahrenheit).implInto(Kelvin, {
       from(fahrenheit: Fahrenheit): Kelvin {
         const celsius = new Celsius(((fahrenheit.value - 32) * 5) / 9);
         return new Kelvin(celsius.value + 273.15);
@@ -49,14 +49,14 @@ describe('Type Conversion', () => {
     });
 
     // Implement From<Celsius> for Temperature
-    implFrom(Temperature, Celsius, {
+    From(Celsius).implInto(Temperature, {
       from(celsius: Celsius): Temperature {
         return new Temperature(celsius.value);
       },
     });
 
     // Implement From<Fahrenheit> for Temperature
-    implFrom(Temperature, Fahrenheit, {
+    From(Fahrenheit).implInto(Temperature, {
       from(fahrenheit: Fahrenheit): Temperature {
         const celsius = new Celsius(((fahrenheit.value - 32) * 5) / 9);
         return new Temperature(celsius.value);
@@ -64,7 +64,7 @@ describe('Type Conversion', () => {
     });
 
     // Implement From<Kelvin> for Temperature
-    implFrom(Temperature, Kelvin, {
+    From(Kelvin).implInto(Temperature, {
       from(kelvin: Kelvin): Temperature {
         return new Temperature(kelvin.value - 273.15);
       },
@@ -73,7 +73,7 @@ describe('Type Conversion', () => {
 
   test('should convert between types using into method', () => {
     const celsius = new Celsius(100);
-    const fahrenheit = celsius.into(Fahrenheit);
+    const fahrenheit = Into(Fahrenheit).wrap(celsius).into();
 
     expect(fahrenheit).toBeInstanceOf(Fahrenheit);
     expect(fahrenheit.value).toBe(212);
@@ -81,8 +81,8 @@ describe('Type Conversion', () => {
 
   test('should support bidirectional conversion', () => {
     const celsius = new Celsius(0);
-    const fahrenheit = celsius.into(Fahrenheit);
-    const backToCelsius = fahrenheit.into(Celsius);
+    const fahrenheit = Into(Fahrenheit).wrap(celsius).into();
+    const backToCelsius = Into(Celsius).wrap(fahrenheit).into();
 
     expect(fahrenheit.value).toBe(32);
     expect(backToCelsius.value).toBe(0);
@@ -94,19 +94,19 @@ describe('Type Conversion', () => {
     }
 
     const celsius = new Celsius(100);
-    expect(() => celsius.into(Kelvin)).toThrow();
+    expect(() => Into(Kelvin).wrap(celsius).into()).toThrow();
   });
 
   test('should work with primitive types', () => {
     // Implement From<number> for Celsius
-    implFrom(Celsius, Number, {
-      from(value: number): Celsius {
-        return new Celsius(value);
+    From(Number).implInto(Celsius, {
+      from(value): Celsius {
+        return new Celsius(value.valueOf());
       },
     });
 
     const temp = 100;
-    const celsius = temp.into(Celsius);
+    const celsius = Into(Celsius).wrap(temp).into();
 
     expect(celsius).toBeInstanceOf(Celsius);
     expect(celsius.value).toBe(100);
@@ -116,15 +116,15 @@ describe('Type Conversion', () => {
     const celsius = new Celsius(0);
 
     // Convert to Fahrenheit
-    const fahrenheit = celsius.into(Fahrenheit);
+    const fahrenheit = Into(Fahrenheit).wrap(celsius).into();
     expect(fahrenheit.value).toBe(32);
 
     // Convert to Kelvin
-    const kelvin = celsius.into(Kelvin);
+    const kelvin = Into(Kelvin).wrap(celsius).into();
     expect(kelvin.value).toBe(273.15);
 
     // Convert to Temperature
-    const temp = celsius.into(Temperature);
+    const temp = Into(Temperature).wrap(celsius).into();
     expect(temp.value).toBe(0);
   });
 
@@ -132,11 +132,11 @@ describe('Type Conversion', () => {
     const fahrenheit = new Fahrenheit(32);
 
     // Convert Fahrenheit -> Celsius -> Kelvin
-    const kelvin = fahrenheit.into(Kelvin);
+    const kelvin = Into(Kelvin).wrap(fahrenheit).into();
     expect(kelvin.value).toBeCloseTo(273.15);
 
     // Convert Kelvin -> Temperature
-    const temp = kelvin.into(Temperature);
+    const temp = Into(Temperature).wrap(kelvin).into();
     expect(temp.value).toBeCloseTo(0);
   });
 });
