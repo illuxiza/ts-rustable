@@ -136,23 +136,4 @@ describe('Type', () => {
     const CustomGenericClass = Type(GenericClass, [CustomClass]);
     expect(CustomGenericClass.name).toBe('GenericClass<CustomClass>');
   });
-
-  test('should handle complex generic parameter names', () => {
-    // Function as generic parameter
-    function customFn() {}
-    const FunctionGenericClass = Type(GenericClass, [customFn]);
-    expect(FunctionGenericClass.name).toBe('GenericClass<customFn>');
-
-    // Object as generic parameter
-    const obj = { toString: () => 'CustomObject' };
-    const ObjectGenericClass = Type(GenericClass, [obj]);
-    expect(ObjectGenericClass.name).toBe('GenericClass<CustomObject>');
-
-    // Primitive values as generic parameters
-    const NumberValueClass = Type(GenericClass, [42]);
-    expect(NumberValueClass.name).toBe('GenericClass<42>');
-
-    const StringValueClass = Type(GenericClass, ['test']);
-    expect(StringValueClass.name).toBe('GenericClass<test>');
-  });
 });

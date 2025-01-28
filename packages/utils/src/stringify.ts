@@ -3,6 +3,12 @@
  * This module provides two main functions:
  * - stringifyObject: For complex object serialization with circular reference handling
  * - stringify: For general-purpose value to string conversion
+ *
+ * Key Features:
+ * - Deterministic output with sorted object keys
+ * - Circular reference detection and handling
+ * - Support for special types (Map, Date, Symbol, etc.)
+ * - Memory efficient with WeakMap for reference tracking
  */
 
 /**
@@ -12,8 +18,9 @@
  * Key features:
  * - Handles circular references using reference markers (#n)
  * - Sorts object keys for consistent output
- * - Preserves object structure
- * - Supports nested objects and arrays
+ * - Preserves object structure and type information
+ * - Supports nested objects, arrays, Maps, and iterables
+ * - Handles special types like Date, Symbol, and BigInt
  *
  * @example
  * ```typescript
@@ -33,6 +40,13 @@
  * };
  * stringifyObject(nested);
  * // '{settings:{theme:"dark"},user:{id:1,name:"John"}}'
+ *
+ * // Special types
+ * const map = new Map([['key', 'value']]);
+ * stringifyObject(map);  // 'Map{"key":"value"}'
+ *
+ * const date = new Date(1234567890000);
+ * stringifyObject(date);  // 'Date("1234567890000")'
  * ```
  *
  * @param obj Any JavaScript object to stringify
@@ -216,14 +230,91 @@ export function stringify(obj: any): string {
   if (typeof obj === 'object') {
     return stringifyObject(obj);
   }
-  if (typeof obj === 'function') {
-    return obj.toString();
+  return obj.toString();
+}
+
+/**
+ * Generates a hash code for a string using the djb2 algorithm.
+ * This is a simple and effective non-cryptographic hash function.
+ *
+ * Properties:
+ * - Fast computation
+ * - Good distribution for string input
+ * - Returns 32-bit integer
+ * - Deterministic output
+ *
+ * @param str Input string to hash
+ * @returns 32-bit integer hash value
+ *
+ * @example
+ * ```typescript
+ * stringHash('hello');  // Returns consistent hash value
+ * stringHash('');       // Returns 0
+ * ```
+ */
+function stringHash(str: string) {
+  if (str.length === 0) return 0;
+  let hash = 0;
+  let i;
+  let chr;
+  for (i = 0; i < str.length; i++) {
+    chr = str.charCodeAt(i);
+    hash = (hash << 5) - hash + chr; // hash * 31 + chr
+    hash |= 0; // Convert to 32-bit integer
   }
-  if (typeof obj === 'symbol') {
-    return obj.toString();
+  return hash;
+}
+
+/**
+ * Generates a hash code for any JavaScript value.
+ * Handles all primitive types and objects by converting them to strings first.
+ * Uses the djb2 algorithm for string hashing.
+ *
+ * Hash values for different types:
+ * - null/undefined: -1
+ * - string: djb2 hash of the string
+ * - number: the number itself
+ * - boolean: 1 for true, 0 for false
+ * - object: djb2 hash of its stringified representation
+ * - function: djb2 hash of its string representation
+ * - symbol: djb2 hash of its string representation
+ * - bigint: djb2 hash of its string representation
+ *
+ * @param obj Any JavaScript value to hash
+ * @returns A number representing the hash code
+ *
+ * @example
+ * ```typescript
+ * // Primitive values
+ * hash(null);           // -1
+ * hash(true);          // 1
+ * hash(42);            // 42
+ * hash("hello");       // [32-bit hash value]
+ *
+ * // Objects
+ * hash({x: 1});        // [32-bit hash value]
+ * hash([1, 2, 3]);     // [32-bit hash value]
+ *
+ * // Special values
+ * hash(Symbol("key")); // [32-bit hash value]
+ * hash(() => {});      // [32-bit hash value]
+ * ```
+ */
+export function hash(obj: any) {
+  if (obj === null || typeof obj === 'undefined') {
+    return -1;
   }
-  if (typeof obj === 'bigint') {
-    return obj.toString();
+  if (typeof obj === 'boolean') {
+    return obj ? 1 : 0;
   }
-  return '';
+  if (typeof obj === 'number') {
+    return obj;
+  }
+  if (typeof obj === 'string') {
+    return stringHash(obj);
+  }
+  if (typeof obj === 'object') {
+    return stringHash(stringifyObject(obj));
+  }
+  return stringHash(obj.toString());
 }

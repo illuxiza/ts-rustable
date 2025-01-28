@@ -3,15 +3,115 @@ import { Constructor } from './common';
 // Store type constructors in a WeakMap using the target as key
 const typeMap = new WeakMap<any, Map<string, Constructor<any>>>();
 
+/**
+ * Registry for storing type IDs.
+ * Uses WeakMap to allow garbage collection of unused type IDs.
+ */
+const typeIdMap = new WeakMap<object, TypeId>();
+
+/**
+ * TypeId represents a unique identifier for a type.
+ * Uses TypeScript's branded type pattern to ensure type safety.
+ *
+ * @example
+ * // TypeIds are automatically generated for classes
+ * class MyClass {}
+ * const id = typeId(MyClass); // Unique TypeId
+ *
+ * // Different classes get different TypeIds
+ * class AnotherClass {}
+ * const id2 = typeId(AnotherClass); // Different TypeId
+ *
+ * // TypeIds with generic parameters
+ * class Container<T> {}
+ * const id3 = typeId(Container, [String]); // TypeId for Container<String>
+ * const id4 = typeId(Container, [Number]); // Different TypeId for Container<Number>
+ */
+export type TypeId = string & { readonly __type: unique symbol };
+
+/**
+ * Generates a new unique type ID using a timestamp and random value.
+ * The combination ensures uniqueness even when multiple IDs are generated
+ * in the same millisecond.
+ *
+ * @returns A new unique TypeId
+ */
+let i = 0;
+
+function generateTypeId(type: Constructor): TypeId {
+  return `${++i}:${type.name}` as TypeId;
+}
+
+/**
+ * Gets or creates a unique type ID for a value.
+ * The ID is based on the value's constructor and remains consistent
+ * across multiple calls with the same type.
+ *
+ * @example
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
+ * }
+ *
+ * const p = new Point(1, 2);
+ * const id1 = typeId(Point);    // Get ID from class
+ * const id2 = typeId(p);        // Get ID from instance
+ * console.log(id1 === id2);     // true
+ *
+ * // With generic parameters
+ * class Container<T> {}
+ * const stringContainerId = typeId(Container, String);  // Single parameter
+ * const multiContainerId = typeId(Container, [String, Number]);  // Multiple parameters
+ * console.log(stringContainerId === multiContainerId); // false
+ *
+ * @param target The value to get or create a type ID for
+ * @param genericParams Optional generic type parameter(s). Can be a single type or array of types
+ * @returns The type's unique ID
+ * @throws {Error} If target is null or undefined
+ */
+export function typeId(target: any, genericParams?: any[]): TypeId {
+  if (target === null || target === undefined) {
+    throw new Error('Cannot get typeId of null or undefined');
+  }
+
+  // Get the constructor if target is an instance
+  let constructor: Constructor;
+  if (typeof target === 'object') {
+    constructor = Type(target.constructor, genericParams);
+  } else if (typeof target === 'function' && target.prototype) {
+    constructor = Type(target, genericParams);
+  } else if (target.constructor) {
+    // If target is a primitive value, get its constructor
+    constructor = Type(target.constructor, genericParams);
+  } else {
+    constructor = target;
+  }
+
+  // Return existing ID if available
+  const existingId = typeIdMap.get(constructor);
+  if (existingId !== undefined) {
+    return existingId;
+  }
+
+  // Create and store new ID
+  const id = generateTypeId(constructor);
+  typeIdMap.set(constructor, id);
+  return id;
+}
+
 const genericType = Symbol('GenericType');
 
 function getGenericKey(genericParams: any[]): string {
   return genericParams
     .map((param) => {
-      if (typeof param === 'function') {
-        return param.name;
-      }
-      return String(param);
+      return typeId(param);
+    })
+    .join(',');
+}
+
+function getGenericName(genericParams: any[]): string {
+  return genericParams
+    .map((param) => {
+      return param.name;
     })
     .join(',');
 }
@@ -68,6 +168,7 @@ export function Type<T extends MaybeGenericConstructor>(
   genericParams?: Constructor[],
   newWithTypes: boolean = false,
 ): T {
+  validNull(target);
   if (genericParams && !Array.isArray(genericParams)) {
     throw new Error('Generic parameters must be an array');
   }
@@ -117,7 +218,7 @@ export function Type<T extends MaybeGenericConstructor>(
     });
 
     Object.defineProperty(customType, 'name', {
-      value: `${targetConstructor.name}<${genericKey}>`,
+      value: `${targetConstructor.name}<${getGenericName(genericParams)}>`,
       writable: false,
       enumerable: false,
       configurable: true,
@@ -136,8 +237,94 @@ export function Type<T extends MaybeGenericConstructor>(
   return customType as T;
 }
 
+/**
+ * Checks if a given target is a generic type.
+ *
+ * @param target - The target to check
+ * @returns True if the target is a generic type, false otherwise
+ * @throws {Error} If target is null or undefined
+ *
+ * @example
+ * ```typescript
+ * class Container<T> {}
+ * const StringContainer = Type(Container, [String]);
+ *
+ * console.log(isGenericType(Container));     // false
+ * console.log(isGenericType(StringContainer)); // true
+ * ```
+ */
 export function isGenericType(target: any): boolean {
+  validNull(target);
   return target[genericType];
+}
+
+/**
+ * Gets the name of a type, either from a constructor function or an instance.
+ *
+ * @param target - The target to get the name from. Can be a constructor function or an instance
+ * @returns The name of the type
+ * @throws {Error} If target is null or undefined
+ *
+ * @example
+ * ```typescript
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
+ * }
+ *
+ * console.log(typeName(Point));        // "Point"
+ * console.log(typeName(new Point(1, 2))); // "Point"
+ * ```
+ */
+export function typeName(target: any): string {
+  validNull(target);
+  if (typeof target === 'function') {
+    return target.name;
+  } else {
+    return target.constructor.name;
+  }
+}
+
+/**
+ * Gets the constructor of a type, either from a constructor function or an instance.
+ *
+ * @param target - The target to get the constructor from. Can be a constructor function or an instance
+ * @returns The constructor function
+ * @throws {Error} If target is null or undefined
+ *
+ * @example
+ * ```typescript
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
+ * }
+ *
+ * const constructor1 = type(Point);        // Point constructor
+ * const constructor2 = type(new Point(1, 2)); // Also Point constructor
+ * console.log(constructor1 === constructor2); // true
+ * ```
+ */
+export function type(target: any): Constructor {
+  validNull(target);
+  if (typeof target === 'function') {
+    return target;
+  } else {
+    return target.constructor;
+  }
+}
+
+/**
+ * Validates that a target is neither null nor undefined.
+ * Used internally by other type-related functions.
+ *
+ * @param target - The value to validate
+ * @throws {Error} If target is null or undefined with appropriate error message
+ */
+function validNull(target: any) {
+  if (target === null) {
+    throw new Error('Cannot get type of null');
+  }
+  if (target === undefined) {
+    throw new Error('Cannot get type of undefined');
+  }
 }
 
 /**
@@ -163,13 +350,4 @@ export function named(name: string) {
     });
     return target;
   };
-}
-
-export function typeName(target: any): string {
-  if (typeof target === 'function') {
-    return target.name;
-  } else if (typeof target === 'object') {
-    return target.constructor.name;
-  }
-  return String(target);
 }

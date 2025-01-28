@@ -34,34 +34,25 @@ const factoryCache = new WeakMap<any, WeakMap<any, any>>();
 
 export function createFactory<
   T extends new (...args: any[]) => any,
-  P extends readonly any[] = ConstructorParameters<T>,
+  P extends any[] = ConstructorParameters<T>,
   R = InstanceType<T>,
 >(BaseClass: T, factoryFn?: (...args: P) => R): T & ((...args: P) => R) {
-  if (!factoryCache.has(BaseClass)) {
-    factoryCache.set(BaseClass, new WeakMap());
-  }
-  const cache = factoryCache.get(BaseClass)!;
+  const cache = factoryCache.get(BaseClass) || new WeakMap();
+  factoryCache.set(BaseClass, cache);
   if (cache.has(factoryFn)) {
-    return cache.get(factoryFn) as T & ((...args: P) => R);
+    return cache.get(factoryFn);
   }
-  function Factory(this: any, ...args: P) {
-    if (!(this instanceof Factory)) {
-      return factoryFn ? factoryFn(...args) : new BaseClass(...args);
-    }
-    // Use Reflect.construct to properly handle inheritance
-    return Reflect.construct(BaseClass, args, this.constructor);
-  }
-
-  // Copy prototype
-  Factory.prototype = BaseClass.prototype;
-
-  // Copy all static properties and methods
-  const staticProps = Object.getOwnPropertyDescriptors(BaseClass);
-  Object.defineProperties(Factory, staticProps);
-
+  const Factory = new Proxy(BaseClass, {
+    construct(target, args, newTarget) {
+      return Reflect.construct(target, args, newTarget);
+    },
+    apply(target, thisArg, args) {
+      return factoryFn
+        ? factoryFn.bind(thisArg)(...(args as P))
+        : Reflect.construct(target, args, target);
+    },
+  }) as T & ((...args: P) => R);
   // Set proper prototype chain for static inheritance
-  Object.setPrototypeOf(Factory, BaseClass);
   cache.set(factoryFn ?? BaseClass, Factory);
-
-  return Factory as T & ((...args: P) => R);
+  return Factory;
 }

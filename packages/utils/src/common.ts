@@ -3,7 +3,7 @@
  */
 export interface Constructor<T = any> {
   new (...args: any[]): T;
-  prototype?: any;
+  prototype?: T;
 }
 
 /**

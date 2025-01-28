@@ -11,8 +11,8 @@ export interface PtrAccessors<T> {
 export function Ptr<T>(accessors: PtrAccessors<T>): Ptr<T> {
   const { get, set } = accessors;
 
-  const handler = {
-    get(_: any, prop: string | symbol) {
+  return new Proxy({} as Ptr<T>, {
+    get(_, prop) {
       const current = get();
       if (prop === Ptr.ptr) {
         return current;
@@ -22,7 +22,7 @@ export function Ptr<T>(accessors: PtrAccessors<T>): Ptr<T> {
         ? (target[prop] as Function).bind(target)
         : target[prop];
     },
-    set(_: any, prop: string | symbol, value: any) {
+    set(_, prop, value) {
       const current = get();
       if (prop === Ptr.ptr) {
         set(value);
@@ -31,8 +31,7 @@ export function Ptr<T>(accessors: PtrAccessors<T>): Ptr<T> {
       (current as any)[prop] = value;
       return true;
     },
-  };
-  return new Proxy({} as Ptr<T>, handler);
+  });
 }
 
 export namespace Ptr {

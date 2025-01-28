@@ -46,6 +46,7 @@ export default [
       // General rules
       'no-redeclare': 'off',
       'no-unused-vars': 'off',
+      'no-dupe-class-members': 'off',
       'no-console': 'error',
       eqeqeq: ['error', 'always'],
       'no-unused-expressions': 'error',

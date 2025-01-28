@@ -3,10 +3,8 @@ export { Constructor, NOT_IMPLEMENTED } from './common';
 export { MarcoFn, applyMacros, derive } from './derive';
 export { equals } from './eq';
 export { createFactory } from './factory';
-export { hash } from './hash';
+export { Location } from './location';
 export { Ptr } from './ptr';
-export { stringify } from './stringify';
-export { MaybeGenericConstructor, Type, isGenericType, named, typeName } from './type';
-export { TypeId, typeId } from './type_id';
+export { hash, stringify } from './stringify';
+export { Type, TypeId, isGenericType, named, type, typeId, typeName } from './type';
 export { Val } from './val';
-
