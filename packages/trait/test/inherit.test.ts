@@ -1,4 +1,4 @@
-import { hasTrait, implTrait, trait } from '../src/trait';
+import { Trait } from '../src/trait';
 
 describe('Trait Inheritance', () => {
   // Base container class
@@ -23,21 +23,19 @@ describe('Trait Inheritance', () => {
   }
 
   // Trait implementations
-  @trait
-  class Display implements Displayable {
+
+  class Display extends Trait implements Displayable {
     display(): string {
       return 'base display';
     }
   }
 
-  @trait
   class FormattedDisplay extends Display implements FormattedDisplayable {
     formatDisplay(style: string): string {
       return `${style}: ${this.display()}`;
     }
   }
 
-  @trait
   class RichDisplay extends FormattedDisplay implements RichDisplayable {
     displayWithMetadata(metadata: Record<string, unknown>): string {
       return `${this.formatDisplay('rich')} [${JSON.stringify(metadata)}]`;
@@ -56,24 +54,24 @@ describe('Trait Inheritance', () => {
     class RichItem extends Container {}
 
     // Basic trait implementation
-    implTrait(BasicItem, Display);
+    Display.implFor(BasicItem);
 
     // Extended trait implementation
-    implTrait(FormattedItem, Display, {
+    Display.implFor(FormattedItem, {
       display(this: FormattedItem) {
         return `Value: ${this.getValue()}`;
       },
     });
-    implTrait(FormattedItem, FormattedDisplay);
+    FormattedDisplay.implFor(FormattedItem);
 
     // Rich trait implementation
-    implTrait(RichItem, Display, {
+    Display.implFor(RichItem, {
       display(this: RichItem) {
         return `Value: ${this.getValue()}`;
       },
     });
-    implTrait(RichItem, FormattedDisplay);
-    implTrait(RichItem, RichDisplay);
+    FormattedDisplay.implFor(RichItem);
+    RichDisplay.implFor(RichItem);
 
     it('should handle trait inheritance chain correctly', () => {
       const basicItem = new BasicItem('basic');
@@ -81,17 +79,17 @@ describe('Trait Inheritance', () => {
       const richItem = new RichItem({ type: 'rich' });
 
       // Test trait presence
-      expect(hasTrait(basicItem, Display)).toBe(true);
-      expect(hasTrait(basicItem, FormattedDisplay)).toBe(false);
-      expect(hasTrait(basicItem, RichDisplay)).toBe(false);
+      expect(Display.isImplFor(basicItem)).toBe(true);
+      expect(FormattedDisplay.isImplFor(basicItem)).toBe(false);
+      expect(RichDisplay.isImplFor(basicItem)).toBe(false);
 
-      expect(hasTrait(formattedItem, Display)).toBe(true);
-      expect(hasTrait(formattedItem, FormattedDisplay)).toBe(true);
-      expect(hasTrait(formattedItem, RichDisplay)).toBe(false);
+      expect(Display.isImplFor(formattedItem)).toBe(true);
+      expect(FormattedDisplay.isImplFor(formattedItem)).toBe(true);
+      expect(RichDisplay.isImplFor(formattedItem)).toBe(false);
 
-      expect(hasTrait(richItem, Display)).toBe(true);
-      expect(hasTrait(richItem, FormattedDisplay)).toBe(true);
-      expect(hasTrait(richItem, RichDisplay)).toBe(true);
+      expect(Display.isImplFor(richItem)).toBe(true);
+      expect(FormattedDisplay.isImplFor(richItem)).toBe(true);
+      expect(RichDisplay.isImplFor(richItem)).toBe(true);
 
       // Test functionality
       expect(basicItem.display()).toBe('base display');
@@ -108,7 +106,6 @@ describe('Trait Inheritance', () => {
   });
 
   describe('Method Override', () => {
-    @trait
     class CustomDisplay extends Display implements FormattedDisplayable {
       formatDisplay(style: string): string {
         return `${style} -> ${this.display()}`;
@@ -118,12 +115,12 @@ describe('Trait Inheritance', () => {
     interface CustomItem extends FormattedDisplayable {}
     class CustomItem extends Container {}
 
-    implTrait(CustomItem, Display, {
+    Display.implFor(CustomItem, {
       display(this: CustomItem) {
         return `custom: ${this.getValue()}`;
       },
     });
-    implTrait(CustomItem, CustomDisplay);
+    CustomDisplay.implFor(CustomItem);
 
     it('should preserve method overrides in inheritance chain', () => {
       const item = new CustomItem('test');

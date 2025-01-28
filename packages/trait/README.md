@@ -1,19 +1,6 @@
 # @rustable/trait
 
-A powerful TypeScript implementation of Rust-like traits, providing a flexible and type-safe way to define and implement interfaces with shared behavior. This package brings Rust's trait system to TypeScript, enabling better code organization, reusability, and type safety.
-
-## ✨ Features
-
-- 🦀 **Rust-like Trait System**: Familiar syntax and behavior for Rust developers
-- 🔒 **Type Safety**: Full compile-time type checking and runtime verification
-- 💪 **Generic Traits**: Support for generic type parameters and constraints
-- 🎯 **Multiple Implementations**: Implement multiple traits for a single type
-- 🔄 **Runtime Checking**: Dynamic trait verification with `hasTrait` and `useTrait`
-- 🎨 **Default Implementations**: Provide default behavior in trait definitions
-- 🏷️ **Decorator API**: Easy-to-use decorators for trait implementation
-- 🔧 **Static Methods**: Support for both instance and static trait methods
-- 📦 **Memory Efficient**: Uses WeakMap for automatic garbage collection
-- 🚀 **Performance Optimized**: Smart caching of trait inheritance chains
+A TypeScript library that implements Rust-like traits with compile-time type checking and runtime verification.
 
 ## 📦 Installation
 
@@ -25,59 +12,54 @@ yarn add @rustable/trait
 pnpm add @rustable/trait
 ```
 
-## 🚀 Quick Start
+## ✨ Features
 
-### Defining a Trait
+- 🔒 Type-safe trait definitions and implementations
+- 🎯 Support for generic traits
+- 🔄 Instance and static method implementations
+- 🔗 Trait-to-trait implementations
+- 💾 Memory-efficient using WeakMap for garbage collection
+- ⚡ Performance optimized with parent trait caching
+
+## 📖 Usage
+
+### 🎨 Defining a Trait
 
 ```typescript
-import { trait, macroTrait } from '@rustable/trait';
+import { Trait, macroTrait } from '@rustable/trait';
 
-// Define a trait with generic type parameter
-@trait
-class DisplayTrait<T> {
-  // Default implementation
-  display(value: T): string {
-    return String(value);
-  }
-  
-  // Method without default implementation
-  format(): string {
-    throw new Error('Not implemented');
+// Define a trait
+class DisplayTrait extends Trait {
+  display(): string {
+    return 'default';
   }
 }
 
-// Create the trait macro for use with decorators
-export const Display = macroTrait(DisplayTrait);
+// Create a trait decorator
+const Display = macroTrait(DisplayTrait);
 ```
 
-### Implementing a Trait
+### 🔧 Implementing a Trait
 
-There are two ways to implement traits:
+There are several ways to implement a trait:
 
-#### 1. Using Decorators (Recommended)
+1. Using the `@derive` decorator with default implementation:
 
 ```typescript
-import { derive } from '@rustable/utils';
-
 @derive([Display])
 class Point {
   constructor(
     public x: number,
     public y: number,
   ) {}
-  
-  // Override default display implementation
-  display(): string {
-    return `Point(${this.x}, ${this.y})`;
-  }
 }
+
+// The display method will use the default implementation from DisplayTrait
 ```
 
-#### 2. Using implTrait Function
+2. Using `implFor` method with custom implementation:
 
 ```typescript
-import { implTrait } from '@rustable/trait';
-
 class Point {
   constructor(
     public x: number,
@@ -85,188 +67,175 @@ class Point {
   ) {}
 }
 
-// Implement trait with instance and static methods
-implTrait(Point, Display, {
+DisplayTrait.implFor(Point, {
   display() {
-    return `Point(${this.x}, ${this.y})`;
-  },
-  format() {
     return `(${this.x}, ${this.y})`;
   },
-  static: {
-    isValid(s: string): boolean {
-      return /^\d+,\d+$/.test(s);
-    }
-  }
 });
 ```
 
-### Using Traits
+### 🚀 Using Traits
+
+Once a trait is implemented, you can use it in several ways:
 
 ```typescript
-import { useTrait, hasTrait } from '@rustable/trait';
-
 const point = new Point(1, 2);
 
-// Check if type implements trait
-if (hasTrait(point, Display)) {
-  // Get trait implementation
-  const display = useTrait(point, Display);
-  console.log(display.display()); // Output: "Point(1, 2)"
-  console.log(display.format()); // Output: "(1, 2)"
-}
+// Method 1: Using wrap
+const display = DisplayTrait.wrap(point);
+console.log(display.display()); // "(1, 2)"
 
-// Using static methods
-if (hasTrait(Point, Display)) {
-  const displayStatic = useTrait(Point, Display);
-  console.log(displayStatic.isValid("1,2")); // Output: true
+// Method 2: Checking implementation
+if (DisplayTrait.isImplFor(point)) {
+  const display = DisplayTrait.wrap(point);
+  console.log(display.display());
 }
 ```
 
-## 🔥 Advanced Features
+### ⚙️ Static Trait Methods
 
-### Generic Traits with Constraints
-
-```typescript
-@trait
-class FromStr<T> {
-  fromStr(s: string): T {
-    throw new Error('Not implemented');
-  }
-  
-  static isValid(s: string): boolean {
-    return true;
-  }
-}
-
-// Implement for specific type
-implTrait(Number, FromStr, {
-  fromStr(s: string): number {
-    return parseFloat(s);
-  },
-  static: {
-    isValid(s: string): boolean {
-      return !isNaN(parseFloat(s));
-    }
-  }
-});
-```
-
-### Trait Inheritance
+Traits can also include static methods:
 
 ```typescript
-@trait
-class ToString {
-  toString(): string {
+class FromStrTrait extends Trait {
+  static fromStr(s: string): any {
     throw new Error('Not implemented');
   }
 }
 
-@trait
-class Display extends ToString {
-  display(): string {
-    return this.toString();
-  }
-}
-```
+const FromStr = macroTrait(FromStrTrait);
 
-### Multiple Trait Implementations
-
-```typescript
-@derive([Display, FromStr, ToString])
 class Point {
   constructor(
     public x: number,
     public y: number,
   ) {}
-  
-  toString() {
-    return `${this.x},${this.y}`;
-  }
-  
-  static fromStr(s: string): Point {
-    const [x, y] = s.split(',').map(Number);
-    return new Point(x, y);
-  }
-}
-```
-
-### Trait-to-Trait Implementations
-
-Traits can implement other traits. When a trait implements another trait, any class implementing the first trait automatically gets the second trait's implementation.
-
-```typescript
-import { trait, implTrait, useTrait } from '@rustable/trait';
-
-@trait
-class Display {
-  display(): string {
-    return 'Display';
-  }
 }
 
-@trait
-class Debug {
-  debug(): string {
-    return 'Debug';
-  }
-}
+// Implement static methods using implFor
+FromStr.implFor(Point, {
+  static: {
+    fromStr(s: string): Point {
+      const [x, y] = s.split(',').map(Number);
+      return new Point(x, y);
+    },
+  },
+});
 
-// Implement Display for Debug trait
-implTrait(Debug, Display);
-
-// Create a class and implement Debug
-class MyClass {}
-implTrait(MyClass, Debug);
-
-// MyClass automatically gets both Debug and Display traits
-const instance = new MyClass();
-console.log(useTrait(instance, Debug).debug());     // Output: "Debug"
-console.log(useTrait(instance, Display).display()); // Output: "Display"
-```
-
-### Type-Safe Trait Wrappers
-
-The `TraitWrapper` class provides type-safe methods for working with traits. By extending `TraitWrapper`, your trait classes get convenient static methods for type checking and conversion.
-
-```typescript
-import { trait } from '@rustable/trait';
-
-@trait
-class Display extends TraitWrapper {
-  display(): string {
-    return 'Display';
-  }
-}
-
-// Type-safe trait checking
-if (Display.hasTrait(someValue)) {
-  // TypeScript knows someValue implements Display
-  const display = Display.wrap(someValue);
-  console.log(display.display());
-}
-
-// Throws if someValue doesn't implement Display
-Display.validType(someValue);
-
-// Type-safe wrapper with validation
-const display = Display.wrap(someValue);
-console.log(display.display());
+// Use static trait methods
+const point = FromStrTrait.staticWrap(Point).fromStr('1,2');
 ```
 
 ## 📚 API Reference
 
-### Core Decorators
+### 🛠️ Core Functions
 
-- `@trait`: Marks a class as a trait
-- `@derive`: Implements traits for a class
+#### macroTrait
 
-### Functions
+Creates a trait decorator for implementing traits at compile time.
 
-- `implTrait(target, trait, implementation)`: Manually implement a trait
-- `hasTrait(target, trait)`: Check if a value implements a trait
-- `useTrait(target, trait)`: Get trait implementation
-- `macroTrait(traitClass)`: Create a trait decorator
+```typescript
+const Display = macroTrait(DisplayTrait);
+const FromStr = macroTrait(FromStrTrait);
+
+@derive([Display, FromStr])
+class Point {
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
+}
+
+// Implement custom behavior using implFor
+DisplayTrait.implFor(Point, {
+  display() {
+    return `(${this.x}, ${this.y})`;
+  },
+});
+
+FromStrTrait.implFor(Point, {
+  static: {
+    fromStr(s: string): Point {
+      const [x, y] = s.split(',').map(Number);
+      return new Point(x, y);
+    },
+  },
+});
+```
+
+### 🔍 Trait Class Methods
+
+The `Trait` class provides several static methods for trait operations:
+
+#### isImplFor
+
+Checks if a value implements the trait.
+
+```typescript
+if (DisplayTrait.isImplFor(point)) {
+  // point implements DisplayTrait
+  const display = DisplayTrait.wrap(point);
+  console.log(display.display());
+}
+```
+
+#### validFor
+
+Validates that a value implements the trait. Throws if validation fails.
+
+```typescript
+// Throws if point doesn't implement DisplayTrait
+DisplayTrait.validFor(point);
+```
+
+#### wrap
+
+Wraps a value as a trait instance. Supports both instance and constructor wrapping.
+
+```typescript
+// Wrap instance
+const point = new Point(1, 2);
+const display = DisplayTrait.wrap(point);
+console.log(display.display());
+
+// Wrap constructor
+const PointDisplay = DisplayTrait.wrap(Point);
+const newPoint = new PointDisplay(3, 4);
+```
+
+#### staticWrap
+
+Wraps a class to access static trait methods.
+
+```typescript
+// Wrap Point's static methods
+const PointFromStr = FromStrTrait.staticWrap(Point);
+const point = PointFromStr.fromStr('1,2');
+```
+
+#### implFor
+
+Implements a trait for a target class.
+
+```typescript
+DisplayTrait.implFor(Point, {
+  display() {
+    return `(${this.x}, ${this.y})`;
+  },
+});
+```
+
+#### tryImplFor
+
+Similar to `implFor`, but doesn't throw if the trait is already implemented.
+
+```typescript
+DisplayTrait.tryImplFor(Point, {
+  display() {
+    return `(${this.x}, ${this.y})`;
+  },
+});
+```
 
 ## 🤝 Contributing
 

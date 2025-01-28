@@ -1,7 +1,7 @@
 /**
  * Core trait system implementation for TypeScript
  * Provides Rust-like trait functionality with compile-time type checking and runtime verification.
- * 
+ *
  * Key features:
  * - Type-safe trait definitions and implementations
  * - Support for generic traits
@@ -9,22 +9,28 @@
  * - Trait-to-trait implementations
  * - Memory-efficient using WeakMap for garbage collection
  * - Performance optimized with parent trait caching
- * 
+ *
  * @module @rustable/trait
  */
-import { Constructor, createFactory, isGenericType, Type } from '@rustable/utils';
+import { Constructor, createFactory, isGenericType, type, Type, typeName } from '@rustable/utils';
+import {
+  MethodNotImplementedError,
+  MultipleImplementationError,
+  TraitError,
+  TraitNotImplementedError,
+} from './error';
 
 /**
  * Registry for storing trait implementations.
  * Uses WeakMap to allow garbage collection of unused implementations.
  */
-const traitRegistry = new WeakMap<Constructor, WeakMap<Constructor, any>>();
+const traitRegistry = new WeakMap<Constructor, WeakMap<Constructor, Map<string, any>>>();
 
 /**
  * Registry for storing static trait implementations.
  * Uses WeakMap to allow garbage collection of unused implementations.
  */
-const staticTraitRegistry = new WeakMap<Constructor, WeakMap<TraitConstructor, any>>();
+const staticTraitRegistry = new WeakMap<Constructor, WeakMap<Constructor, Map<string, any>>>();
 
 /**
  * Registry for storing trait-to-trait implementations.
@@ -64,17 +70,16 @@ const traitSymbol = Symbol('TRAIT');
  * @template T The trait being implemented
  */
 export type TraitInstanceMethods<C extends Constructor, T extends TraitConstructor> = {
-  [K in keyof InstanceType<T>]?: (
-    this: InstanceType<C>,
-    ...args: any[]
-  ) => InstanceType<T>[K] extends (...args: any[]) => infer R ? R : never;
+  [K in keyof InstanceType<T>]?: InstanceType<T>[K] extends (...args: infer P) => infer R
+    ? (this: InstanceType<C>, ...args: P) => R
+    : never;
 };
 
 export type TraitStaticMethods<C extends Constructor, T extends TraitConstructor> = {
-  [K in keyof T]?: (
-    this: C,
-    ...args: any[]
-  ) => T[K] extends (...args: any[]) => infer R ? R : never;
+  [K in keyof Omit<
+    T,
+    'isImplFor' | 'validFor' | 'wrap' | 'staticWrap' | 'implFor' | 'tryImplFor'
+  >]?: T[K] extends (...args: infer P) => infer R ? (this: C, ...args: P) => R : never;
 };
 
 export type TraitImplementation<
@@ -93,81 +98,235 @@ interface TraitConstructor<T = any> extends Constructor<T> {
 }
 
 /**
- * Internal function to collect all parent commons with caching
+ * ITrait provides a type-safe wrapper for trait operations.
+ * It offers a convenient API for trait checking, validation, and type conversion.
  *
- * @param trait The trait to collect parents for
- * @returns Array of parent trait constructors
- */
-function collectParentTraits(trait: TraitConstructor): TraitConstructor[] {
-  const traitConstructor = trait.prototype.constructor;
-  const cached = parentTraitsCache.get(traitConstructor);
-  if (cached) {
-    return cached;
-  }
-
-  const parents: TraitConstructor[] = [];
-  let proto = Object.getPrototypeOf(trait.prototype);
-  while (proto && proto !== Object.prototype) {
-    const parentTrait = proto.constructor;
-    if (parentTrait && parentTrait !== Object && parentTrait[traitSymbol]) {
-      parents.push(parentTrait);
-    }
-    proto = Object.getPrototypeOf(proto);
-  }
-
-  if (isGenericType(trait)) {
-    parents.shift();
-  }
-
-  parentTraitsCache.set(traitConstructor, parents);
-  return parents;
-}
-
-/**
- * Decorator for defining traits.
- * Marks a class as a trait and sets up its metadata for type-safe implementations.
- * 
- * Features:
- * - Supports generic type parameters
- * - Allows default method implementations
- * - Enables compile-time type checking
- * - Supports trait inheritance
- *
- * @param traitClass - The class to be marked as a trait
- * @returns The decorated trait class
+ * Key features:
+ * - Type-safe trait checking and conversion
+ * - Support for both instance and static methods
+ * - Automatic handling of multiple implementations
+ * - Convenient trait implementation API
  *
  * @example
  * ```typescript
  * @trait
- * class Display<T> {
- *   // Default implementation
- *   display(value: T): string {
- *     return String(value);
- *   }
- *   
- *   // Method without default implementation
- *   format(): string {
- *     throw new Error('Not implemented');
+ * class Display extends ITrait {
+ *   display(): string {
+ *     return 'default';
  *   }
  * }
- * 
- * // Generic trait with constraints
- * @trait
- * class FromStr<T> {
- *   fromStr(s: string): T {
- *     throw new Error('Not implemented');
- *   }
+ *
+ * class Point {
+ *   constructor(public x: number, public y: number) {}
  * }
+ *
+ * // Implement trait
+ * Display.implFor(Point, {
+ *   display() {
+ *     return `(${this.x}, ${this.y})`;
+ *   }
+ * });
+ *
+ * // Use trait
+ * const point = new Point(1, 2);
+ * const display = Display.wrap(point);
+ * console.log(display.display()); // "(1, 2)"
  * ```
  */
-export function trait<T extends object, TC extends Constructor<T>>(traitClass: TC): TC {
-  Object.defineProperty(traitClass, traitSymbol, {
-    value: true,
-    enumerable: false,
-    configurable: false,
-    writable: false,
-  });
-  return traitClass;
+export class Trait {
+  static [traitSymbol] = true;
+  /**
+   * Checks if a value implements the trait.
+   * This is a type-safe alternative to the hasTrait function.
+   *
+   * @param this The trait constructor
+   * @param val The value to check
+   * @returns true if the value implements the trait
+   *
+   * @example
+   * ```typescript
+   * @trait
+   * class Display extends ITrait {
+   *   display(): string {
+   *     return 'default';
+   *   }
+   * }
+   *
+   * const point = new Point(1, 2);
+   * if (Display.isImplFor(point)) {
+   *   // point implements Display trait
+   *   const display = Display.wrap(point);
+   *   console.log(display.display());
+   * }
+   * ```
+   */
+  static isImplFor<T extends object>(this: Constructor<T>, val: any): boolean {
+    return hasTrait(val, this);
+  }
+
+  /**
+   * Validates that a value implements the trait.
+   * Throws an error if the value does not implement the trait.
+   *
+   * @param this The trait constructor
+   * @param val The value to validate
+   * @throws {Error} if the value does not implement the trait
+   *
+   * @example
+   * ```typescript
+   * @trait
+   * class Display extends ITrait {
+   *   display(): string {
+   *     return 'default';
+   *   }
+   * }
+   *
+   * // Throws if point doesn't implement Display trait
+   * Display.validType(point);
+   * ```
+   */
+  static validFor<T extends object>(this: Constructor<T>, val: any): void {
+    validTrait(val, this);
+  }
+
+  /**
+   * Wraps a value as an instance of the trait type.
+   * Supports both instance and constructor wrapping, and automatically handles multiple implementations.
+   *
+   * @param this The trait constructor
+   * @param val The value or constructor to wrap
+   * @returns The wrapped trait instance or constructor
+   * @throws {Error} if the value does not implement the trait
+   * @throws {TraitMethodNotImplementedError} if accessing an unimplemented trait method
+   *
+   * @example
+   * ```typescript
+   * // Wrap instance
+   * const point = new Point(1, 2);
+   * const display = Display.wrap(point);
+   * console.log(display.display());
+   *
+   * // Wrap constructor
+   * const PointDisplay = Display.wrap(Point);
+   * const newPoint = new PointDisplay(3, 4);
+   * ```
+   */
+  static wrap<C extends Constructor, T extends Constructor>(this: T, val: C): T;
+  static wrap<C extends Constructor, T extends Constructor>(
+    this: T,
+    val: InstanceType<C>,
+  ): InstanceType<T>;
+  static wrap<C extends Constructor, T extends Constructor>(
+    this: T,
+    val: C | InstanceType<C>,
+  ): T | InstanceType<T> {
+    validTrait(val, this);
+    return useTrait(val, this);
+  }
+
+  /**
+   * Wraps a value as a static trait type.
+   * Specifically handles static method trait wrapping and automatically handles multiple implementations.
+   *
+   * @param this The trait constructor
+   * @param val The value or constructor to wrap
+   * @returns The wrapped static trait constructor
+   * @throws {Error} if the value does not implement the trait
+   * @throws {TraitMethodNotImplementedError} if accessing an unimplemented static trait method
+   *
+   * @example
+   * ```typescript
+   * @trait
+   * class FromStr extends ITrait {
+   *   static fromStr(s: string): any {
+   *     throw new Error('Not implemented');
+   *   }
+   * }
+   *
+   * // Wrap Point's static methods
+   * const PointFromStr = FromStr.staticWrap(Point);
+   * const point = PointFromStr.fromStr('1,2');
+   * ```
+   */
+  static staticWrap<C extends Constructor, T extends Constructor>(
+    this: T,
+    val: C | InstanceType<C>,
+  ): T {
+    validTrait(val, this);
+    return useTrait(type(val), this);
+  }
+
+  /**
+   * Implements the trait for a target class.
+   * Provides a convenient API for implementing traits with support for default implementations.
+   *
+   * @param this The trait constructor
+   * @param target The target class to implement the trait for
+   * @param implementation Optional implementation overrides
+   *
+   * @example
+   * ```typescript
+   * @trait
+   * class Display extends ITrait {
+   *   display(): string {
+   *     return 'default';
+   *   }
+   * }
+   *
+   * // Use custom implementation
+   * Display.implFor(Point, {
+   *   display() {
+   *     return `(${this.x}, ${this.y})`;
+   *   }
+   * });
+   *
+   * // Use default implementation
+   * Display.implFor(OtherClass);
+   * ```
+   */
+  static implFor<C extends Constructor, T extends TraitConstructor>(
+    this: T,
+    target: C,
+    implementation?: TraitImplementation<C, T>,
+  ): void {
+    implTrait(target, this, implementation);
+  }
+
+  /**
+   * Tries to implement the trait for a target class.
+   * Similar to implFor, but doesn't throw an error if the trait is already implemented.
+   *
+   * @param this The trait constructor
+   * @param target The target class to implement the trait for
+   * @param implementation Optional implementation overrides
+   *
+   * @example
+   * ```typescript
+   * @trait
+   * class Display extends ITrait {
+   *   display(): string {
+   *     return 'default';
+   *   }
+   * }
+   *
+   * // Use custom implementation
+   * Display.tryImplFor(Point, {
+   *   display() {
+   *     return `(${this.x}, ${this.y})`;
+   *   }
+   * });
+   *
+   * // Use default implementation
+   * Display.tryImplFor(Point);
+   * ```
+   */
+  static tryImplFor<C extends Constructor, T extends TraitConstructor>(
+    this: T,
+    target: C,
+    implementation?: TraitImplementation<C, T>,
+  ): void {
+    tryImplTrait(target, this, implementation);
+  }
 }
 
 /**
@@ -191,7 +350,7 @@ export function trait<T extends object, TC extends Constructor<T>>(traitClass: T
  *     return `Point(${this.x}, ${this.y})`;
  *   }
  * });
- * 
+ *
  * // Implementation with static methods
  * implTrait(Point, FromStr, {
  *   fromStr(s: string): Point {
@@ -206,44 +365,17 @@ export function trait<T extends object, TC extends Constructor<T>>(traitClass: T
  * });
  * ```
  */
-export function implTrait<C extends Constructor, T extends TraitConstructor>(
+function implTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
   trait: T,
   implementation?: TraitImplementation<C, T>,
 ): void {
-  if (implementation !== undefined && Array.isArray(implementation)) {
-    throw new Error('Trait implementation must be a record');
-  }
   trait = Type(trait);
   target = Type(target);
+
   if (!trait[traitSymbol]) {
-    throw new Error(trait.name + ' must be implemented using the trait function');
+    throw new TraitError(trait.name + ' must be implemented using the trait function');
   }
-
-  const targetProto = target.prototype;
-
-  // Add static trait methods to target class
-  const staticImpl = getStaticTraitBound(target, trait, implementation);
-
-  Object.keys(staticImpl).forEach((name) => {
-    if (!(name in target)) {
-      Object.defineProperty(target, name, {
-        value: function (this: Constructor<C>, ...args: any[]) {
-          if (typeof staticImpl[name] === 'function') {
-            return staticImpl[name].call(this, ...args);
-          }
-        },
-        enumerable: false,
-        configurable: true,
-        writable: true,
-      });
-    }
-  });
-
-  // Store static implementation
-  const staticImplMap = staticTraitRegistry.get(target) || new WeakMap();
-  staticImplMap.set(trait, staticImpl);
-  staticTraitRegistry.set(target, staticImplMap);
 
   // Check if target is a trait
   const isTraitTarget = traitSymbol in target;
@@ -266,30 +398,46 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
     return;
   }
 
-  const selfBoundImpl = getSelfBound(targetProto, target);
-
   // Get or create implementation map for target
-  const implMap = traitRegistry.get(targetProto) || new WeakMap();
-  traitRegistry.set(targetProto, implMap);
+  const implMap = traitRegistry.get(target) || new WeakMap();
+  traitRegistry.set(target, implMap);
 
-  if (implMap.has(trait)) {
-    throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
-  }
+  handleGenericType(
+    trait,
+    (trait) => {
+      if (implMap.has(trait)) {
+        throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
+      }
+    },
+    () => false,
+  );
 
   // Check parent commons
   const parents = collectParentTraits(trait);
   parents.forEach((parent) => {
     const parentId = Type(parent);
     if (!implMap.has(parentId)) {
-      throw new Error(`Parent trait ${parent.name} not implemented for ${target.name}`);
+      throw new TraitNotImplementedError(target.name, parent.name);
     }
   });
 
   // Create implementation that binds 'this' correctly
-  const boundImpl: Record<string, any> = getTraitBound(trait, implementation);
+  const boundImpl = createBound(trait.prototype, isGenericType(trait) ? 2 : 1, implementation);
 
   // Store the implementation
   implMap.set(trait, boundImpl);
+
+  // Add trait methods to target prototype
+  addMethod(target.prototype, boundImpl, getSelfBound(target));
+
+  // Add static trait methods to target class
+  const staticImpl = createBound(trait, isGenericType(trait) ? 2 : 1, implementation?.static);
+  // Store static implementation
+  const staticImplMap = staticTraitRegistry.get(target) || new WeakMap();
+  staticImplMap.set(trait, staticImpl);
+  staticTraitRegistry.set(target, staticImplMap);
+
+  addMethod(target, staticImpl, getSelfStaticBound(target));
 
   // Record that this class implements this trait
   let implementers = traitImplementersRegistry.get(trait);
@@ -299,155 +447,109 @@ export function implTrait<C extends Constructor, T extends TraitConstructor>(
   }
   implementers.push(target);
 
-  // Add trait methods to target prototype
-  Object.keys(boundImpl).forEach((name) => {
-    if (!(name in targetProto) || (Object.prototype as any)[name] === targetProto[name]) {
-      Object.defineProperty(targetProto, name, {
-        value: function (this: C, ...args: any[]) {
-          if (typeof boundImpl[name] === 'function') {
-            return boundImpl[name].call(this, ...args);
-          }
-        },
-        enumerable: false,
-        configurable: true,
-        writable: true,
-      });
-    } else if (!(name in selfBoundImpl)) {
-      Object.defineProperty(targetProto, name, {
-        value: function (this: C, ..._args: any[]) {
-          throw new Error(
-            `Multiple implementations of method ${name} for ${target.name}, please use useTrait`,
-          );
-        },
-        enumerable: false,
-        configurable: true,
-        writable: true,
-      });
-    }
-  });
-
   // Auto-implement traits that this trait implements
   if (isGenericType(trait)) {
-    const traitImplMap = traitToTraitRegistry.get(
-      Object.getPrototypeOf(trait).prototype.constructor,
-    );
-    if (traitImplMap) {
-      for (const [traitToTrait, implInfo] of traitImplMap) {
-        if (!hasTrait(target, traitToTrait)) {
-          implTrait(target, traitToTrait, implInfo.implementation);
-        }
-      }
-    }
+    traitToTrait(target, Object.getPrototypeOf(trait).prototype.constructor);
   }
-  const traitImplMap = traitToTraitRegistry.get(trait);
-  if (traitImplMap) {
-    for (const [traitToTrait, implInfo] of traitImplMap) {
-      if (!hasTrait(target, traitToTrait)) {
-        implTrait(target, traitToTrait, implInfo.implementation);
-      }
-    }
-  }
+  traitToTrait(target, trait);
 }
 
-function getStaticTraitBound<C extends Constructor, T extends TraitConstructor>(
+function addMethod<C extends object | Constructor>(
+  target: C,
+  boundImpl: Map<string, any>,
+  selfBoundImpl: Map<string, any>,
+) {
+  boundImpl.forEach((value, name) => {
+    if (!(name in target) || (Object.prototype as any)[name] === (target as any)[name]) {
+      Object.defineProperty(target, name, {
+        value: function (...args: any[]) {
+          return value.apply(this, args);
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    } else if (!selfBoundImpl.has(name)) {
+      Object.defineProperty(target, name, {
+        value: function () {
+          throw new MultipleImplementationError(typeName(target), name);
+        },
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+    }
+  });
+}
+
+function traitToTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
   trait: T,
-  implementation?: TraitImplementation<C, T>,
-) {
-  const boundImpl: Record<string, any> = {};
-  const targetConstructor = target.prototype.constructor;
-  const traitConstructor = trait.prototype.constructor;
-  // Add trait's static methods
-  const staticMethods = Object.getOwnPropertyNames(traitConstructor).filter(
-    (name) => name !== 'prototype' && typeof traitConstructor[name] === 'function',
-  );
-  staticMethods.forEach((name) => {
-    if (name in targetConstructor && typeof targetConstructor[name] === 'function') {
-      boundImpl[name] = targetConstructor[name];
-    } else {
-      boundImpl[name] = traitConstructor[name];
+): void {
+  const traitImplMap = traitToTraitRegistry.get(trait);
+  if (traitImplMap) {
+    for (const [parentTrait, implInfo] of traitImplMap) {
+      tryImplTrait(target, parentTrait, implInfo.implementation);
     }
-  });
-
-  // Add custom implementation methods
-  if (implementation && implementation.static) {
-    Object.entries(implementation.static).forEach(([key, method]) => {
-      if (!(key in boundImpl)) {
-        throw new Error(`Static method ${key} not defined in trait`);
-      }
-      if (typeof method === 'function') {
-        boundImpl[key] = method;
-      }
-    });
   }
-  return boundImpl;
 }
 
-function getTraitBound<C extends Constructor, T extends TraitConstructor>(
-  trait: T,
-  implementation?: TraitImplementation<C, T>,
-) {
-  const boundImpl: Record<string, any> = {};
-  // Add trait's own methods
-  const protoObj = isGenericType(trait) ? Object.getPrototypeOf(trait.prototype) : trait.prototype;
-  const methods = Object.getOwnPropertyNames(protoObj).filter(
-    (name) => name !== 'constructor' && typeof protoObj[name] === 'function',
-  );
-  methods.forEach((name) => {
-    const method = protoObj[name];
-    if (typeof method === 'function') {
-      boundImpl[name] = method;
-    }
-  });
-
-  // Add custom implementation methods
-  if (implementation) {
-    Object.entries(implementation).forEach(([key, method]) => {
-      if (key === 'static') {
-        return;
-      }
-      if (!(key in boundImpl)) {
-        throw new Error(`Method ${key} not defined in trait`);
-      }
-      if (typeof method === 'function') {
-        boundImpl[key] = method;
-      }
-    });
-  }
-  return boundImpl;
-}
-
-function getSelfBound<Class extends object>(targetProto: any, target: Constructor<Class>) {
-  let selfBoundImpl: Record<string, any>;
-  if (!traitRegistry.has(targetProto)) {
-    const implMap = new WeakMap();
-    traitRegistry.set(targetProto, implMap);
-    // Create implementation that binds 'this' correctly
-    selfBoundImpl = {};
-    let currentProto = targetProto;
-    while (currentProto !== Object.prototype) {
-      Object.getOwnPropertyNames(currentProto).forEach((name) => {
-        try {
-          if (!(name in selfBoundImpl) && typeof currentProto[name] === 'function') {
-            selfBoundImpl[name] = currentProto[name];
-          }
-        } catch (_) {
-          /* empty */
-        }
-      });
-      currentProto = Object.getPrototypeOf(currentProto);
-    }
-    implMap.set(Type(target), selfBoundImpl);
+function getSelfStaticBound<Class extends object>(target: Constructor<Class>) {
+  let selfBoundImpl: Map<string, any>;
+  const implMap = staticTraitRegistry.get(target)!;
+  if (!implMap.has(target)) {
+    selfBoundImpl = createBound(target, -1);
+    implMap.set(target, selfBoundImpl);
   } else {
-    selfBoundImpl = traitRegistry.get(targetProto)!.get(Type(target))!;
+    selfBoundImpl = implMap.get(target)!;
   }
   return selfBoundImpl;
+}
+
+function getSelfBound<Class extends object>(target: Constructor<Class>) {
+  let selfBoundImpl: Map<string, any>;
+  const implMap = traitRegistry.get(target)!;
+  if (!implMap.has(target)) {
+    selfBoundImpl = createBound(target.prototype, -1);
+    implMap.set(target, selfBoundImpl);
+  } else {
+    selfBoundImpl = implMap.get(target)!;
+  }
+  return selfBoundImpl;
+}
+
+const skip = new Set(['constructor']);
+
+function createBound<C extends Constructor, T extends TraitConstructor>(
+  target: any,
+  lc: number = 1,
+  implementation?: TraitStaticMethods<C, T> | TraitInstanceMethods<C, T>,
+) {
+  const bound = new Map<string, any>();
+  let current = target;
+  while (current !== Object.prototype && lc !== 0) {
+    lc--;
+    Object.getOwnPropertyNames(current).forEach((name) => {
+      try {
+        if (!bound.has(name) && !skip.has(name) && typeof current[name] === 'function') {
+          bound.set(name, current[name]);
+        }
+      } catch (_) {
+        /* empty */
+      }
+    });
+    current = Object.getPrototypeOf(current);
+  }
+  if (implementation) {
+    putCustomImpl(target, implementation, bound);
+  }
+  return bound;
 }
 
 /**
  * Checks if a value implements a trait.
  * Performs runtime verification of trait implementation.
- * 
+ *
  * @param target The value or class to check
  * @param trait The trait to check for
  * @returns true if the target implements the trait
@@ -455,58 +557,50 @@ function getSelfBound<Class extends object>(targetProto: any, target: Constructo
  * @example
  * ```typescript
  * const point = new Point(1, 2);
- * 
+ *
  * // Check instance implementation
  * if (hasTrait(point, Display)) {
  *   console.log(useTrait(point, Display).display());
  * }
- * 
+ *
  * // Check static implementation
  * if (hasTrait(Point, FromStr)) {
  *   const newPoint = useTrait(Point, FromStr).fromStr("1,2");
  * }
  * ```
  */
-export function hasTrait<Class extends object, Trait extends object>(
+function hasTrait<Class extends object, Trait extends object>(
   target: Class | Constructor<Class>,
   trait: Constructor<Trait>,
 ): boolean {
-  const targetConstructor =
-    typeof target === 'function' ? target.prototype.constructor : target.constructor;
-  const traitType = Type(trait);
+  target = Type(type(target));
+  trait = Type(trait);
 
   // If target is a trait (checking trait-to-trait implementation)
-  if (traitSymbol in targetConstructor) {
-    const traitImplMap = traitToTraitRegistry.get(targetConstructor);
-    if (traitImplMap?.has(traitType)) {
-      return true;
-    }
-    if (isGenericType(targetConstructor)) {
-      const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
-      const traitImplMap = traitToTraitRegistry.get(sourceType);
-      return traitImplMap?.has(traitType) ?? false;
-    }
-    return false;
+  if (traitSymbol in target) {
+    return handleGenericType(
+      target,
+      (target) => {
+        return traitToTraitRegistry.get(target);
+      },
+      (impl) => !!impl?.has(trait),
+    );
   }
 
   // For normal class implementation
-  const implMap = traitRegistry.get(targetConstructor.prototype);
-  if (implMap?.has(traitType)) {
-    return true;
-  }
-  if (isGenericType(targetConstructor)) {
-    const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
-    const implMap = traitRegistry.get(sourceType.prototype);
-    return implMap?.has(traitType) ?? false;
-  }
-
-  return false;
+  return handleGenericType(
+    target,
+    (target) => {
+      return traitRegistry.get(target);
+    },
+    (impl) => !!impl?.has(trait),
+  );
 }
 
 /**
  * Gets the trait implementation for a value.
  * Provides type-safe access to trait methods.
- * 
+ *
  * @param target The value or class to get the trait implementation from
  * @param trait The trait to get
  * @returns The trait implementation or undefined if not implemented
@@ -515,11 +609,11 @@ export function hasTrait<Class extends object, Trait extends object>(
  * @example
  * ```typescript
  * const point = new Point(1, 2);
- * 
+ *
  * // Using instance methods
  * const display = useTrait(point, Display);
  * console.log(display.display());
- * 
+ *
  * // Using static methods
  * const fromStr = useTrait(Point, FromStr);
  * if (fromStr.isValid("1,2")) {
@@ -527,95 +621,63 @@ export function hasTrait<Class extends object, Trait extends object>(
  * }
  * ```
  */
-export function useTrait<C extends Constructor, T extends TraitConstructor>(target: C, trait: T): T;
-export function useTrait<C extends Constructor, T extends TraitConstructor>(
-  target: InstanceType<C>,
-  trait: T,
-): InstanceType<T>;
-export function useTrait<C extends Constructor, T extends TraitConstructor>(
+function useTrait<C extends Constructor, T extends TraitConstructor>(
   target: C | InstanceType<C>,
   trait: T,
+  strict: boolean = false,
 ): InstanceType<T> | T {
   if (typeof target === 'function') {
-    return useStatic<C, T>(target, trait);
-  } else if (typeof target === 'object') {
-    return useNormal<C, T>(target, trait);
+    return createUseProxy(target, trait, strict, (target) => {
+      return staticTraitRegistry.get(target);
+    }) as T;
+  } else {
+    return createUseProxy(target, trait, strict, (target) => {
+      return traitRegistry.get(type(target));
+    }) as InstanceType<T>;
   }
-  throw new Error('Invalid target type');
 }
 
-function useNormal<C extends Constructor, T extends TraitConstructor>(
-  target: InstanceType<C>,
+function createUseProxy<C extends Constructor, T extends TraitConstructor>(
+  target: C | InstanceType<C>,
   trait: T,
-): T {
-  const traitType = Type(trait);
-  const targetType = target.constructor;
-  let implMap = traitRegistry.get(targetType.prototype);
-  if (!implMap?.has(traitType)) {
-    if (isGenericType(targetType)) {
-      const sourceType = Object.getPrototypeOf(targetType.prototype).constructor;
-      implMap = traitRegistry.get(sourceType.prototype);
-      if (!implMap?.has(traitType)) {
-        throw new Error(
-          `Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetType.name}`,
-        );
-      }
-    } else {
-      throw new Error(`Trait ${traitType.name} not implemented for ${targetType.name}`);
-    }
+  strict: boolean,
+  handleTarget: (target: any) => WeakMap<Constructor<any>, Map<string, any>> | undefined,
+) {
+  trait = Type(trait);
+  const targetType = Type(type(target));
+  const impl = handleGenericType(targetType, handleTarget, (impl) => impl?.get(trait));
+  if (!impl) {
+    throw new TraitNotImplementedError(targetType.name, trait.name);
   }
-
-  const impl = implMap.get(traitType);
   return new Proxy(
     {},
     {
       get(_, prop) {
-        if (typeof prop === 'string' && prop in impl) {
-          return impl[prop].bind(target);
+        if (typeof prop === 'string' && impl.has(prop)) {
+          if (!strict) {
+            return function (...args: any[]) {
+              try {
+                return (target as any)[prop](...args);
+              } catch (error) {
+                if (error instanceof MultipleImplementationError) {
+                  return impl.get(prop).apply(target, args);
+                }
+                throw error;
+              }
+            };
+          }
+          return impl.get(prop).bind(target);
         }
-        throw new Error(`Method ${String(prop)} not implemented for trait`);
+        throw new MethodNotImplementedError(trait.name, String(prop));
       },
     },
-  ) as InstanceType<T>;
-}
-
-function useStatic<C extends Constructor, T extends TraitConstructor>(target: C, trait: T): T {
-  const targetConstructor = target.prototype.constructor;
-  const traitType = Type(trait);
-  const staticImpls = staticTraitRegistry.get(targetConstructor);
-  if (!staticImpls?.has(traitType)) {
-    if (isGenericType(targetConstructor)) {
-      const sourceType = Object.getPrototypeOf(targetConstructor.prototype).constructor;
-      const sourceImpls = staticTraitRegistry.get(sourceType);
-      if (!sourceImpls?.has(traitType)) {
-        throw new Error(
-          `Trait ${traitType.name} not implemented for ${sourceType.name} or ${targetConstructor.name}`,
-        );
-      }
-      return useStatic(sourceType, trait);
-    } else {
-      throw new Error(`Trait ${traitType.name} not implemented for ${targetConstructor.name}`);
-    }
-  }
-
-  const impl = staticImpls.get(traitType);
-  return new Proxy(
-    {},
-    {
-      get(_, prop) {
-        if (typeof prop === 'string' && prop in impl) {
-          return impl[prop].bind(targetConstructor);
-        }
-        throw new Error(`Method ${String(prop)} not implemented for trait`);
-      },
-    },
-  ) as T;
+  );
 }
 
 /**
  * Decorator for implementing traits at compile time.
  * Provides a more declarative way to implement traits using decorators.
- * 
+ *
  * @param trait The trait to be implemented
  * @param implementation Optional implementation overrides
  * @returns A decorator function that applies the trait
@@ -624,11 +686,11 @@ function useStatic<C extends Constructor, T extends TraitConstructor>(target: C,
  * ```typescript
  * const Display = macroTrait(DisplayTrait);
  * const FromStr = macroTrait(FromStrTrait);
- * 
+ *
  * @derive([Display, FromStr])
  * class Point {
  *   constructor(public x: number, public y: number) {}
- *   
+ *
  *   // Override default display implementation
  *   display(): string {
  *     return `(${this.x}, ${this.y})`;
@@ -642,17 +704,95 @@ export function macroTrait<C extends Constructor, T extends TraitConstructor>(
 ) {
   const factoryFn = function (target: any) {
     // Auto-implement traits that this trait implements
-    collectParentTraits(trait).forEach((parent) => {
-      if (!hasTrait(target, parent)) {
-        implTrait(target, parent);
-      }
-    });
-    // Then implement this trait
-    if (!hasTrait(target, trait)) {
-      implTrait(target, trait, implementation);
+    for (const parent of collectParentTraits(trait)) {
+      tryImplTrait(target, parent);
     }
-    // return target;
+    // Then implement this trait
+    tryImplTrait(target, trait, implementation);
   };
 
   return createFactory(trait, factoryFn);
+}
+
+export function tryImplTrait<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  implementation?: TraitImplementation<C, T>,
+): void {
+  if (!hasTrait(target, trait)) {
+    implTrait(target, trait, implementation);
+  }
+}
+
+/**
+ * Validates that a target type implements a trait.
+ *
+ * @param target The target type
+ * @param trait The trait type
+ * @throws {Error} if the target type does not implement the trait
+ * @internal
+ */
+function validTrait<C extends Constructor, T extends Constructor>(target: C, trait: T): void {
+  if (!hasTrait(target, trait)) {
+    throw new TraitNotImplementedError(typeName(target), typeName(trait));
+  }
+}
+
+/**
+ * Internal function to collect all parent commons with caching
+ *
+ * @param trait The trait to collect parents for
+ * @returns Array of parent trait constructors
+ */
+function collectParentTraits(trait: TraitConstructor): TraitConstructor[] {
+  const traitConstructor = trait.prototype.constructor;
+  const cached = parentTraitsCache.get(traitConstructor);
+  if (cached) {
+    return cached;
+  }
+
+  const parents: TraitConstructor[] = [];
+  let proto = Object.getPrototypeOf(trait.prototype);
+  while (proto && proto !== Trait.prototype) {
+    const parentTrait = proto.constructor;
+    if (parentTrait && parentTrait !== Trait && parentTrait[traitSymbol]) {
+      parents.push(parentTrait);
+    }
+    proto = Object.getPrototypeOf(proto);
+  }
+
+  if (isGenericType(trait)) {
+    parents.shift();
+  }
+
+  parentTraitsCache.set(traitConstructor, parents);
+  return parents;
+}
+
+function handleGenericType<T, R>(
+  type: Constructor,
+  handler: (type: Constructor) => T,
+  result: (ret: T) => R,
+): R {
+  const ret = result(handler(type));
+  if (!ret && isGenericType(type)) {
+    return result(handler(Object.getPrototypeOf(type.prototype).constructor));
+  }
+  return ret;
+}
+
+function putCustomImpl<C extends Constructor, T extends TraitConstructor>(
+  trait: T,
+  implementation: TraitStaticMethods<C, T> | TraitInstanceMethods<C, T>,
+  boundImpl: Map<string, any>,
+) {
+  Object.entries(implementation).forEach(([key, method]) => {
+    if (key === 'static') {
+      return;
+    }
+    if (!boundImpl.has(key)) {
+      throw new MethodNotImplementedError(typeName(trait), key);
+    }
+    boundImpl.set(key, method);
+  });
 }

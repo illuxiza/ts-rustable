@@ -1,5 +1,5 @@
-import { derive } from 'packages/utils/src/derive';
-import { hasTrait, implTrait, macroTrait, trait, useTrait } from '../src/trait';
+import { derive } from '@rustable/utils';
+import { macroTrait, Trait } from '../src/trait';
 
 // Basic trait interfaces
 interface BasicClass {
@@ -9,8 +9,7 @@ interface BasicClass {
 }
 
 // Basic trait implementations
-@trait
-class PrintTrait {
+class PrintTrait extends Trait {
   print(): string {
     return 'default print';
   }
@@ -22,8 +21,7 @@ class PrintTrait {
 
 const Print = macroTrait(PrintTrait);
 
-@trait
-class DebugTrait {
+class DebugTrait extends Trait {
   debug(): string {
     return 'default debug';
   }
@@ -36,11 +34,12 @@ const Debug = macroTrait(DebugTrait);
 class BasicClass {
   constructor(public value: string) {}
 }
-implTrait(BasicClass, Debug, {
+Debug.implFor(BasicClass, {
   debug(this: BasicClass) {
     return `custom debug for: ${this.value}`;
   },
 });
+
 describe('Basic Trait Features', () => {
   describe('Simple Trait Implementation', () => {
     test('should implement default trait methods', () => {
@@ -56,20 +55,20 @@ describe('Basic Trait Features', () => {
 
     test('should check trait implementation', () => {
       const instance = new BasicClass('test');
-      expect(hasTrait(instance, Print)).toBe(true);
-      expect(hasTrait(instance, Debug)).toBe(true);
-      expect(hasTrait({}, Print)).toBe(false);
+      expect(PrintTrait.isImplFor(instance)).toBe(true);
+      expect(DebugTrait.isImplFor(instance)).toBe(true);
+      expect(PrintTrait.isImplFor({})).toBe(false);
     });
 
     test('should get trait implementation', () => {
       const instance = new BasicClass('test');
-      const printTrait = useTrait(instance, Print);
-      const debugTrait = useTrait(instance, Debug);
+      const printTrait = PrintTrait.wrap(instance);
+      const debugTrait = DebugTrait.wrap(instance);
 
       expect(printTrait).toBeDefined();
       expect(debugTrait).toBeDefined();
-      expect(printTrait?.print()).toBe('default print');
-      expect(debugTrait?.debug()).toBe('custom debug for: test');
+      expect(printTrait.print()).toBe('default print');
+      expect(debugTrait.debug()).toBe('custom debug for: test');
     });
   });
 
@@ -93,7 +92,7 @@ describe('Basic Trait Features', () => {
     }
 
     beforeAll(() => {
-      implTrait(CustomClass, Print, {
+      PrintTrait.implFor(CustomClass, {
         print(this: CustomClass) {
           return `${this.getPrefix()} - print - ${this.getSuffix()}`;
         },
@@ -105,8 +104,8 @@ describe('Basic Trait Features', () => {
 
     test('should support custom implementation with typed this', () => {
       const obj = new CustomClass('start', 'end');
-      expect(obj.print()).toBe('start - print - end');
-      expect(obj.format('test')).toBe('test [start] - end');
+      expect(PrintTrait.wrap(obj).print()).toBe('start - print - end');
+      expect(PrintTrait.wrap(obj).format('test')).toBe('test [start] - end');
     });
   });
 });

@@ -1,5 +1,5 @@
 import { Type } from '@rustable/utils';
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { Trait } from '../src/trait';
 
 describe('Trait Type System', () => {
   // Base container for all tests
@@ -18,8 +18,7 @@ describe('Trait Type System', () => {
       transform<U>(value: U): string;
     }
 
-    @trait
-    class Print<T> implements Printable<T> {
+    class Print<T> extends Trait implements Printable<T> {
       print(): string {
         return 'default print';
       }
@@ -39,7 +38,7 @@ describe('Trait Type System', () => {
     interface StringContainer extends Printable<string> {}
     class StringContainer extends Container<string> {}
 
-    implTrait(NumberContainer, Print, {
+    Print.implFor(NumberContainer, {
       print(this: NumberContainer) {
         return `Number: ${this.getValue()}`;
       },
@@ -48,7 +47,7 @@ describe('Trait Type System', () => {
       },
     });
 
-    implTrait(StringContainer, Print, {
+    Print.implFor(StringContainer, {
       print(this: StringContainer) {
         return `String: ${this.getValue()}`;
       },
@@ -61,16 +60,16 @@ describe('Trait Type System', () => {
       const numContainer = new NumberContainer(42);
       const strContainer = new StringContainer('hello');
 
-      expect(hasTrait(numContainer, Print)).toBe(true);
-      expect(hasTrait(strContainer, Print)).toBe(true);
+      expect(Print.isImplFor(numContainer)).toBe(true);
+      expect(Print.isImplFor(strContainer)).toBe(true);
 
-      expect(numContainer.print()).toBe('Number: 42');
-      expect(numContainer.format('Test')).toBe('Test: Number: 42');
-      expect(numContainer.transform('hello')).toBe('Number(42) transformed hello');
+      expect(Print.wrap(numContainer).print()).toBe('Number: 42');
+      expect(Print.wrap(numContainer).format('Test')).toBe('Test: Number: 42');
+      expect(Print.wrap(numContainer).transform('hello')).toBe('Number(42) transformed hello');
 
-      expect(strContainer.print()).toBe('String: hello');
-      expect(strContainer.format('Test')).toBe('Test: String: hello');
-      expect(strContainer.transform(42)).toBe('String(hello) transformed 42');
+      expect(Print.wrap(strContainer).print()).toBe('String: hello');
+      expect(Print.wrap(strContainer).format('Test')).toBe('Test: String: hello');
+      expect(Print.wrap(strContainer).transform(42)).toBe('String(hello) transformed 42');
     });
   });
 
@@ -83,15 +82,13 @@ describe('Trait Type System', () => {
       display(value: T, format: U, extra: V): string;
     }
 
-    @trait
-    class FormatTrait<T, U> implements Format<T, U> {
+    class FormatTrait<T, U> extends Trait implements Format<T, U> {
       format(value: T, style: U): string {
         return `${String(style)}: ${String(value)}`;
       }
     }
 
-    @trait
-    class MultiDisplayTrait<T, U, V> implements MultiDisplay<T, U, V> {
+    class MultiDisplayTrait<T, U, V> extends Trait implements MultiDisplay<T, U, V> {
       display(value: T, format: U, extra: V): string {
         return `${String(format)}[${String(extra)}]: ${String(value)}`;
       }
@@ -104,35 +101,36 @@ describe('Trait Type System', () => {
       ) {}
     }
 
-    implTrait(Point, Type(FormatTrait, [Number, String]), {
+    Type(FormatTrait<number, string>, [Number, String]).implFor(Point, {
       format(this: Point, value: number, style: string): string {
         return `${style}: (${this.x}, ${this.y}) -> ${value}`;
       },
     });
 
-    implTrait(Point, Type(MultiDisplayTrait, [Number, String, Boolean]), {
+    Type(MultiDisplayTrait<number, string, boolean>, [Number, String, Boolean]).implFor(Point, {
       display(this: Point, value: number, format: string, extra: boolean): string {
         const coords = `(${this.x}, ${this.y})`;
         return extra ? `${format}: ${coords} -> ${value}` : coords;
       },
     });
+
     test('should handle two generic parameters', () => {
       const point = new Point(1, 2);
-      expect(hasTrait(point, Type(FormatTrait, [Number, String]))).toBe(true);
-      expect(hasTrait(point, Type(FormatTrait, [String, Number]))).toBe(false);
+      expect(Type(FormatTrait, [Number, String]).isImplFor(point)).toBe(true);
+      expect(Type(FormatTrait, [String, Number]).isImplFor(point)).toBe(false);
 
-      const format = useTrait(point, Type(FormatTrait, [Number, String]));
-      expect(format?.format(42, 'Point')).toBe('Point: (1, 2) -> 42');
+      const formatTrait = Type(FormatTrait, [Number, String]).wrap(point);
+      expect(formatTrait.format(42, 'Point')).toBe('Point: (1, 2) -> 42');
     });
 
     test('should handle three generic parameters', () => {
       const point = new Point(3, 4);
-      expect(hasTrait(point, Type(MultiDisplayTrait, [Number, String, Boolean]))).toBe(true);
-      expect(hasTrait(point, Type(MultiDisplayTrait, [String, Number, Boolean]))).toBe(false);
+      expect(Type(MultiDisplayTrait, [Number, String, Boolean]).isImplFor(point)).toBe(true);
+      expect(Type(MultiDisplayTrait, [String, Number, Boolean]).isImplFor(point)).toBe(false);
 
-      const display = useTrait(point, Type(MultiDisplayTrait, [Number, String, Boolean]));
-      expect(display?.display(42, 'Point', true)).toBe('Point: (3, 4) -> 42');
-      expect(display?.display(42, 'Point', false)).toBe('(3, 4)');
+      const displayTrait = Type(MultiDisplayTrait, [Number, String, Boolean]).wrap(point);
+      expect(displayTrait.display(42, 'Point', true)).toBe('Point: (3, 4) -> 42');
+      expect(displayTrait.display(42, 'Point', false)).toBe('(3, 4)');
     });
   });
 
@@ -142,8 +140,7 @@ describe('Trait Type System', () => {
       convertTo<U>(converter: (value: T) => U): U;
     }
 
-    @trait
-    class Transform<T> implements Transformable<T> {
+    class Transform<T> extends Trait implements Transformable<T> {
       transform<U extends number | string>(_value: U): T {
         throw new Error('Not implemented');
       }
@@ -161,7 +158,7 @@ describe('Trait Type System', () => {
     const StringTypeContainer = Type(TypeContainer<string>, [String]);
     interface StringTypeContainer extends TypeContainer<string> {}
 
-    implTrait(StringTypeContainer, Type(Transform, [String]), {
+    Type(Transform, [String]).implFor(StringTypeContainer, {
       transform<U extends number | string>(this: StringTypeContainer, value: U): string {
         return `${this.getValue()}_${String(value)}`;
       },
@@ -176,49 +173,45 @@ describe('Trait Type System', () => {
       const StringTransform = Type(Transform<string>, [String]);
 
       // Type checking
-      expect(hasTrait(container, StringTransform)).toBe(false);
-      expect(hasTrait(stringContainer, StringTransform)).toBe(true);
-      expect(hasTrait(TypeContainer, StringTransform)).toBe(false);
+      expect(StringTransform.isImplFor(container)).toBe(false);
+      expect(StringTransform.isImplFor(stringContainer)).toBe(true);
+      expect(StringTransform.isImplFor(TypeContainer)).toBe(false);
 
       // Method implementations
-      const stringTrait = useTrait(stringContainer, StringTransform);
-      expect(stringTrait?.transform(42)).toBe('base_42');
-      expect(stringTrait?.transform('test')).toBe('base_test');
-      expect(stringTrait?.convertTo((value) => value.length)).toBe(4);
-      expect(useTrait(StringTypeContainer, StringTransform)?.version()).toBe('1.0.0');
+      const stringTrait = StringTransform.wrap(stringContainer);
+      expect(stringTrait.transform(42)).toBe('base_42');
+      expect(stringTrait.transform('test')).toBe('base_test');
+      expect(stringTrait.convertTo((value) => value.length)).toBe(4);
+      expect(StringTransform.wrap(StringTypeContainer).version()).toBe('1.0.0');
     });
   });
 
   describe('Default Generic Trait Implementation', () => {
     test('should handle default implementations with single and multiple type parameters', () => {
-      @trait
-      class MultiParamTrait<T, U> {
+      class MultiParamTrait<T, U> extends Trait {
         test(t: T, u: U): string {
           return `${t},${u}`;
         }
       }
 
-      @trait      
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      class SingleParamTrait<T> {
-        test(): string {
-          return 'default';
+      class SingleParamTrait<T> extends Trait {
+        test(t: T): string {
+          return String(t);
         }
       }
 
       class Target {}
 
       // Test multi-parameter implementation
-      implTrait(Target, Type(MultiParamTrait, [String, Number]));
+      Type(MultiParamTrait, [String, Number]).implFor(Target);
       const multiTarget = new Target();
-      const multiImpl = useTrait(multiTarget, Type(MultiParamTrait, [String, Number]));
-      expect(multiImpl?.test('hello', 42)).toBe('hello,42');
+      const multiImpl = Type(MultiParamTrait, [String, Number]).wrap(multiTarget);
+      expect(multiImpl.test('hello', 42)).toBe('hello,42');
 
       // Test single-parameter implementation
-      implTrait(Target, Type(SingleParamTrait, [String]));
-      const singleTarget = new Target();
-      const singleImpl = useTrait(singleTarget, Type(SingleParamTrait, [String]));
-      expect(singleImpl?.test()).toBe('default');
+      Type(SingleParamTrait, [Number]).implFor(Target);
+      const singleImpl = Type(SingleParamTrait, [Number]).wrap(multiTarget);
+      expect(singleImpl.test(42)).toBe('42');
     });
   });
 });

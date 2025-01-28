@@ -1,5 +1,5 @@
 import { Type } from '@rustable/utils';
-import { hasTrait, implTrait, trait, useTrait } from '../src/trait';
+import { Trait } from '../src/trait';
 
 describe('Trait Error Cases', () => {
   // Base class for testing
@@ -17,8 +17,8 @@ describe('Trait Error Cases', () => {
   }
 
   // Basic trait implementation
-  @trait
-  class Print implements Printable {
+
+  class Print extends Trait implements Printable {
     print(): string {
       return 'default print';
     }
@@ -29,26 +29,12 @@ describe('Trait Error Cases', () => {
   }
 
   describe('Invalid Trait Definitions', () => {
-    it('should throw when implementing non-trait class', () => {
-      class NonTrait {
-        print(): string {
-          return 'not a trait';
-        }
-      }
-
-      class TestClass {}
-
-      expect(() => {
-        implTrait(TestClass, NonTrait as any);
-      }).toThrow('Trait must be implemented using the trait function');
-    });
-
     it('should throw when implementing trait twice', () => {
       class DuplicateClass {}
 
-      implTrait(DuplicateClass, Print);
+      Print.implFor(DuplicateClass);
       expect(() => {
-        implTrait(DuplicateClass, Print);
+        Print.implFor(DuplicateClass);
       }).toThrow('Trait Print already implemented for DuplicateClass');
     });
   });
@@ -58,7 +44,7 @@ describe('Trait Error Cases', () => {
       class TestClass {}
 
       expect(() => {
-        implTrait(TestClass, Print, {
+        Print.implFor(TestClass, {
           nonExistent(this: TestClass) {
             return 'invalid';
           },
@@ -68,7 +54,6 @@ describe('Trait Error Cases', () => {
   });
 
   describe('Inheritance Errors', () => {
-    @trait
     class ExtendedPrint extends Print {
       extended(): string {
         return 'extended';
@@ -79,13 +64,12 @@ describe('Trait Error Cases', () => {
       class TestClass {}
 
       expect(() => {
-        implTrait(TestClass, ExtendedPrint);
-      }).toThrow('Parent trait Print not implemented for TestClass');
+        ExtendedPrint.implFor(TestClass);
+      }).toThrow('Trait Print not implemented for TestClass');
     });
 
     it('should throw error for non-implemented trait with multiple generics', () => {
-      @trait
-      class MultiGeneric<T, U> {
+      class MultiGeneric<T, U> extends Trait {
         method(t: T, u: U): string {
           return `${String(t)},${String(u)}`;
         }
@@ -98,27 +82,24 @@ describe('Trait Error Cases', () => {
       }
 
       const point = new Point(1, 2);
-      expect(() => useTrait(point, Type(MultiGeneric, [String, Number]))).toThrow(
+      expect(() => Type(MultiGeneric, [String, Number]).wrap(point)).toThrow(
         'Trait MultiGeneric<String,Number> not implemented for Point',
       );
     });
 
     it('should handle trait inheritance chain', () => {
-      @trait
-      class BaseA {
+      class BaseA extends Trait {
         methodA(): string {
           return 'A';
         }
       }
 
-      @trait
       class ExtendedB extends BaseA {
         methodB(): string {
           return 'B';
         }
       }
 
-      @trait
       class ExtendedC extends ExtendedB {
         methodC(): string {
           return 'C';
@@ -129,21 +110,21 @@ describe('Trait Error Cases', () => {
 
       // Implement commons in reverse order to test inheritance chain validation
       expect(() => {
-        implTrait(TestClass, ExtendedC);
-      }).toThrow('Parent trait ExtendedB not implemented for TestClass');
+        ExtendedC.implFor(TestClass);
+      }).toThrow('Trait ExtendedB not implemented for TestClass');
 
-      implTrait(TestClass, BaseA);
+      BaseA.implFor(TestClass);
       expect(() => {
-        implTrait(TestClass, ExtendedC);
-      }).toThrow('Parent trait ExtendedB not implemented for TestClass');
+        ExtendedC.implFor(TestClass);
+      }).toThrow('Trait ExtendedB not implemented for TestClass');
 
-      implTrait(TestClass, ExtendedB);
-      implTrait(TestClass, ExtendedC);
+      ExtendedB.implFor(TestClass);
+      ExtendedC.implFor(TestClass);
 
       const instance = new TestClass();
-      expect(hasTrait(instance, BaseA)).toBe(true);
-      expect(hasTrait(instance, ExtendedB)).toBe(true);
-      expect(hasTrait(instance, ExtendedC)).toBe(true);
+      expect(BaseA.wrap(instance).methodA()).toBe('A');
+      expect(ExtendedB.wrap(instance).methodB()).toBe('B');
+      expect(ExtendedC.wrap(instance).methodC()).toBe('C');
     });
   });
 
@@ -161,7 +142,7 @@ describe('Trait Error Cases', () => {
       interface ErrorClass extends Printable {}
       class ErrorClass extends BaseClass {}
 
-      implTrait(ErrorClass, Print, {
+      Print.implFor(ErrorClass, {
         print(this: ErrorClass) {
           throw new Error('Implementation error');
         },
@@ -177,8 +158,8 @@ describe('Trait Error Cases', () => {
       class TestClass extends BaseClass {}
       const instance = new TestClass('test');
 
-      expect(() => useTrait(instance, Print)).toThrow('Trait Print not implemented for TestClass');
-      expect(hasTrait(instance, Print)).toBe(false);
+      expect(() => Print.wrap(instance)).toThrow('Trait Print not implemented for TestClass');
+      expect(Print.isImplFor(instance)).toBe(false);
     });
   });
 
@@ -188,26 +169,20 @@ describe('Trait Error Cases', () => {
         testMethod(): string;
       }
 
-      @trait
-      class TestTrait implements ITestTrait {
+      class TestTrait extends Trait implements ITestTrait {
         testMethod(): string {
           return 'test';
         }
       }
 
       class TestClass {}
-      implTrait(TestClass, TestTrait);
+      TestTrait.implFor(TestClass);
 
       const instance = new TestClass();
-      const traitImpl = useTrait(instance, TestTrait);
+      const traitImpl = TestTrait.wrap(instance);
 
-      if (traitImpl) {
-        // Access trait with symbol key
-        const symbol = Symbol('test');
-        expect(() => (traitImpl as any)[symbol]).toThrow(
-          'Method Symbol(test) not implemented for trait',
-        );
-      }
+      const sym = Symbol('test');
+      expect(() => (traitImpl as any)[sym]).toThrow();
     });
 
     it('should throw when accessing non-existent method in trait proxy', () => {
@@ -215,23 +190,22 @@ describe('Trait Error Cases', () => {
         testMethod(): string;
       }
 
-      @trait
-      class TestTrait implements ITestTrait {
+      class TestTrait extends Trait implements ITestTrait {
         testMethod(): string {
           return 'test';
         }
       }
 
       class TestClass {}
-      implTrait(TestClass, TestTrait);
+      TestTrait.implFor(TestClass);
 
       const instance = new TestClass();
-      const traitImpl = useTrait(instance, TestTrait);
+      const traitImpl = TestTrait.wrap(instance);
 
       if (traitImpl) {
         // Access non-existent method
         expect(() => (traitImpl as any).nonExistentMethod).toThrow(
-          'Method nonExistentMethod not implemented for trait',
+          'Method nonExistentMethod not defined in trait TestTrait',
         );
       }
     });
@@ -248,14 +222,14 @@ describe('Trait Error Cases', () => {
         }
       }
 
-      implTrait(TypedClass, Print, {
+      Print.implFor(TypedClass, {
         print(this: TypedClass) {
           return this.specificMethod();
         },
       });
 
       const instance = new TypedClass('test');
-      expect(instance.print()).toBe('specific');
+      expect(Print.wrap(instance).print()).toBe('specific');
     });
 
     it('should preserve method types in implementation', () => {
@@ -263,8 +237,7 @@ describe('Trait Error Cases', () => {
         print(): number;
       }
 
-      @trait
-      class NumberPrint implements NumberPrintable {
+      class NumberPrint extends Trait implements NumberPrintable {
         print(): number {
           return 42;
         }
@@ -273,14 +246,14 @@ describe('Trait Error Cases', () => {
       interface TestClass extends NumberPrintable {}
       class TestClass extends BaseClass {}
 
-      implTrait(TestClass, NumberPrint, {
+      NumberPrint.implFor(TestClass, {
         print(this: TestClass): number {
           return parseInt(this.getValue());
         },
       });
 
       const instance = new TestClass('123');
-      expect(instance.print()).toBe(123);
+      expect(NumberPrint.wrap(instance).print()).toBe(123);
     });
   });
 });

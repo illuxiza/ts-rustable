@@ -1,19 +1,19 @@
 {
   "name": "@rustable/trait",
   "version": "0.4.0",
-  "description": "Powerful TypeScript implementation of Rust-like traits. Features type-safe interface definitions, generic traits, multiple implementations, default methods, and runtime trait checking. Perfect for building flexible and maintainable TypeScript applications with Rust-inspired patterns.",
+  "description": "A TypeScript library that implements Rust-like traits with compile-time type checking and runtime verification.",
   "keywords": [
     "typescript",
     "rust",
-    "traits",
-    "interfaces",
-    "polymorphism",
-    "generics",
+    "trait",
+    "interface",
     "type-safe",
-    "decorators",
-    "multiple-inheritance",
-    "default-methods",
-    "runtime-checking"
+    "compile-time",
+    "runtime-verification",
+    "polymorphism",
+    "decorator",
+    "derive",
+    "macro"
   ],
   "main": "./lib/index.js",
   "module": "./lib/index.mjs",

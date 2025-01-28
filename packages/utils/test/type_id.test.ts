@@ -1,5 +1,4 @@
-import { Type } from '../src';
-import { typeId } from '../src/type_id';
+import { Type, typeId } from '../src';
 
 describe('TypeId System', () => {
   describe('typeId Generation', () => {

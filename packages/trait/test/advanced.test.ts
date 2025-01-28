@@ -1,10 +1,9 @@
-import { derive } from 'packages/utils/src/derive';
-import { implTrait, macroTrait, trait, useTrait } from '../src/trait';
+import { derive } from '@rustable/utils';
+import { macroTrait, trait, Trait } from '../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
-    @trait
-    class MathOps {
+    class MathOps extends Trait {
       add(a: number, b: number): number {
         return a + b;
       }
@@ -14,8 +13,7 @@ describe('Advanced Trait Features', () => {
       }
     }
 
-    @trait
-    class StringOps {
+    class StringOps extends Trait {
       concat(...strings: string[]): string {
         return strings.join('');
       }
@@ -39,8 +37,8 @@ describe('Advanced Trait Features', () => {
         replace(text: string, searchValue: string | RegExp, replaceValue: string): string;
       }
 
-      implTrait(MathClass, MathOps);
-      implTrait(MathClass, StringOps, {
+      MathOps.implFor(MathClass);
+      StringOps.implFor(MathClass, {
         concat(this: MathClass, ...strings: string[]): string {
           return `[${this.getBase()}] ${strings.join(' + ')}`;
         },
@@ -54,8 +52,7 @@ describe('Advanced Trait Features', () => {
   });
 
   describe('Trait Method Conflicts', () => {
-    @trait
-    class Animal {
+    class Animal extends Trait {
       makeSound(): string {
         return 'Default Animal sound';
       }
@@ -64,7 +61,6 @@ describe('Advanced Trait Features', () => {
       }
     }
 
-    @trait
     class Pet extends Animal {
       makeSound(): string {
         return 'Default Pet sound';
@@ -74,8 +70,7 @@ describe('Advanced Trait Features', () => {
       }
     }
 
-    @trait
-    class PlayableTrait {
+    class PlayableTrait extends Trait {
       playGame(): string {
         return 'Playing a game';
       }
@@ -86,8 +81,7 @@ describe('Advanced Trait Features', () => {
 
     const Playable = macroTrait(PlayableTrait);
 
-    @trait
-    class ScoreableTrait {
+    class ScoreableTrait extends Trait {
       playGame(): string {
         return 'Scoring a game';
       }
@@ -109,12 +103,12 @@ describe('Advanced Trait Features', () => {
         return this.score;
       }
     }
-    implTrait(Dog, Animal, {
+    Animal.implFor(Dog, {
       getName(this: Dog) {
         return this.name;
       },
     });
-    implTrait(Dog, Pet, {
+    Pet.implFor(Dog, {
       makeSound() {
         return 'Woof!';
       },
@@ -126,18 +120,16 @@ describe('Advanced Trait Features', () => {
     test('should handle trait method conflicts', () => {
       const dog = new Dog('Buddy', 100);
       expect(dog.getScore()).toBe(100);
-      expect(useTrait(dog, Animal).getName()).toBe('Buddy');
-      expect(useTrait(dog, Pet).makeSound()).toBe('Woof!');
-      expect(useTrait(dog, Pet).play()).toBe('Playing fetch!');
-      expect(useTrait(dog, Playable).playGame()).toBe('Playing a game');
-      expect(useTrait(dog, Scoreable).playGame()).toBe('Scoring a game');
-      expect(useTrait(dog, Dog).getScore()).toBe(100);
+      expect(Animal.wrap(dog).getName()).toBe('Buddy');
+      expect(Pet.wrap(dog).makeSound()).toBe('Woof!');
+      expect(Pet.wrap(dog).play()).toBe('Playing fetch!');
+      expect(Playable.wrap(dog).playGame()).toBe('Playing a game');
+      expect(Scoreable.wrap(dog).playGame()).toBe('Scoring a game');
     });
   });
 
   describe('Default Implementation Override', () => {
-    @trait
-    class PrintableTrait {
+    class PrintableTrait extends Trait {
       print(): string {
         return 'default print';
       }
@@ -145,8 +137,7 @@ describe('Advanced Trait Features', () => {
 
     const Printable = macroTrait(PrintableTrait);
 
-    @trait
-    class DisplayableTrait {
+    class DisplayableTrait extends Trait {
       display(): string {
         return 'default display';
       }
@@ -159,31 +150,31 @@ describe('Advanced Trait Features', () => {
       class Target {}
 
       const target = new Target();
-      expect(useTrait(target, Printable)?.print()).toBe('default print');
-      expect(useTrait(target, Displayable)?.display()).toBe('default display');
+      expect(Printable.wrap(target)?.print()).toBe('default print');
+      expect(Displayable.wrap(target)?.display()).toBe('default display');
     });
 
     test('should override default implementations', () => {
       class Target {}
-      implTrait(Target, Printable, {
+      Printable.implFor(Target, {
         print(): string {
           return 'custom print';
         },
       });
-      implTrait(Target, Displayable, {
+      Displayable.implFor(Target, {
         display(): string {
           return 'custom display';
         },
       });
 
       const target = new Target();
-      expect(useTrait(target, Printable)?.print()).toBe('custom print');
-      expect(useTrait(target, Displayable)?.display()).toBe('custom display');
+      expect(Printable.wrap(target)?.print()).toBe('custom print');
+      expect(Displayable.wrap(target)?.display()).toBe('custom display');
     });
   });
   describe('Mixed Instance and Static Methods', () => {
     @trait
-    class MixedTrait {
+    class MixedTrait extends Trait {
       static staticMethod(): string {
         return 'default static method';
       }
@@ -199,7 +190,7 @@ describe('Advanced Trait Features', () => {
           return 'custom static method';
         }
       }
-      implTrait(Target, MixedTrait, {
+      MixedTrait.implFor(Target, {
         static: {
           staticMethod(): string {
             return 'custom static method';
@@ -211,8 +202,8 @@ describe('Advanced Trait Features', () => {
       });
 
       const target = new Target();
-      expect(useTrait(Target, MixedTrait).staticMethod()).toBe('custom static method');
-      expect(useTrait(target, MixedTrait).instanceMethod()).toBe('custom instance method');
+      expect(MixedTrait.wrap(Target).staticMethod()).toBe('custom static method');
+      expect(MixedTrait.wrap(target).instanceMethod()).toBe('custom instance method');
     });
   });
 });

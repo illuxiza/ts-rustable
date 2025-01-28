@@ -1,8 +1,7 @@
-import { Constructor, derive } from '@rustable/utils';
-import { implTrait, macroTrait, trait } from '../src/trait';
+import { derive } from '@rustable/utils';
+import { macroTrait, Trait } from '../src/trait';
 
-@trait
-class DebugTrait {
+class DebugTrait extends Trait {
   string(): string {
     return `Debug: ${this.constructor.name}`;
   }
@@ -12,15 +11,9 @@ const Debug = macroTrait(DebugTrait);
 
 interface Debug extends DebugTrait {}
 
-function implDebug(target: Constructor<any>) {
-  implTrait(target, Debug);
-  return target;
-}
-
 describe('derive decorator', () => {
   test('should derive single trait', () => {
     @derive([Debug])
-    @implDebug
     class Point {
       constructor(
         public x: number,
