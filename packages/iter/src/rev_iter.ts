@@ -39,9 +39,7 @@ class RevIter<T> extends RustIter<T> {
   [Symbol.iterator](): IterableIterator<T> {
     return {
       next: () => {
-        if (this.idx < 0) {
-          return { done: true, value: undefined };
-        }
+        if (this.idx < 0) return { done: true, value: undefined };
         return { done: false, value: this.items[this.idx--] };
       },
       [Symbol.iterator]() {

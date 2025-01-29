@@ -37,7 +37,7 @@ class StepByIter<T> extends RustIter<T> {
     return {
       next: () => {
         while (true) {
-          const item = this.iterator.next();
+          const item = this.it.next();
           if (item.done) return item;
           if (this.idx++ % this.step === 0) return item;
         }

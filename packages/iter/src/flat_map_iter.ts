@@ -1,5 +1,6 @@
 /**
- * Map elements to iterables and flatten the results
+ * @module flat_map_iter
+ * Provides flatMap and flatten operations for iterators
  */
 import { RustIter } from './rust_iter';
 
@@ -23,34 +24,45 @@ declare module './rust_iter' {
      * ```
      */
     flatMap<U>(f: (x: T) => Iterable<U>): RustIter<U>;
+
+    /**
+     * Creates an iterator that flattens nested structure
+     * @example
+     * ```ts
+     * // Flatten nested arrays
+     * iter([[1, 2], [3, 4]])
+     *   .flatten() // [1, 2, 3, 4]
+     * ```
+     */
+    flatten<U>(): RustIter<U>;
   }
 }
 
+/**
+ * Iterator adapter that both maps and flattens
+ */
 class FlatMapIter<T, U> extends RustIter<U> {
-  private inner: Iterator<U> | null = null;
+  private inner?: Iterator<U>;
 
   constructor(
-    private iter: RustIter<T>,
+    private iter: IterableIterator<T>,
     private f: (x: T) => Iterable<U>,
   ) {
     super([]);
   }
 
   [Symbol.iterator](): IterableIterator<U> {
-    const outer = this.iter[Symbol.iterator]();
-
     return {
       next: () => {
         while (true) {
-          if (!this.inner) {
-            const item = outer.next();
-            if (item.done) return item;
-            this.inner = this.f(item.value)[Symbol.iterator]();
+          if (this.inner) {
+            const item = this.inner.next();
+            if (!item.done) return item;
+            this.inner = undefined;
           }
-
-          const value = this.inner.next();
-          if (!value.done) return value;
-          this.inner = null;
+          const item = this.iter.next();
+          if (item.done) return item;
+          this.inner = this.f(item.value)[Symbol.iterator]();
         }
       },
       [Symbol.iterator]() {
@@ -60,9 +72,22 @@ class FlatMapIter<T, U> extends RustIter<U> {
   }
 }
 
+/**
+ * Creates an iterator that both maps and flattens
+ * @param f Function that returns an iterator
+ * @returns New flattened iterator
+ */
 RustIter.prototype.flatMap = function <T, U>(
   this: RustIter<T>,
   f: (x: T) => Iterable<U>,
 ): RustIter<U> {
-  return new FlatMapIter(this, f);
+  return new FlatMapIter(this[Symbol.iterator](), f);
+};
+
+/**
+ * Creates an iterator that flattens nested structure
+ * @returns Flattened iterator
+ */
+RustIter.prototype.flatten = function <T, U>(this: RustIter<T & Iterable<U>>): RustIter<U> {
+  return this.flatMap((x) => x);
 };

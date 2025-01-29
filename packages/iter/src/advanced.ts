@@ -4,6 +4,7 @@
  */
 import './num_iter';
 import './partition_iter';
+import './sort_iter';
 
 // Complex mapping
 import './map_while_iter';
@@ -34,5 +35,3 @@ import './step_by_iter';
 
 // Grouping
 import './group_by_iter';
-
-export {};

@@ -42,7 +42,7 @@ class IntersperseIter<T> extends RustIter<T> {
       next: () => {
         if (!this.started) {
           this.started = true;
-          return this.iterator.next();
+          return this.it.next();
         }
 
         if (this.n !== undefined) {
@@ -51,7 +51,7 @@ class IntersperseIter<T> extends RustIter<T> {
           return { done: false, value };
         }
 
-        const item = this.iterator.next();
+        const item = this.it.next();
         if (item.done) return item;
 
         this.n = item.value;

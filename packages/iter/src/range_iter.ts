@@ -22,24 +22,20 @@ export function range(start: number, end: number, step = 1): RustIter<number> {
 }
 
 class RangeIter extends RustIter<number> {
-  private curr: number;
-
   constructor(
-    start: number,
+    private curr: number,
     private end: number,
     private step = 1,
   ) {
     super([]);
     if (step === 0) throw new Error('Step cannot be zero');
-    this.curr = start;
   }
 
   [Symbol.iterator](): IterableIterator<number> {
     return {
       next: () => {
-        if ((this.step > 0 && this.curr >= this.end) || (this.step < 0 && this.curr <= this.end)) {
+        if ((this.step > 0 && this.curr >= this.end) || (this.step < 0 && this.curr <= this.end))
           return { done: true, value: undefined };
-        }
         const val = this.curr;
         this.curr += this.step;
         return { done: false, value: val };

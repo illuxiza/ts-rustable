@@ -1,4 +1,5 @@
 import { iter } from '../src';
+import '../src/advanced';
 
 describe('Sort Operations', () => {
   test('should sort numbers', () => {

@@ -12,14 +12,14 @@ import { deepClone } from '@rustable/utils';
  * Provides common iterator operations like map, filter, reduce etc.
  */
 export class RustIter<T> implements Iterable<T> {
-  protected iterator: Iterator<T>;
+  protected it: Iterator<T>;
 
   /**
    * Creates a new iterator from an iterable source
    * @param source The source iterable to create iterator from
    */
-  constructor(protected source: Iterable<T>) {
-    this.iterator = source[Symbol.iterator]();
+  constructor(source: Iterable<T>) {
+    this.it = source[Symbol.iterator]();
   }
 
   /**
@@ -36,7 +36,7 @@ export class RustIter<T> implements Iterable<T> {
    * @returns Iterator interface for this collection
    */
   [Symbol.iterator](): IterableIterator<T> {
-    return this.iterator as IterableIterator<T>;
+    return this.it as IterableIterator<T>;
   }
 
   /**

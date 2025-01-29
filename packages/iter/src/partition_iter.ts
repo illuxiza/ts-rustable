@@ -34,14 +34,6 @@ declare module './rust_iter' {
     partition(predicate: (x: T) => boolean): [T[], T[]];
 
     /**
-     * Reorders the iterator's elements in-place according to the given predicate
-     * Elements that match the predicate are placed at the start
-     * @param predicate Function to determine element placement
-     * @returns The index where the partition occurs (first element that returns false)
-     */
-    partitionInPlace(predicate: (x: T) => boolean): number;
-
-    /**
      * Tests if the iterator is partitioned by a predicate
      * @param predicate Function to determine element placement
      * @returns true if the iterator is partitioned by the predicate, false otherwise
@@ -72,30 +64,6 @@ RustIter.prototype.partition = function <T>(
     return undefined;
   });
   return [left, right];
-};
-
-RustIter.prototype.partitionInPlace = function <T>(
-  this: RustIter<T>,
-  predicate: (x: T) => boolean,
-): number {
-  const arr = this.source as unknown as T[];
-  if (!Array.isArray(arr)) {
-    throw new Error('partitionInPlace can only be used with array sources');
-  }
-
-  const [matches, nonMatches] = this.partition(predicate);
-
-  const pivot = matches.length;
-  for (let i = 0; i < matches.length; i++) {
-    arr[i] = matches[i];
-  }
-  for (let i = 0; i < nonMatches.length; i++) {
-    arr[pivot + i] = nonMatches[i];
-  }
-
-  this.iterator = arr[Symbol.iterator]();
-
-  return pivot;
 };
 
 RustIter.prototype.isPartitioned = function <T>(

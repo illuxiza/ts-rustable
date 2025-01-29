@@ -43,45 +43,6 @@ describe('partition', () => {
   });
 });
 
-describe('partitionInPlace', () => {
-  test('should partition array in place based on predicate', () => {
-    const arr = [1, 2, 3, 4, 5];
-    const pivot = iter(arr).partitionInPlace((x) => x % 2 === 0);
-    expect(pivot).toBe(2);
-    expect(arr.slice(0, pivot)).toEqual([2, 4]);
-    expect(arr.slice(pivot)).toEqual([1, 3, 5]);
-  });
-
-  test('should handle empty array', () => {
-    const arr: number[] = [];
-    const pivot = iter(arr).partitionInPlace((x) => x > 0);
-    expect(pivot).toBe(0);
-    expect(arr).toEqual([]);
-  });
-
-  test('should handle array with all elements satisfying predicate', () => {
-    const arr = [2, 4, 6, 8];
-    const pivot = iter(arr).partitionInPlace((x) => x % 2 === 0);
-    expect(pivot).toBe(4);
-    expect(arr).toEqual([2, 4, 6, 8]);
-  });
-
-  test('should handle array with no elements satisfying predicate', () => {
-    const arr = [1, 3, 5, 7];
-    const pivot = iter(arr).partitionInPlace((x) => x % 2 === 0);
-    expect(pivot).toBe(0);
-    expect(arr).toEqual([1, 3, 5, 7]);
-  });
-
-  test('should work with complex predicates', () => {
-    const arr = [{ value: 1 }, { value: 2 }, { value: 3 }, { value: 4 }];
-    const pivot = iter(arr).partitionInPlace((x) => x.value > 2);
-    expect(pivot).toBe(2);
-    expect(arr.slice(0, pivot).map((x) => x.value)).toEqual([3, 4]);
-    expect(arr.slice(pivot).map((x) => x.value)).toEqual([1, 2]);
-  });
-});
-
 describe('isPartitioned', () => {
   test('should return true for partitioned array', () => {
     expect(iter([2, 4, 1, 3, 5]).isPartitioned((x) => x % 2 === 0)).toBe(true);

@@ -43,7 +43,7 @@ class TakeWhileIter<T> extends RustIter<T> {
           return { done: true, value: undefined };
         }
 
-        const item = this.iterator.next();
+        const item = this.it.next();
         if (item.done || !this.pred(item.value)) {
           this.done = true;
           return { done: true, value: undefined };

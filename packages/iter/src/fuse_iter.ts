@@ -29,7 +29,7 @@ class FuseIter<T> extends RustIter<T> {
   [Symbol.iterator](): IterableIterator<T> {
     return {
       next: () => {
-        const item = this.iterator.next();
+        const item = this.it.next();
         if (item.done || item.value === undefined || item.value === null) {
           return { done: true, value: undefined };
         }

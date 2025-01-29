@@ -1,46 +1,63 @@
 /**
- * Skip a number of elements from the start
+ * @module skip_iter
+ * Provides skip and skipWhile operations for iterators
  */
 import { RustIter } from './rust_iter';
 
 declare module './rust_iter' {
   interface RustIter<T> {
     /**
-     * Skip the first n elements
+     * Creates an iterator that skips the first n elements
+     * @param n Number of elements to skip
      * @example
      * ```ts
-     * // Skip first two
      * iter([1, 2, 3, 4])
      *   .skip(2) // [3, 4]
-     *
-     * // Skip all
-     * iter([1, 2])
-     *   .skip(3) // []
      * ```
      */
     skip(n: number): RustIter<T>;
+
+    /**
+     * Creates an iterator that skips elements based on a predicate
+     * @param predicate Function that returns true for elements to skip
+     * @example
+     * ```ts
+     * iter([1, 2, 3, 4])
+     *   .skipWhile(x => x < 3) // [3, 4]
+     * ```
+     */
+    skipWhile(predicate: (x: T) => boolean): RustIter<T>;
   }
 }
 
-class SkipIter<T> extends RustIter<T> {
+/**
+ * Iterator adapter that skips elements while a predicate is true
+ */
+class SkipWhileIter<T> extends RustIter<T> {
+  private started = false;
+
   constructor(
-    source: RustIter<T>,
-    private n: number,
+    private iter: RustIter<T>,
+    private predicate: (x: T) => boolean,
   ) {
-    super(source);
+    super([]);
   }
 
   [Symbol.iterator](): IterableIterator<T> {
+    const it = this.iter[Symbol.iterator]();
     return {
       next: () => {
-        while (this.n > 0) {
-          const skipped = this.iterator.next();
-          if (skipped.done) {
-            return { done: true, value: undefined };
+        if (!this.started) {
+          let item;
+          while ((item = it.next()) && !item.done) {
+            if (!this.predicate(item.value)) {
+              this.started = true;
+              return item;
+            }
           }
-          this.n--;
+          return item;
         }
-        return this.iterator.next();
+        return it.next();
       },
       [Symbol.iterator]() {
         return this;
@@ -49,6 +66,14 @@ class SkipIter<T> extends RustIter<T> {
   }
 }
 
+RustIter.prototype.skipWhile = function <T>(
+  this: RustIter<T>,
+  predicate: (x: T) => boolean,
+): RustIter<T> {
+  return new SkipWhileIter(this, predicate);
+};
+
 RustIter.prototype.skip = function <T>(this: RustIter<T>, n: number): RustIter<T> {
-  return new SkipIter(this, n);
+  let count = 0;
+  return this.skipWhile(() => count++ < n);
 };

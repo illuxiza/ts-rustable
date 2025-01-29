@@ -33,7 +33,7 @@ class DedupIter<T> extends RustIter<T> {
     return {
       next: () => {
         while (true) {
-          const item = this.iterator.next();
+          const item = this.it.next();
           if (item.done) return item;
           if (this.l !== item.value) {
             this.l = item.value;

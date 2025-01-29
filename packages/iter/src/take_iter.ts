@@ -37,7 +37,7 @@ class TakeIter<T> extends RustIter<T> {
           return { done: true, value: undefined };
         }
         this.n--;
-        return this.iterator.next();
+        return this.it.next();
       },
       [Symbol.iterator]() {
         return this;

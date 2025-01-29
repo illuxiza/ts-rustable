@@ -36,7 +36,7 @@ class InspectIter<T> extends RustIter<T> {
   [Symbol.iterator](): IterableIterator<T> {
     return {
       next: () => {
-        const item = this.iterator.next();
+        const item = this.it.next();
         if (!item.done) {
           this.f(item.value);
         }

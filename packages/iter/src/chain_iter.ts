@@ -36,7 +36,7 @@ class ChainIter<T> extends RustIter<T> {
     return {
       next: () => {
         if (!this.done) {
-          const item = this.iterator.next();
+          const item = this.it.next();
           if (!item.done) return item;
           this.done = true;
         }

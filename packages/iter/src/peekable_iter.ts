@@ -31,14 +31,14 @@ declare module './rust_iter' {
 }
 
 class PeekableIter<T> extends RustIter<T> {
-  private n?: Option<T> = None;
+  private n: Option<T> = None;
 
   constructor(private iter: RustIter<T>) {
     super([]);
   }
 
   peek(): Option<T> {
-    if (this.n?.isNone()) {
+    if (this.n.isNone()) {
       this.n = this.iter.next();
     }
     return this.n || None;
@@ -47,7 +47,7 @@ class PeekableIter<T> extends RustIter<T> {
   [Symbol.iterator](): IterableIterator<T> {
     return {
       next: () => {
-        if (this.n?.isSome()) {
+        if (this.n.isSome()) {
           const value = this.n.unwrap();
           this.n = None;
           return { done: false, value };
