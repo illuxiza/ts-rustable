@@ -404,6 +404,18 @@ export class Option<T> extends Enum {
         }),
     });
   }
+
+  toJSON() {
+    return this.toString();
+  }
+
+  toString() {
+    return this.isSome() ? String(super.unwrap<any>()) : null!;
+  }
+
+  valueOf() {
+    return this.isSome() ? super.unwrap()?.valueOf() : null;
+  }
 }
 
 /**

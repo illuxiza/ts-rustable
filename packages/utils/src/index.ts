@@ -1,5 +1,5 @@
 export { deepClone } from './clone';
-export { Constructor, NOT_IMPLEMENTED } from './common';
+export { Constructor } from './common';
 export { MarcoFn, applyMacros, derive } from './derive';
 export { equals } from './eq';
 export { createFactory } from './factory';

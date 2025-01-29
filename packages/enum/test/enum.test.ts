@@ -251,21 +251,21 @@ describe('Enum.createEnum', () => {
     const NamedEnum = Enums.create('NamedEnum', {
       X: () => {},
       Y: (_value: number) => {},
-      Z: (_a: string, _b: boolean) => {},
+      Z: (_: { a: string; b: boolean }) => {},
     });
 
     expect(NamedEnum.name).toBe('NamedEnum');
 
     const x = NamedEnum.X();
     const y = NamedEnum.Y(10);
-    const z = NamedEnum.Z('test', true);
+    const z = NamedEnum.Z({ a: 'test', b: true });
 
     expect(x.isX()).toBe(true);
     expect(y.isY()).toBe(true);
     expect(z.isZ()).toBe(true);
 
     expect(y.unwrap()).toBe(10);
-    expect(z.unwrapTuple()).toEqual(['test', true]);
+    expect(z.unwrap()).toEqual({ a: 'test', b: true });
 
     expect(() => (NamedEnum as any).W()).toThrow();
   });

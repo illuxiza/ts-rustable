@@ -1,4 +1,4 @@
-import { Constructor, deepClone, equals, typeId } from '@rustable/utils';
+import { deepClone, equals } from '@rustable/utils';
 
 /**
  * Represents a variant in an enumerated type.
@@ -20,14 +20,13 @@ interface EnumVariant {
  * }
  *
  * @param target The class prototype
- * @param propertyKey The name of the variant
+ * @param name The name of the variant
  * @param descriptor The property descriptor
  * @returns Modified property descriptor
  */
-export function variant(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+export function variant(target: any, name: string, descriptor: PropertyDescriptor) {
   descriptor.value = function (...args: any[]) {
-    const constructor = target.prototype.constructor;
-    return new constructor(propertyKey, ...args);
+    return new target(name, ...args);
   };
   return descriptor;
 }
@@ -67,7 +66,7 @@ export type EnumInstance<U extends EnumParam> = Omit<
 
 export type CustomEnum<U extends EnumParam> = typeof Enum & {
   [K in keyof U]: (...args: Parameters<U[K]>) => EnumInstance<U>;
-} & Constructor<Enum>;
+};
 
 export namespace Enums {
   /**
@@ -284,9 +283,5 @@ export abstract class Enum {
       return;
     }
     this._variant.args = modifier(...this._variant.args);
-  }
-
-  [Symbol('ENUM')]() {
-    return typeId(this.constructor);
   }
 }

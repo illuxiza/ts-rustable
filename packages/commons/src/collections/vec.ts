@@ -15,23 +15,23 @@ const OUT_OF_BOUNDS = 'Index out of bounds';
 export class Vec<T> implements Iterable<T> {
   [index: number]: T;
 
-  private readonly __buffer: T[];
-  private __len: number;
+  private readonly _buffer: T[];
+  private _len: number;
 
   /**
    * Creates a new Vec with the specified initial capacity.
    * @param iterable
    */
   constructor(iterable?: Iterable<T>) {
-    this.__buffer = [];
+    this._buffer = [];
     let length = 0;
     if (iterable) {
       for (const item of iterable) {
-        this.__buffer.push(item);
+        this._buffer.push(item);
         length++;
       }
     }
-    this.__len = length;
+    this._len = length;
   }
 
   /**
@@ -70,7 +70,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns The number of elements
    */
   len(): number {
-    return this.__len;
+    return this._len;
   }
 
   /**
@@ -78,7 +78,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns true if the Vec contains no elements, false otherwise
    */
   isEmpty(): boolean {
-    return this.__len === 0;
+    return this._len === 0;
   }
 
   /**
@@ -90,10 +90,10 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.get(1); // Some(2)
    */
   get(index: number): Option<T> {
-    if (index >= this.__len || index < 0) {
+    if (index >= this._len || index < 0) {
       return None;
     }
-    return Some(this.__buffer[index]);
+    return Some(this._buffer[index]);
   }
 
   /**
@@ -105,14 +105,14 @@ export class Vec<T> implements Iterable<T> {
    * const element = vec.getMut(1).unwrap().value; // Some(2)
    */
   getMut(index: number): Option<Ptr<T>> {
-    if (index >= this.__len || index < 0) {
+    if (index >= this._len || index < 0) {
       return None;
     }
     return Some(
       Ptr({
-        get: () => this.__buffer[index],
+        get: () => this._buffer[index],
         set: (value: T) => {
-          this.__buffer[index] = value;
+          this._buffer[index] = value;
         },
       }),
     );
@@ -128,10 +128,10 @@ export class Vec<T> implements Iterable<T> {
    * vec.set(1, 4); // vec is now [1, 4, 3]
    */
   set(index: number, value: T) {
-    if (index >= this.__len || index < 0) {
+    if (index >= this._len || index < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    this.__buffer[index] = value;
+    this._buffer[index] = value;
   }
 
   /**
@@ -141,7 +141,7 @@ export class Vec<T> implements Iterable<T> {
    * @warning This method does not perform bounds checking
    */
   getUnchecked(index: number): T {
-    return this.__buffer[index];
+    return this._buffer[index];
   }
 
   /**
@@ -154,8 +154,8 @@ export class Vec<T> implements Iterable<T> {
    * vec.contains(4); // false
    */
   contains(value: T): boolean {
-    for (let i = 0; i < this.__len; i++) {
-      if (keysEqual(this.__buffer[i], value)) {
+    for (let i = 0; i < this._len; i++) {
+      if (keysEqual(this._buffer[i], value)) {
         return true;
       }
     }
@@ -171,8 +171,8 @@ export class Vec<T> implements Iterable<T> {
    * vec.push(1); // vec is now [1]
    */
   push(value: T) {
-    this.__buffer[this.__len] = value;
-    this.__len++;
+    this._buffer[this._len] = value;
+    this._len++;
   }
 
   /**
@@ -183,11 +183,11 @@ export class Vec<T> implements Iterable<T> {
    * const last = vec.pop(); // Some(2), vec is now [1]
    */
   pop(): Option<T> {
-    if (this.__len === 0) {
+    if (this._len === 0) {
       return None;
     }
-    this.__len--;
-    return Some(this.__buffer[this.__len]);
+    this._len--;
+    return Some(this._buffer[this._len]);
   }
 
   /**
@@ -208,10 +208,10 @@ export class Vec<T> implements Iterable<T> {
    * @returns Some(element) if Vec is not empty, None if empty
    */
   last(): Option<T> {
-    if (this.__len === 0) {
+    if (this._len === 0) {
       return None;
     }
-    return Some(this.__buffer[this.__len - 1]);
+    return Some(this._buffer[this._len - 1]);
   }
 
   /**
@@ -219,7 +219,7 @@ export class Vec<T> implements Iterable<T> {
    * Does not affect capacity.
    */
   clear() {
-    this.__len = 0;
+    this._len = 0;
   }
 
   /**
@@ -231,8 +231,8 @@ export class Vec<T> implements Iterable<T> {
     if (length < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    if (length < this.__len) {
-      this.__len = length;
+    if (length < this._len) {
+      this._len = length;
     }
   }
 
@@ -246,14 +246,14 @@ export class Vec<T> implements Iterable<T> {
    * vec.insert(1, 2); // vec is now [1, 2, 3]
    */
   insert(index: number, value: T) {
-    if (index > this.__len || index < 0) {
+    if (index > this._len || index < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    for (let i = this.__len; i > index; i--) {
-      this.__buffer[i] = this.__buffer[i - 1];
+    for (let i = this._len; i > index; i--) {
+      this._buffer[i] = this._buffer[i - 1];
     }
-    this.__buffer[index] = value;
-    this.__len++;
+    this._buffer[index] = value;
+    this._len++;
   }
 
   /**
@@ -266,14 +266,14 @@ export class Vec<T> implements Iterable<T> {
    * vec.remove(1); // Some(2), vec is now [1, 3]
    */
   remove(index: number): T {
-    if (index >= this.__len || index < 0) {
+    if (index >= this._len || index < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    const value = this.__buffer[index];
-    for (let i = index; i < this.__len - 1; i++) {
-      this.__buffer[i] = this.__buffer[i + 1];
+    const value = this._buffer[index];
+    for (let i = index; i < this._len - 1; i++) {
+      this._buffer[i] = this._buffer[i + 1];
     }
-    this.__len--;
+    this._len--;
     return value;
   }
 
@@ -287,13 +287,13 @@ export class Vec<T> implements Iterable<T> {
    * vec.swapRemove(1); // Some(2), vec is now [1, 4, 3]
    */
   swapRemove(index: number): T {
-    if (index >= this.__len || index < 0) {
+    if (index >= this._len || index < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    const value = this.__buffer[index];
-    this.__len--;
-    if (index < this.__len) {
-      this.__buffer[index] = this.__buffer[this.__len];
+    const value = this._buffer[index];
+    this._len--;
+    if (index < this._len) {
+      this._buffer[index] = this._buffer[this._len];
     }
     return value;
   }
@@ -303,7 +303,7 @@ export class Vec<T> implements Iterable<T> {
    * @returns A new array containing all elements
    */
   asSlice(): T[] {
-    return this.__buffer.slice(0, this.__len);
+    return this._buffer.slice(0, this._len);
   }
 
   /**
@@ -311,7 +311,7 @@ export class Vec<T> implements Iterable<T> {
    * @yields Each element in the Vec in order
    */
   [Symbol.iterator](): IterableIterator<T> {
-    return this.__buffer.slice(0, this.__len)[Symbol.iterator]();
+    return this._buffer.slice(0, this._len)[Symbol.iterator]();
   }
 
   /**
@@ -344,9 +344,9 @@ export class Vec<T> implements Iterable<T> {
     const otherSlice = other.asSlice();
     const len = this.len();
     for (let i = 0; i < otherSlice.length; i++) {
-      this.__buffer[len + i] = otherSlice[i];
+      this._buffer[len + i] = otherSlice[i];
     }
-    this.__len += otherSlice.length;
+    this._len += otherSlice.length;
     other.clear();
   }
 
@@ -354,11 +354,11 @@ export class Vec<T> implements Iterable<T> {
    * Reverses the order of the elements in the Vec in-place.
    */
   reverse(): void {
-    const halfLen = Math.floor(this.__len / 2);
+    const halfLen = Math.floor(this._len / 2);
     for (let i = 0; i < halfLen; i++) {
-      const temp = this.__buffer[i];
-      this.__buffer[i] = this.__buffer[this.__len - 1 - i];
-      this.__buffer[this.__len - 1 - i] = temp;
+      const temp = this._buffer[i];
+      this._buffer[i] = this._buffer[this._len - 1 - i];
+      this._buffer[this._len - 1 - i] = temp;
     }
   }
 
@@ -368,8 +368,8 @@ export class Vec<T> implements Iterable<T> {
    * @param end End index (default: length)
    * @returns Array containing elements from start to end
    */
-  slice(start: number = 0, end: number = this.__len): T[] {
-    return this.__buffer.slice(start, Math.min(end, this.__len));
+  slice(start: number = 0, end: number = this._len): T[] {
+    return this._buffer.slice(start, Math.min(end, this._len));
   }
 
   /**
@@ -383,11 +383,11 @@ export class Vec<T> implements Iterable<T> {
    * vec.splice(1, 2, 5, 6); // Returns [2, 3], vec is now [1, 5, 6, 4]
    */
   splice(start: number, deleteCount: number, items?: Iterable<T>): T[] {
-    const s = start < 0 ? Math.max(0, this.__len + start) : Math.min(start, this.__len);
-    const d = Math.min(Math.max(0, deleteCount), this.__len - s);
+    const s = start < 0 ? Math.max(0, this._len + start) : Math.min(start, this._len);
+    const d = Math.min(Math.max(0, deleteCount), this._len - s);
     const itemsArr = items ? [...items] : [];
-    const deleted = this.__buffer.splice(s, d, ...itemsArr);
-    this.__len -= d - itemsArr.length;
+    const deleted = this._buffer.splice(s, d, ...itemsArr);
+    this._len -= d - itemsArr.length;
     return deleted;
   }
 
@@ -404,12 +404,12 @@ export class Vec<T> implements Iterable<T> {
     if (newLength < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    if (newLength > this.__len) {
-      for (let i = this.__len; i < newLength; i++) {
-        this.__buffer[i] = value;
+    if (newLength > this._len) {
+      for (let i = this._len; i < newLength; i++) {
+        this._buffer[i] = value;
       }
     }
-    this.__len = newLength;
+    this._len = newLength;
   }
 
   /**
@@ -425,12 +425,12 @@ export class Vec<T> implements Iterable<T> {
     if (newLength < 0) {
       throw new Error(OUT_OF_BOUNDS);
     }
-    if (newLength > this.__len) {
-      for (let i = this.__len; i < newLength; i++) {
-        this.__buffer[i] = callback(i);
+    if (newLength > this._len) {
+      for (let i = this._len; i < newLength; i++) {
+        this._buffer[i] = callback(i);
       }
     }
-    this.__len = newLength;
+    this._len = newLength;
   }
 
   /**
@@ -456,16 +456,16 @@ export class Vec<T> implements Iterable<T> {
   retain(predicate: (value: T, index: number) => boolean): void {
     let writeIndex = 0;
 
-    for (let readIndex = 0; readIndex < this.__len; readIndex++) {
-      if (predicate(this.__buffer[readIndex], readIndex)) {
+    for (let readIndex = 0; readIndex < this._len; readIndex++) {
+      if (predicate(this._buffer[readIndex], readIndex)) {
         if (writeIndex !== readIndex) {
-          this.__buffer[writeIndex] = this.__buffer[readIndex];
+          this._buffer[writeIndex] = this._buffer[readIndex];
         }
         writeIndex++;
       }
     }
 
-    this.__len = writeIndex;
+    this._len = writeIndex;
   }
 
   /**
@@ -494,17 +494,17 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   drain(range: { start?: number; end?: number } = {}): Vec<T> {
-    const len = this.__len;
+    const len = this._len;
     const start = range.start ?? 0;
     const end = range.end ?? len;
     if (start < 0 || end > len || start > end) {
       throw new Error('Invalid range');
     }
-    const drainedElements = this.__buffer.slice(start, end);
+    const drainedElements = this._buffer.slice(start, end);
     const drainedVec = new Vec(drainedElements);
     // Remove drained elements from the original Vec
-    this.__buffer.splice(start, end - start);
-    this.__len -= drainedElements.length;
+    this._buffer.splice(start, end - start);
+    this._len -= drainedElements.length;
     return drainedVec;
   }
 
@@ -530,18 +530,18 @@ export class Vec<T> implements Iterable<T> {
   drainBy(p: (value: T) => boolean): Vec<T> {
     const matching = Vec.new<T>();
     let wi = 0;
-    for (let ri = 0; ri < this.__len; ri++) {
-      const value = this.__buffer[ri];
+    for (let ri = 0; ri < this._len; ri++) {
+      const value = this._buffer[ri];
       if (p(value)) {
         matching.push(value);
       } else {
         if (wi !== ri) {
-          this.__buffer[wi] = value;
+          this._buffer[wi] = value;
         }
         wi++;
       }
     }
-    this.__len = wi;
+    this._len = wi;
     return matching;
   }
 
@@ -562,18 +562,18 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   dedup(eq?: (a: T, b: T) => boolean): void {
-    if (this.__len <= 1) return;
+    if (this._len <= 1) return;
     const isEqual = eq || keysEqual;
     let wi = 1;
-    for (let ri = 1; ri < this.__len; ri++) {
-      if (!isEqual(this.__buffer[wi - 1], this.__buffer[ri])) {
+    for (let ri = 1; ri < this._len; ri++) {
+      if (!isEqual(this._buffer[wi - 1], this._buffer[ri])) {
         if (wi !== ri) {
-          this.__buffer[wi] = this.__buffer[ri];
+          this._buffer[wi] = this._buffer[ri];
         }
         wi++;
       }
     }
-    this.__len = wi;
+    this._len = wi;
   }
 
   /**
@@ -628,8 +628,8 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   splitAtUnchecked(mid: number): [Vec<T>, Vec<T>] {
-    if (mid > this.__len) throw new Error(OUT_OF_BOUNDS);
-    return [new Vec(this.__buffer.slice(0, mid)), new Vec(this.__buffer.slice(mid, this.__len))];
+    if (mid > this._len) throw new Error(OUT_OF_BOUNDS);
+    return [new Vec(this._buffer.slice(0, mid)), new Vec(this._buffer.slice(mid, this._len))];
   }
 
   /**
@@ -670,7 +670,7 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   splitAt(mid: number): Option<[Vec<T>, Vec<T>]> {
-    if (mid <= this.__len) {
+    if (mid <= this._len) {
       return Some(this.splitAtUnchecked(mid));
     } else {
       return None;
@@ -693,7 +693,7 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   splitFirst(): Option<[T, Vec<T>]> {
-    return this.__len ? Some([this.__buffer[0], new Vec(this.__buffer.slice(1))]) : None;
+    return this._len ? Some([this._buffer[0], new Vec(this._buffer.slice(1))]) : None;
   }
 
   /**
@@ -712,8 +712,8 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   splitLast(): Option<[T, Vec<T>]> {
-    return this.__len
-      ? Some([this.__buffer[this.__len - 1], new Vec(this.__buffer.slice(0, -1))])
+    return this._len
+      ? Some([this._buffer[this._len - 1], new Vec(this._buffer.slice(0, -1))])
       : None;
   }
 
@@ -733,14 +733,14 @@ export class Vec<T> implements Iterable<T> {
    * @throws If index is out of bounds
    */
   splitOff(index: number): Vec<T> {
-    if (index > this.__len) {
+    if (index > this._len) {
       throw new Error(OUT_OF_BOUNDS);
     }
     const rightPart = Vec.new<T>();
-    for (let i = index; i < this.__len; i++) {
-      rightPart.push(this.__buffer[i]);
+    for (let i = index; i < this._len; i++) {
+      rightPart.push(this._buffer[i]);
     }
-    this.__len = index;
+    this._len = index;
     return rightPart;
   }
 
@@ -760,11 +760,11 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   sort(compare: (a: T, b: T) => number = defaultCmp): void {
-    if (this.__len <= 1) return;
-    this.__buffer
-      .slice(0, this.__len)
+    if (this._len <= 1) return;
+    this._buffer
+      .slice(0, this._len)
       .sort(compare)
-      .forEach((value, i) => (this.__buffer[i] = value));
+      .forEach((value, i) => (this._buffer[i] = value));
   }
 
   /**
@@ -812,22 +812,22 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   sortUnstable(compare: (a: T, b: T) => number = defaultCmp): void {
-    if (this.__len <= 1) return;
+    if (this._len <= 1) return;
     const swap = (i: number, j: number) => {
-      [this.__buffer[i], this.__buffer[j]] = [this.__buffer[j], this.__buffer[i]];
+      [this._buffer[i], this._buffer[j]] = [this._buffer[j], this._buffer[i]];
     };
     const sort = (l: number, h: number): void => {
       if (l >= h) return;
-      const p = this.__buffer[h];
+      const p = this._buffer[h];
       let i = l - 1;
       for (let j = l; j < h; j++) {
-        if (compare(this.__buffer[j], p) <= 0) swap(++i, j);
+        if (compare(this._buffer[j], p) <= 0) swap(++i, j);
       }
       swap(i + 1, h);
       sort(l, i);
       sort(i + 2, h);
     };
-    sort(0, this.__len - 1);
+    sort(0, this._len - 1);
   }
 
   /**
@@ -844,9 +844,9 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   isSorted(compare: (a: T, b: T) => number = defaultCmp): boolean {
-    if (this.__len <= 1) return true;
-    for (let i = 1; i < this.__len; i++) {
-      if (compare(this.__buffer[i - 1], this.__buffer[i]) > 0) {
+    if (this._len <= 1) return true;
+    for (let i = 1; i < this._len; i++) {
+      if (compare(this._buffer[i - 1], this._buffer[i]) > 0) {
         return false;
       }
     }
@@ -888,8 +888,8 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   fill(value: T): void {
-    for (let i = 0; i < this.__len; i++) {
-      this.__buffer[i] = value;
+    for (let i = 0; i < this._len; i++) {
+      this._buffer[i] = value;
     }
   }
 
@@ -911,8 +911,20 @@ export class Vec<T> implements Iterable<T> {
    * ```
    */
   fillWith(f: (index: number) => T): void {
-    for (let i = 0; i < this.__len; i++) {
-      this.__buffer[i] = f(i);
+    for (let i = 0; i < this._len; i++) {
+      this._buffer[i] = f(i);
     }
+  }
+
+  toJSON() {
+    return this.asSlice();
+  }
+
+  toString() {
+    return this.asSlice();
+  }
+
+  valueOf() {
+    return this.asSlice();
   }
 }

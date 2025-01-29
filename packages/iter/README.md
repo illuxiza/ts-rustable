@@ -87,6 +87,45 @@ range(0, 5)
 - `forEach(fn)` - Execute for each element
 - `find(predicate)` - Find first matching element
 
+## Advanced Features
+
+For more advanced iterator operations, you can import them from `@rustable/iter/advanced`:
+
+```typescript
+import { iter } from '@rustable/iter';
+import '@rustable/iter/advanced';
+
+// Numeric operations
+iter([1, 2, 3, 4]).sum(); // 10
+iter([1, 2, 3, 4]).product(); // 24
+
+// Comparison operations
+iter([1, 4, 2, 3]).max(); // Some(4)
+iter([1, 4, 2, 3]).min(); // Some(1)
+
+// Partitioning
+iter([1, 2, 3, 4, 5])
+  .partition(x => x % 2 === 0); // [[2, 4], [1, 3, 5]]
+
+// Chunking
+iter([1, 2, 3, 4])
+  .chunks(2); // [[1, 2], [3, 4]]
+
+// Windows
+iter([1, 2, 3, 4])
+  .windows(2); // [[1, 2], [2, 3], [3, 4]]
+
+// Scanning
+iter([1, 2, 3])
+  .scan(0, (sum, x) => sum + x); // [1, 3, 6]
+
+// Grouping
+iter([1, 1, 2, 3, 3])
+  .groupBy(x => x); // [[1, [1, 1]], [2, [2]], [3, [3, 3]]]
+```
+
+These advanced features are separated to keep the core package lightweight. Import them only when needed.
+
 ## Examples
 
 ### Lazy Evaluation

@@ -1,5 +1,6 @@
 import { Trait, TraitStaticMethods } from '@rustable/trait';
-import { Constructor, createFactory, named, NOT_IMPLEMENTED, type, Type } from '@rustable/utils';
+import { Constructor, createFactory, named, type, Type } from '@rustable/utils';
+import { NotImplementedError } from 'packages/trait/src';
 
 /**
  * From trait for type conversion.
@@ -47,13 +48,13 @@ class FromTrait extends Trait {
    * @throws {Error} If conversion is not implemented
    */
   static from<T>(_value: T): any {
-    throw NOT_IMPLEMENTED;
+    throw new NotImplementedError();
   }
   static implInto<C extends Constructor>(
     _target: C,
     _implementation?: TraitStaticMethods<C, typeof FromTrait>,
   ): void {
-    throw NOT_IMPLEMENTED;
+    throw new NotImplementedError();
   }
 }
 
@@ -108,7 +109,7 @@ class IntoTrait<T> extends Trait {
    * @param targetType
    */
   into(): T {
-    throw NOT_IMPLEMENTED;
+    throw new NotImplementedError();
   }
 }
 

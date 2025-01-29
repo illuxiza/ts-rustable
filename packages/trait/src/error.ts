@@ -4,7 +4,6 @@
 export class TraitError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = 'TraitError';
   }
 }
 
@@ -16,7 +15,12 @@ export class MultipleImplementationError extends TraitError {
     super(
       `Multiple implementations of method ${methodName} for ${targetName}, please use useTrait`,
     );
-    this.name = 'MultipleImplementationError';
+  }
+}
+
+export class NotImplementedError extends TraitError {
+  constructor() {
+    super('Not implemented.');
   }
 }
 
@@ -26,7 +30,6 @@ export class MultipleImplementationError extends TraitError {
 export class TraitNotImplementedError extends TraitError {
   constructor(targetName: string, traitName: string) {
     super(`Trait ${traitName} not implemented for ${targetName}`);
-    this.name = 'TraitNotImplementedError';
   }
 }
 
@@ -36,6 +39,5 @@ export class TraitNotImplementedError extends TraitError {
 export class MethodNotImplementedError extends TraitError {
   constructor(traitName: string, methodName: string) {
     super(`Method ${methodName} not defined in trait ${traitName}`);
-    this.name = 'MethodNotImplementedError';
   }
 }
