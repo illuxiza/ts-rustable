@@ -25,25 +25,25 @@ pnpm add @rustable/utils
 import { stringify } from '@rustable/utils';
 
 // Basic value stringification
-stringify(42);              // '42'
-stringify('hello');         // 'hello'
-stringify(null);           // ''
-stringify(undefined);      // ''
+stringify(42); // '42'
+stringify('hello'); // 'hello'
+stringify(null); // ''
+stringify(undefined); // ''
 
 // Complex object stringification
 const user = {
   name: 'John',
-  info: { age: 30 }
+  info: { age: 30 },
 };
-stringify(user);  // '{info:{age:30},name:"John"}'
+stringify(user); // '{info:{age:30},name:"John"}'
 
 // Special types
-stringify(Symbol('key'));  // 'Symbol(key)'
-stringify(42n);           // '42'
-stringify(() => {});      // 'function...'
+stringify(Symbol('key')); // 'Symbol(key)'
+stringify(42n); // '42'
+stringify(() => {}); // 'function...'
 
 // Arrays and Maps
-stringify([1, 2, 3]);     // '[1,2,3]'
+stringify([1, 2, 3]); // '[1,2,3]'
 stringify(new Map([['a', 1]])); // 'Map{a:1}'
 
 // Dates
@@ -59,16 +59,16 @@ stringify(new Date(1234567890)); // 'Date("1234567890")'
 import { hash } from '@rustable/utils';
 
 // Primitive values
-hash('hello');         // djb2 hash of the string
-hash(42);             // 42 (number as is)
-hash(true);           // 1
-hash(false);          // 0
-hash(null);           // -1
-hash(undefined);      // -1
+hash('hello'); // djb2 hash of the string
+hash(42); // 42 (number as is)
+hash(true); // 1
+hash(false); // 0
+hash(null); // -1
+hash(undefined); // -1
 
 // Objects are hashed based on their string representation
 const obj = { x: 1, y: 2 };
-hash(obj);            // hash of '{x:1,y:2}'
+hash(obj); // hash of '{x:1,y:2}'
 ```
 
 ### Object Cloning (`clone.ts`)
@@ -83,15 +83,18 @@ import { deepClone } from '@rustable/utils';
 
 // Clone primitive values
 const num = deepClone(42);
-const str = deepClone("hello");
+const str = deepClone('hello');
 
 // Clone complex objects
 const original = {
   date: new Date(),
   regex: /test/g,
   set: new Set([1, 2, 3]),
-  map: new Map([['a', 1], ['b', 2]]),
-  nested: { array: [1, 2, 3] }
+  map: new Map([
+    ['a', 1],
+    ['b', 2],
+  ]),
+  nested: { array: [1, 2, 3] },
 };
 
 const cloned = deepClone(original);
@@ -104,7 +107,10 @@ const cloned = deepClone(original);
 
 // Custom clone method support
 class Point {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
   clone() {
     return new Point(this.x, this.y);
   }
@@ -124,17 +130,17 @@ const clonedPoint = deepClone(point); // Uses Point's clone method
 import { equals } from '@rustable/utils';
 
 // Compare primitive values
-equals(42, 42);              // true
-equals("hello", "hello");    // true
+equals(42, 42); // true
+equals('hello', 'hello'); // true
 
 // Compare objects
-equals({ x: 1 }, { x: 1 });  // true
-equals([1, 2], [1, 2]);      // true
+equals({ x: 1 }, { x: 1 }); // true
+equals([1, 2], [1, 2]); // true
 
 // Compare nested structures
 const obj1 = { data: { points: [1, 2] } };
 const obj2 = { data: { points: [1, 2] } };
-equals(obj1, obj2);          // true
+equals(obj1, obj2); // true
 ```
 
 ### Value Management (`val.ts`)
@@ -153,12 +159,12 @@ const val = Val(original);
 // Modifications don't affect original
 val.count = 1;
 val.data.push(4);
-console.log(original.count);     // Still 0
-console.log(original.data);      // Still [1, 2, 3]
+console.log(original.count); // Still 0
+console.log(original.data); // Still [1, 2, 3]
 
 // Access original through symbol
 const originalRef = val[Val.ptr];
-console.log(originalRef === original);  // true
+console.log(originalRef === original); // true
 ```
 
 ### Pointer Management (`ptr.ts`)
@@ -174,21 +180,23 @@ import { Ptr } from '@rustable/utils';
 // Basic pointer usage with method support
 class Counter {
   count = 0;
-  increment() { this.count++; }
+  increment() {
+    this.count++;
+  }
 }
 
 let counter = new Counter();
 const ptr = Ptr({
   get: () => counter,
-  set: (v) => counter = v
+  set: (v) => (counter = v),
 });
 
 // Method calls and property access work transparently
 ptr.increment();
-console.log(counter.count);  // 1
+console.log(counter.count); // 1
 
 // Value replacement
-Ptr.replace(ptr, new Counter());
+ptr[Ptr.ptr] = new Counter();
 ```
 
 ## Advanced Usage
@@ -201,27 +209,27 @@ import { Ptr, Val, stringify, equals } from '@rustable/utils';
 // Safe reference with immutable copies
 class SafeReference<T> {
   private ptr: Ptr<T>;
-  
+
   constructor(value: T) {
-    let current = Val(value);  // Immutable copy
+    let current = Val(value); // Immutable copy
     this.ptr = Ptr({
       get: () => current,
-      set: (v) => current = Val(v)  // New immutable copy on set
+      set: (v) => (current = Val(v)), // New immutable copy on set
     });
   }
-  
+
   get value(): T {
     return this.ptr[Ptr.ptr];
   }
-  
+
   modify(fn: (value: T) => T) {
     Ptr.replace(this.ptr, fn(this.value));
   }
-  
+
   toString() {
     return stringify(this.value);
   }
-  
+
   equals(other: T) {
     return equals(this.value, other);
   }
@@ -229,9 +237,9 @@ class SafeReference<T> {
 
 // Usage example combining multiple features
 const ref = new SafeReference({ data: [1, 2, 3] });
-ref.modify(val => ({ data: [...val.data, 4] }));
-console.log(ref.toString());  // '{data:[1,2,3,4]}'
-console.log(ref.equals({ data: [1, 2, 3, 4] }));  // true
+ref.modify((val) => ({ data: [...val.data, 4] }));
+console.log(ref.toString()); // '{data:[1,2,3,4]}'
+console.log(ref.equals({ data: [1, 2, 3, 4] })); // true
 ```
 
 ## Notes

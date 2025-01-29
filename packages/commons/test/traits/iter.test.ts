@@ -1,5 +1,5 @@
 import { HashMap, HashSet, Vec } from '@rustable/commons';
-import { derive } from '@rustable/utils';
+import { derive } from '@rustable/type';
 import { Iter } from '../../src/traits/iter';
 
 @derive(Iter)

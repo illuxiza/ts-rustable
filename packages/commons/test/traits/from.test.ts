@@ -1,4 +1,4 @@
-import { Type } from '../../../utils';
+import { Type } from '../../../type';
 import { from, From, Into } from '../../src/traits/from';
 
 // Example classes for testing

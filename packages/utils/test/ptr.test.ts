@@ -1,6 +1,6 @@
 import { Ptr } from '../src/ptr';
 
-describe('Mut', () => {
+describe('Ptr', () => {
   it('should get and set object properties through getter/setter', () => {
     let obj = { name: 'Alice', age: 30 };
     const m = Ptr({
@@ -263,7 +263,7 @@ describe('Mut', () => {
     class Counter {
       private numbers: number[] = [];
 
-      // 可变方法：直接修改对象内部状态
+      // Mutable method: directly modifies the object's internal state
       add(n: number) {
         this.numbers.push(n);
         return this.sum();
@@ -280,12 +280,12 @@ describe('Mut', () => {
         this.numbers = [];
       }
 
-      // 非可变方法：不修改对象状态，只返回新值
+      // Immutable method: does not modify the object's state, only returns a new value
       sum() {
         return this.numbers.reduce((a, b) => a + b, 0);
       }
 
-      // 非可变方法：返回新数组
+      // Immutable method: returns a new array
       getNumbers() {
         return [...this.numbers];
       }
@@ -299,7 +299,7 @@ describe('Mut', () => {
       },
     });
 
-    // 测试可变方法
+    // Test mutable methods
     m.add(5);
     expect(counter.getNumbers()).toEqual([5]);
 
@@ -312,146 +312,20 @@ describe('Mut', () => {
     m.clear();
     expect(counter.getNumbers()).toEqual([]);
 
-    // 测试非可变方法
+    // Test immutable methods
     m.add(2);
     m.add(4);
     expect(m.sum()).toBe(6);
 
-    // 获取的数组是副本，修改它不会影响原对象
+    // The returned array is a copy, modifying it does not affect the original object
     const numbers = m.getNumbers();
     numbers.push(6);
     expect(m.getNumbers()).toEqual([2, 4]);
 
-    // 使用 ptr 替换整个对象
+    // Replace the entire counter object using ptr
     const newCounter = new Counter();
     newCounter.add(10);
     m[Ptr.ptr] = newCounter;
     expect(counter.getNumbers()).toEqual([10]);
-  });
-
-  it('should handle Mut.replace function correctly', () => {
-    // Test with primitive objects
-    let obj = { x: 1, y: 2 };
-    const m = Ptr({
-      get: () => obj,
-      set: (newValue) => {
-        obj = newValue;
-      },
-    });
-
-    // Using Mut.replace
-    Ptr.replace(m, { x: 3, y: 4 });
-    expect(obj).toEqual({ x: 3, y: 4 });
-
-    // Compare with ptr assignment
-    const m2 = Ptr({
-      get: () => obj,
-      set: (newValue) => {
-        obj = newValue;
-      },
-    });
-    m2[Ptr.ptr] = { x: 5, y: 6 };
-    expect(obj).toEqual({ x: 5, y: 6 });
-
-    // Test with arrays
-    let arr = [1, 2, 3];
-    const arrMut = Ptr({
-      get: () => arr,
-      set: (newValue) => {
-        arr = newValue;
-      },
-    });
-
-    Ptr.replace(arrMut, [4, 5, 6]);
-    expect(arr).toEqual([4, 5, 6]);
-
-    // Test with complex objects
-    interface ComplexObj {
-      id: number;
-      data: {
-        name: string;
-        items: string[];
-      };
-    }
-
-    let complex: ComplexObj = {
-      id: 1,
-      data: {
-        name: 'test',
-        items: ['a', 'b'],
-      },
-    };
-
-    const complexMut = Ptr({
-      get: () => complex,
-      set: (newValue) => {
-        complex = newValue;
-      },
-    });
-
-    // Replace with new complex object
-    Ptr.replace(complexMut, {
-      id: 2,
-      data: {
-        name: 'new',
-        items: ['c', 'd'],
-      },
-    });
-
-    expect(complex).toEqual({
-      id: 2,
-      data: {
-        name: 'new',
-        items: ['c', 'd'],
-      },
-    });
-
-    // Test with class instances
-    class Person {
-      constructor(
-        public name: string,
-        public age: number,
-      ) {}
-
-      greet() {
-        return `Hello, ${this.name}`;
-      }
-    }
-
-    let person = new Person('Alice', 30);
-    const personMut = Ptr({
-      get: () => person,
-      set: (newValue) => {
-        person = newValue;
-      },
-    });
-
-    Ptr.replace(personMut, new Person('Bob', 25));
-    expect(person.name).toBe('Bob');
-    expect(person.age).toBe(25);
-    expect(person.greet()).toBe('Hello, Bob');
-
-    // Test with built-in objects
-    let date = new Date('2024-01-01');
-    const dateMut = Ptr({
-      get: () => date,
-      set: (newValue) => {
-        date = newValue;
-      },
-    });
-
-    Ptr.replace(dateMut, new Date('2024-12-31'));
-    expect(date.toISOString()).toBe('2024-12-31T00:00:00.000Z');
-
-    let set = new Set([1, 2, 3]);
-    const setMut = Ptr({
-      get: () => set,
-      set: (newValue) => {
-        set = newValue;
-      },
-    });
-
-    Ptr.replace(setMut, new Set([4, 5, 6]));
-    expect([...set]).toEqual([4, 5, 6]);
   });
 });

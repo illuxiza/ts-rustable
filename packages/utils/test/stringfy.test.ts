@@ -149,14 +149,14 @@ describe('stringify', () => {
       [obj1, 'value1'],
       [obj2, { nested: true }],
     ]);
-    expect(stringify(map)).toBe('Map{{id:1}:"value1",{id:2}:{nested:true}}');
+    expect(stringify(map)).toBe('Map{[{id:1},"value1"],[{id:2},{nested:true}]}');
   });
 
   it('should handle recursive structures with Maps', () => {
     const map = new Map<string, any>();
     const obj = { map };
     map.set('self', obj);
-    expect(stringify(obj)).toMatch(/#0\{map:Map\{"self":#0\}\}/);
+    expect(stringify(obj)).toMatch(/#0\{map:Map\{\["self",#0\]\}\}/);
   });
 
   it('should handle special number values', () => {
@@ -172,7 +172,7 @@ describe('stringify', () => {
 
   it('should handle Set with complex values', () => {
     const set = new Set([{ a: 1 }, [1, 2], new Map<string, string>([['key', 'value']])]);
-    expect(stringify(set)).toBe('Set{{a:1},[1,2],Map{"key":"value"}}');
+    expect(stringify(set)).toBe('Set{{a:1},[1,2],Map{["key","value"]}}');
   });
 
   it('should handle empty iterables', () => {

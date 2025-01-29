@@ -104,9 +104,9 @@ export namespace Enums {
       throw new Error('Invalid arguments for create function');
     }
     const variants = arg2 || (arg1 as U);
-    for (const [variantName, _variantFunc] of Object.entries(variants)) {
+    for (const [variantName] of Object.entries(variants)) {
       Object.defineProperty(Anonymous, variantName, {
-        value: (...args: Parameters<typeof _variantFunc>) => new Anonymous(variantName, ...args),
+        value: (...args: any[]) => new Anonymous(variantName, ...args),
         writable: false,
         configurable: false,
       });

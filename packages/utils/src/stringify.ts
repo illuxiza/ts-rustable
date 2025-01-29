@@ -58,20 +58,9 @@ function stringifyObject(obj: any): string {
   let nextRefId = 0;
 
   function scanObject(value: any) {
-    if (
-      value === null ||
-      typeof value === 'undefined' ||
-      Object.is(value, NaN) ||
-      typeof value === 'string' ||
-      typeof value === 'number' ||
-      typeof value === 'boolean' ||
-      typeof value === 'function' ||
-      typeof value === 'symbol' ||
-      typeof value === 'bigint'
-    ) {
+    if (!(typeof value === 'object')) {
       return;
     }
-
     const existing = objectRefs.get(value);
     if (existing) {
       existing.count++;
@@ -80,19 +69,12 @@ function stringifyObject(obj: any): string {
 
     objectRefs.set(value, { count: 1 });
 
-    if (Array.isArray(value)) {
-      value.forEach(scanObject);
-    } else if (value instanceof Map) {
-      Array.from(value.entries()).forEach(([k, v]) => {
-        scanObject(k);
-        scanObject(v);
-      });
-    } else if (value[Symbol.iterator] && typeof value !== 'string') {
-      Array.from(value).forEach(scanObject);
+    if (value[Symbol.iterator]) {
+      for (const item of value) {
+        scanObject(item);
+      }
     } else {
-      Object.keys(value)
-        .sort()
-        .forEach((key) => scanObject(value[key]));
+      Object.keys(value).forEach((key) => scanObject(value[key]));
     }
   }
 
@@ -100,11 +82,11 @@ function stringifyObject(obj: any): string {
   scanObject(obj);
 
   // Assign IDs only to objects referenced more than once
-  objectRefs.forEach((info, _) => {
+  for (const [_, info] of objectRefs) {
     if (info.count > 1) {
       info.id = nextRefId++;
     }
-  });
+  }
 
   // Second pass: generate string representation
   const processedRefs = new Set<any>();
@@ -116,17 +98,15 @@ function stringifyObject(obj: any): string {
     if (Object.is(value, NaN)) {
       return 'NaN';
     }
-    if (typeof value === 'function' || typeof value === 'symbol' || typeof value === 'bigint') {
-      return value.toString();
+    if (typeof value === 'string') {
+      return `"${value}"`;
     }
     if (typeof value !== 'object') {
-      return JSON.stringify(value);
+      return value.toString();
     }
-
     if (value instanceof Date) {
       return `Date("${value.getTime()}")`;
     }
-
     const ref = objectRefs.get(value);
     if (ref?.id !== undefined) {
       if (processedRefs.has(value)) {
@@ -136,18 +116,10 @@ function stringifyObject(obj: any): string {
     }
 
     let result = '';
-    if (Array.isArray(value)) {
-      const items = value.map(stringifyValue);
-      result = '[' + items.join(',') + ']';
-    } else if (value instanceof Map) {
-      const entries = Array.from(value.entries())
-        .map(([k, v]) => `${stringifyValue(k)}:${stringifyValue(v)}`)
-        .join(',');
-      result = `Map{${entries}}`;
-    } else if (value[Symbol.iterator] && typeof value !== 'string') {
+    if (value[Symbol.iterator]) {
       const elements = Array.from(value).map(stringifyValue).join(',');
       const typeName = value.constructor.name;
-      result = typeName !== 'Object' ? `${typeName}{${elements}}` : `[${elements}]`;
+      result = typeName !== 'Array' ? `${typeName}{${elements}}` : `[${elements}]`;
     } else {
       const pairs = Object.keys(value)
         .sort()

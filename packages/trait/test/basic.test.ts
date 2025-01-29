@@ -1,4 +1,4 @@
-import { derive } from '@rustable/utils';
+import { derive } from '@rustable/type';
 import { macroTrait, Trait } from '../src/trait';
 
 // Basic trait interfaces

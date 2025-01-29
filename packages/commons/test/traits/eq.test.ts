@@ -1,4 +1,4 @@
-import { derive } from '@rustable/utils';
+import { derive } from '@rustable/type';
 import { Eq } from '../../src/traits/eq';
 
 @derive([Eq])

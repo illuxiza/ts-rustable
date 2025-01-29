@@ -714,7 +714,7 @@ export function macroTrait<C extends Constructor, T extends TraitConstructor>(
   return createFactory(trait, factoryFn);
 }
 
-export function tryImplTrait<C extends Constructor, T extends TraitConstructor>(
+function tryImplTrait<C extends Constructor, T extends TraitConstructor>(
   target: C,
   trait: T,
   implementation?: TraitImplementation<C, T>,

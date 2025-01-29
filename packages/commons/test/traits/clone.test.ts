@@ -1,4 +1,4 @@
-import { derive } from '@rustable/utils';
+import { derive } from '@rustable/type';
 import { Clone } from '../../src/traits/clone';
 
 describe('Clone trait', () => {

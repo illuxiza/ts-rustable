@@ -1,4 +1,4 @@
-import { Type } from '@rustable/utils';
+import { Type } from '@rustable/type';
 import { Trait } from '../src/trait';
 
 describe('Trait Type System', () => {

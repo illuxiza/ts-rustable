@@ -27,7 +27,7 @@ const typeIdMap = new WeakMap<object, TypeId>();
  * const id3 = typeId(Container, [String]); // TypeId for Container<String>
  * const id4 = typeId(Container, [Number]); // Different TypeId for Container<Number>
  */
-export type TypeId = string & { readonly __type: unique symbol };
+export type TypeId = string & { readonly _type: unique symbol };
 
 /**
  * Generates a new unique type ID using a timestamp and random value.
@@ -37,10 +37,6 @@ export type TypeId = string & { readonly __type: unique symbol };
  * @returns A new unique TypeId
  */
 let i = 0;
-
-function generateTypeId(type: Constructor): TypeId {
-  return `${++i}:${type.name}` as TypeId;
-}
 
 /**
  * Gets or creates a unique type ID for a value.
@@ -74,17 +70,7 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   }
 
   // Get the constructor if target is an instance
-  let constructor: Constructor;
-  if (typeof target === 'object') {
-    constructor = Type(target.constructor, genericParams);
-  } else if (typeof target === 'function' && target.prototype) {
-    constructor = Type(target, genericParams);
-  } else if (target.constructor) {
-    // If target is a primitive value, get its constructor
-    constructor = Type(target.constructor, genericParams);
-  } else {
-    constructor = target;
-  }
+  const constructor = Type(type(target), genericParams);
 
   // Return existing ID if available
   const existingId = typeIdMap.get(constructor);
@@ -93,7 +79,7 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   }
 
   // Create and store new ID
-  const id = generateTypeId(constructor);
+  const id = `${++i}:${type.name}` as TypeId;
   typeIdMap.set(constructor, id);
   return id;
 }

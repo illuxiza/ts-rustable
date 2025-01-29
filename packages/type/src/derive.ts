@@ -39,7 +39,7 @@ export type MarcoFn<T extends Constructor = any> = (target: T, ...args: any[]) =
  * ```
  */
 export function derive<T extends Constructor>(fns: MarcoFn<T> | MarcoFn<T>[]) {
-  return function (target: T) {
+  return (target: T) => {
     // Apply each derive function in sequence
     if (Array.isArray(fns)) {
       fns.forEach((fn) => fn(target));
@@ -68,7 +68,5 @@ export function derive<T extends Constructor>(fns: MarcoFn<T> | MarcoFn<T>[]) {
  * ```
  */
 export function applyMacros<T extends Constructor>(macros: MarcoFn<T> | MarcoFn<T>[]) {
-  return function (target: T) {
-    return derive(macros)(target);
-  };
+  return (target: T) => derive(macros)(target);
 }

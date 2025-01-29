@@ -4,50 +4,46 @@ interface PtrAccessors<T> {
 }
 
 /**
+ * Symbol used as a unique key for the pointer function.
+ */
+const symbol = Symbol('ptr.ptr');
+
+/**
  * Creates a ptrable reference that behaves like the original object
  * @param accessors Getter and setter functions
  * @returns A Ptr instance that behaves like the original object
  */
-export function Ptr<T>(accessors: PtrAccessors<T>): Ptr<T> {
-  const { get, set } = accessors;
-
-  return new Proxy({} as Ptr<T>, {
-    get(_, prop) {
-      const current = get();
-      if (prop === Ptr.ptr) {
-        return current;
-      }
-      const target = current as any;
-      return typeof target[prop] === 'function'
-        ? (target[prop] as Function).bind(target)
-        : target[prop];
-    },
-    set(_, prop, value) {
-      const current = get();
-      if (prop === Ptr.ptr) {
-        set(value);
+export function Ptr<T>({ get, set }: PtrAccessors<T>): Ptr<T> {
+  return new Proxy(
+    {},
+    {
+      get(_, prop) {
+        const current = get();
+        if (prop === symbol) {
+          return current;
+        }
+        const target = current as any;
+        return typeof target[prop] === 'function'
+          ? (target[prop] as Function).bind(target)
+          : target[prop];
+      },
+      set(_, prop, value) {
+        const current = get();
+        if (prop === symbol) {
+          set(value);
+          return true;
+        }
+        (current as any)[prop] = value;
         return true;
-      }
-      (current as any)[prop] = value;
-      return true;
+      },
     },
-  });
+  ) as Ptr<T>;
 }
 
-export namespace Ptr {
-  /**
-   * Symbol used as a unique key for the pointer function.
-   */
-  export const ptr = Symbol('ptr.ptr');
-  /**
-   * Replaces the entire value of a Ptr object.
-   * @param current The Ptr object to modify.
-   * @param newValue The new value to set.
-   */
-  export const replace = <T>(current: Ptr<T>, newValue: T) => {
-    current[Ptr.ptr] = newValue;
-  };
-}
+/**
+ * Symbol used as a unique key for the pointer function.
+ */
+Ptr.ptr = symbol;
 
 /**
  * Represents a ptrable reference to a value.

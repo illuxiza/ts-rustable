@@ -1,5 +1,5 @@
-import { derive } from '@rustable/utils';
-import { macroTrait, trait, Trait } from '../src/trait';
+import { derive } from '@rustable/type';
+import { macroTrait, Trait } from '../src/trait';
 
 describe('Advanced Trait Features', () => {
   describe('Multiple Method Traits', () => {
@@ -173,7 +173,6 @@ describe('Advanced Trait Features', () => {
     });
   });
   describe('Mixed Instance and Static Methods', () => {
-    @trait
     class MixedTrait extends Trait {
       static staticMethod(): string {
         return 'default static method';

@@ -1,4 +1,4 @@
-import { derive } from '@rustable/utils';
+import { derive } from '@rustable/type';
 import { Default, defaultVal } from '../../src/traits/default';
 
 describe('Default trait', () => {

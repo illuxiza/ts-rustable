@@ -1,6 +1,11 @@
 import { deepClone } from './clone';
 
 /**
+ * Symbol used as a unique key for the pointer function.
+ */
+const symbol = Symbol('val.ptr');
+
+/**
  * Internal implementation of the Val functionality.
  * Creates a Proxy that maintains a deep clone of the original value,
  * allowing modifications to the valerence while preserving the original.
@@ -13,7 +18,7 @@ export function Val<T>(value: T): Val<T> {
   const cloned: Val<T> = deepClone(value) as any;
   return new Proxy(cloned, {
     get(target: any, prop: any) {
-      if (prop === Val.ptr) {
+      if (prop === symbol) {
         return value;
       }
       return typeof target[prop] === 'function'
@@ -21,7 +26,7 @@ export function Val<T>(value: T): Val<T> {
         : target[prop];
     },
     set(target: any, prop: any, value: any) {
-      if (prop === Val.ptr) {
+      if (prop === symbol) {
         return true;
       }
       (target as any)[prop] = value;
@@ -30,12 +35,10 @@ export function Val<T>(value: T): Val<T> {
   });
 }
 
-export namespace Val {
-  /**
-   * Symbol used as a unique key for the pointer function.
-   */
-  export const ptr = Symbol('val.ptr');
-}
+/**
+ * Symbol used as a unique key for the pointer function.
+ */
+Val.ptr = symbol;
 
 /**
  * Represents an immutable valerence to a value.
