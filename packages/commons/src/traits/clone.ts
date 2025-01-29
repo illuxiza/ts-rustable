@@ -38,7 +38,3 @@ class CloneTrait extends Trait {
 export const Clone = macroTrait(CloneTrait);
 
 export interface Clone extends CloneTrait {}
-
-declare global {
-  interface Object extends Clone {}
-}

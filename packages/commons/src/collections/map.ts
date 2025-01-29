@@ -1,5 +1,7 @@
 import { None, Option, Some } from '@rustable/enum';
+import { named } from '@rustable/type';
 import { hash } from '@rustable/utils';
+import { Iter } from '../traits';
 import { Entry, OccupiedEntry, VacantEntry } from './entry';
 import { keysEqual } from './func';
 
@@ -26,6 +28,7 @@ import { keysEqual } from './func';
  * map.remove("a");
  * ```
  */
+@named('HashMap')
 export class HashMap<K, V> implements Iterable<[K, V]> {
   /**
    * Internal storage using a Map with hashed keys.
@@ -473,3 +476,7 @@ export class HashMap<K, V> implements Iterable<[K, V]> {
     return this.len() === 0;
   }
 }
+
+Iter.implFor(HashMap);
+
+export interface HashMap<K, V> extends Iter<[K, V]> {}

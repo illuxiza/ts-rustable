@@ -1,3 +1,5 @@
+const factoryCache = new WeakMap<any, WeakMap<any, any>>();
+
 /**
  * Creates a class factory that allows instantiation both with and without the 'new' keyword
  * @param BaseClass The class to be wrapped
@@ -30,8 +32,6 @@
  * const obj = factory('test'); // returns { name: 'test', timestamp: 123... }
  * const instance = new factory('test'); // returns Person instance
  */
-const factoryCache = new WeakMap<any, WeakMap<any, any>>();
-
 export function createFactory<
   T extends new (...args: any[]) => any,
   P extends any[] = ConstructorParameters<T>,

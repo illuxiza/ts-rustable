@@ -326,14 +326,17 @@ function validNull(target: any) {
  * }
  * ```
  */
-export function named(name: string) {
-  return function (target: any): any {
-    Object.defineProperty(target, 'name', {
+export function named<T>(name: string, target: T): T;
+export function named<T>(name: string): (target: T) => T;
+export function named<T>(name: string, target?: T) {
+  const n = function <T>(t: T): T {
+    Object.defineProperty(t, 'name', {
       value: name,
       writable: false,
       enumerable: false,
       configurable: true,
     });
-    return target;
+    return t;
   };
+  return target ? n(target) : n;
 }

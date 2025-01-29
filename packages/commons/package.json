@@ -17,6 +17,7 @@
   "module": "./lib/index.mjs",
   "source": "./src/index.ts",
   "types": "./lib/index.d.ts",
+  "sideEffects": false,
   "exports": {
     ".": {
       "types": "./lib/index.d.ts",

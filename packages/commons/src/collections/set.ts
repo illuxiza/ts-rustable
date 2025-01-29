@@ -1,3 +1,5 @@
+import { named } from '@rustable/type';
+import { Iter } from '../traits';
 import { HashMap } from './map';
 
 /**
@@ -22,6 +24,7 @@ import { HashMap } from './map';
  * set.remove("a");
  * ```
  */
+@named('HashSet')
 export class HashSet<T> implements Iterable<T> {
   /** Internal storage using HashMap */
   private readonly __map: HashMap<T, void>;
@@ -263,3 +266,7 @@ export class HashSet<T> implements Iterable<T> {
     return other.isSubset(this);
   }
 }
+
+Iter.implFor(HashSet);
+
+export interface HashSet<T> extends Iter<T> {}

@@ -1,7 +1,6 @@
 import { iter, RustIter } from '@rustable/iter';
 import { macroTrait, Trait } from '@rustable/trait';
 import { named } from '@rustable/type';
-import { HashMap, HashSet, Vec } from '../collections';
 
 @named('Iter')
 class IterTrait<T> extends Trait implements Iterable<T> {
@@ -63,22 +62,3 @@ class IterTrait<T> extends Trait implements Iterable<T> {
 export const Iter = macroTrait(IterTrait);
 
 export interface Iter<T> extends IterTrait<T> {}
-
-declare module '../collections' {
-  interface Vec<T> extends Iter<T> {}
-  interface HashMap<K, V> extends Iter<[K, V]> {}
-  interface HashSet<T> extends Iter<T> {}
-}
-
-declare global {
-  interface Array<T> extends Iter<T> {}
-  interface Set<T> extends Iter<T> {}
-  interface Map<K, V> extends Iter<[K, V]> {}
-}
-
-Iter.implFor(Vec);
-Iter.implFor(HashMap);
-Iter.implFor(HashSet);
-Iter.implFor(Set);
-Iter.implFor(Map);
-Iter.implFor(Array);
