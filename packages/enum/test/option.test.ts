@@ -209,15 +209,6 @@ describe('Option', () => {
     });
   });
 
-  describe('Default enum patterns', () => {
-    test('should use default None pattern', () => {
-      const opt = None;
-      const some = Some(42);
-      expect(opt.match({})).toBe(undefined);
-      expect(some.match({})).toBe(42);
-    });
-  });
-
   describe('Static variant methods', () => {
     test('Option.Some should create Some variant', () => {
       const value = 42;

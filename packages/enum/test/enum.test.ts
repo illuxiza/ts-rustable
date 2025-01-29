@@ -1,6 +1,6 @@
 import { Enum, Enums, variant } from '../src/enum';
 
-class TestEnum extends Enum {
+class TestEnum extends Enum<typeof TestEnum> {
   @variant
   static A(): TestEnum {
     return undefined as any;
@@ -49,6 +49,7 @@ describe('Enum System', () => {
         A: () => 'matched A',
         B: (x: number, y: number) => `matched B with ${x}, ${y}`,
       });
+
       expect(matchA).toBe('matched A');
 
       const matchB = enumB.match({
@@ -62,26 +63,36 @@ describe('Enum System', () => {
       const enumA = TestEnum.A();
       const enumB = TestEnum.B(1, 2);
 
-      const defaultPatterns = {
-        A: () => 'default A',
-        B: () => 'default B',
-      };
-
       const matchA = enumA.match(
         {
           A: () => 'custom A',
         },
-        defaultPatterns,
+        'default',
       );
       expect(matchA).toBe('custom A');
 
-      const matchB = enumB.match({}, defaultPatterns);
-      expect(matchB).toBe('default B');
+      const matchB = enumB.match({}, 'default');
+      expect(matchB).toBe('default');
+    });
+
+    it('should support isAnd for conditional execution', () => {
+      const enumA = TestEnum.A();
+      const enumB = TestEnum.B(1, 2);
+
+      const resultA = enumA.let('A', { if: () => 'executed A', else: undefined });
+      expect(resultA).toBe('executed A');
+
+      const resultB = enumB.let('B', { if: (x, y) => x + y, else: undefined });
+      expect(resultB).toBe(3);
+
+      // Should return undefined for non-matching variants
+      const noResultA = enumA.let('B', { if: () => 'should not execute', else: undefined });
+      expect(noResultA).toBeUndefined();
     });
   });
 
   describe('Custom Enum', () => {
-    class Color extends Enum {
+    class Color extends Enum<typeof Color> {
       @variant
       static red(): Color {
         return undefined as any;
@@ -113,6 +124,33 @@ describe('Enum System', () => {
       expect(matchRgb).toBe('rgb(255, 128, 0)');
     });
   });
+
+  describe('Enums.create', () => {
+    it('should support variant-specific isAnd methods', () => {
+      const SimpleEnum = Enums.create({
+        A: () => {},
+        B: (_x: number, _y: string) => {},
+      });
+
+      const a = SimpleEnum.A();
+      const b = SimpleEnum.B(42, 'hello');
+
+      // Test variant-specific isAnd methods
+      const aResult = a.letA({ if: () => 'executed A', else: 'other' });
+      expect(aResult).toBe('executed A');
+
+      const bResult = b.letB({ if: (x, y) => `${x}-${y}`, else: 'other' });
+      expect(bResult).toBe('42-hello');
+
+      // Should return undefined for non-matching variants
+      const noResultA = a.letB({ if: () => 'should not execute', else: undefined });
+      expect(noResultA).toBeUndefined();
+
+      const noResultB = b.letA({ if: () => 'should not execute', else: undefined });
+      expect(noResultB).toBeUndefined();
+    });
+  });
+
   describe('Enum.eq', () => {
     class TestEnum extends Enum {
       @variant static A(): TestEnum {

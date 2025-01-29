@@ -68,14 +68,6 @@ describe('ControlFlow', () => {
   });
 
   describe('Pattern matching', () => {
-    test('should use default patterns when not provided', () => {
-      const continueFlow = Continue(42);
-      const breakFlow = Break('error');
-
-      expect(continueFlow.match({})).toBe(42);
-      expect(breakFlow.match({})).toBe('error');
-    });
-
     test('should handle partial patterns', () => {
       const flow = Continue(42);
       const result = flow.match({

@@ -112,7 +112,7 @@ export class Entry<K, V> extends Enum {
    */
   @variant
   static Occupied<K, V>(_entry: OccupiedEntry<K, V>): Entry<K, V> {
-    throw new Error('Not implemented');
+    return null!;
   }
 
   /**
@@ -120,7 +120,7 @@ export class Entry<K, V> extends Enum {
    */
   @variant
   static Vacant<K, V>(_entry: VacantEntry<K, V>): Entry<K, V> {
-    throw new Error('Not implemented');
+    return null!;
   }
 
   /**
@@ -146,7 +146,7 @@ export class Entry<K, V> extends Enum {
    * let empty = map.entry("key").match({}); // empty = undefined
    * ```
    */
-  match<T>(patterns: Partial<MatchOption<K, V, T>>): T {
+  match<T>(patterns: MatchOption<K, V, T>): T {
     return super.match(patterns);
   }
 

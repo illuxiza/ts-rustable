@@ -21,15 +21,6 @@ interface MatchControlFlow<B, C, R> {
 }
 
 /**
- * Default match patterns that preserve the original value
- * @internal
- */
-const defMatch: MatchControlFlow<any, any, any> = {
-  Continue: (val) => val,
-  Break: (val) => val,
-};
-
-/**
  * ControlFlow represents a flow control state that can either continue (Continue)
  * or break with a value (Break).
  *
@@ -77,10 +68,7 @@ export class ControlFlow<B, C = void> extends Enum {
    * ```
    */
   match<R>(patterns: Partial<MatchControlFlow<B, C, R>>): R {
-    return super.match(patterns, {
-      Continue: defMatch.Continue,
-      Break: defMatch.Break,
-    });
+    return super.match(patterns);
   }
 
   /**

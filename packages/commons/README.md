@@ -133,7 +133,7 @@ Provides deep cloning capability with full support for:
 - Class inheritance chains
 
 ```typescript
-import { derive } from '@rustable/trait';
+import { derive } from '@rustable/type';
 import { Clone } from '@rustable/commons';
 
 @derive([Clone])
@@ -160,7 +160,7 @@ Type conversion system supporting:
 - Inheritance hierarchies
 
 ```typescript
-import { from, implFrom } from '@rustable/commons';
+import { from, From } from '@rustable/commons';
 
 class Celsius {
   constructor(public value: number) {}
@@ -171,7 +171,7 @@ class Fahrenheit {
 }
 
 // Implement conversion from Celsius to Fahrenheit
-implFrom(Fahrenheit, Celsius, {
+From(Celsius).implInto(Fahrenheit, {
   from(celsius: Celsius): Fahrenheit {
     return new Fahrenheit((celsius.value * 9) / 5 + 32);
   },
@@ -179,6 +179,8 @@ implFrom(Fahrenheit, Celsius, {
 
 const celsius = new Celsius(100);
 const fahrenheit = from(celsius, Fahrenheit); // Convert to Fahrenheit
+// or
+const fahrenheit = Into(Fahrenheit).wrap(celsius).into();
 ```
 
 ### Eq Trait
@@ -190,7 +192,7 @@ Equality comparison with support for:
 - Type-safe comparisons
 
 ```typescript
-import { derive } from '@rustable/trait';
+import { derive } from '@rustable/type';
 import { Eq } from '@rustable/commons';
 
 @derive([Eq])
@@ -217,8 +219,9 @@ Provides a powerful iteration interface inspired by Rust's Iterator trait:
 - Compatible with various collection types
 
 ```typescript
-import { derive } from '@rustable/trait';
+import { derive } from '@rustable/type';
 import { Iter } from '@rustable/commons';
+import '@rustable/iter/advanced';
 
 @derive([Iter])
 class NumberRange {

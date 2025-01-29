@@ -1,13 +1,5 @@
+import { Constructor } from '@rustable/type';
 import { deepClone, equals } from '@rustable/utils';
-
-/**
- * Represents a variant in an enumerated type.
- * Used internally to track the current state of an enum instance.
- */
-interface EnumVariant {
-  name: string;
-  args?: any[];
-}
 
 /**
  * Decorator for creating enum variants.
@@ -31,12 +23,19 @@ export function variant(target: any, name: string, descriptor: PropertyDescripto
   return descriptor;
 }
 
-export interface EnumMatch<U> {
-  [key: string]: ((...args: any[]) => U) | U;
-}
+export type EnumMatch<E extends Constructor, U> = {
+  [K in keyof Omit<E, 'prototype'>]: E[K] extends (...args: infer P) => InstanceType<E>
+    ? ((...args: P) => U) | U
+    : never;
+};
 
 export interface EnumModify {
   [key: string]: (...args: any[]) => any[];
+}
+
+export interface EnumLetPattern<T extends (...args: any[]) => any, R> {
+  if: (...args: Parameters<T>) => R;
+  else: (() => R) | R;
 }
 
 export type EnumParam = Record<any, (...args: any[]) => any>;
@@ -51,7 +50,7 @@ export type VariantModifyFunctions<U extends EnumParam> = {
 
 export type EnumInstance<U extends EnumParam> = Omit<
   Enum,
-  'match' | 'modify' | 'clone' | 'eq' | 'is'
+  'match' | 'modify' | 'clone' | 'eq' | 'is' | 'let'
 > & {
   match<T>(
     patterns: Partial<VariantMatchFunctions<T, U>>,
@@ -62,8 +61,11 @@ export type EnumInstance<U extends EnumParam> = Omit<
   eq(other: EnumInstance<U>): boolean;
 } & {
   [P in keyof U as `is${Capitalize<string & P>}`]: () => boolean;
+} & {
+  [P in keyof U as `let${Capitalize<string & P>}`]: <T>(
+    cb: EnumLetPattern<U[P], T>,
+  ) => T | undefined;
 };
-
 export type CustomEnum<U extends EnumParam> = typeof Enum & {
   [K in keyof U]: (...args: Parameters<U[K]>) => EnumInstance<U>;
 };
@@ -117,6 +119,13 @@ export namespace Enums {
         writable: false,
         configurable: false,
       });
+      Object.defineProperty(Anonymous.prototype, `let${variantName}`, {
+        value: function <T>(callback: (...args: any[]) => T): T | undefined {
+          return this.let(variantName, callback);
+        },
+        writable: false,
+        configurable: false,
+      });
     }
     return Anonymous as CustomEnum<U>;
   }
@@ -137,11 +146,13 @@ export namespace Enums {
  *   }
  * }
  */
-export abstract class Enum {
-  private _variant: EnumVariant;
-
-  constructor(name: string, ...args: any[]) {
-    this._variant = { name, args };
+export class Enum<C extends Constructor = Constructor> {
+  private vars: any[];
+  constructor(
+    private name: string,
+    ...vars: any[]
+  ) {
+    this.vars = vars;
   }
 
   /**
@@ -150,7 +161,21 @@ export abstract class Enum {
    * @returns true if the enum is the specified variant
    */
   is(variant: string): boolean {
-    return this._variant.name === variant;
+    return this.name === variant;
+  }
+
+  /**
+   * Checks if the enum is a specific variant and executes a callback if it matches
+   * @param variant The variant name to check
+   * @param callback The callback function to execute if the variant matches
+   * @returns The result of the callback if variant matches, undefined otherwise
+   */
+  let<T>(variant: string, cb: EnumLetPattern<(...arg: any[]) => T, T>): T {
+    return this.is(variant)
+      ? cb.if(...(this.vars || []))
+      : typeof cb.else === 'function'
+        ? (cb.else as Function)()
+        : cb.else;
   }
 
   /**
@@ -159,10 +184,10 @@ export abstract class Enum {
    * @returns The first argument of the variant
    */
   unwrap<T>(): T {
-    if (!this._variant.args || this._variant.args.length === 0) {
+    if (!this.vars || this.vars.length === 0) {
       throw new Error('Cannot unwrap a variant without arguments');
     }
-    return this._variant.args[0] as T;
+    return this.vars[0] as T;
   }
 
   /**
@@ -171,10 +196,10 @@ export abstract class Enum {
    * @returns Tuple of all variant arguments
    */
   unwrapTuple<T extends any[]>(): T {
-    if (!this._variant.args || this._variant.args.length === 0) {
+    if (!this.vars || this.vars.length === 0) {
       throw new Error('Cannot unwrap a variant without arguments');
     }
-    return [...this._variant.args] as T;
+    return [...this.vars] as T;
   }
 
   /**
@@ -183,10 +208,10 @@ export abstract class Enum {
    * Format: VariantName(arg1, arg2, ...) for variants with arguments
    */
   toString(): string {
-    if (!this._variant.args || this._variant.args.length === 0) {
-      return this._variant.name;
+    if (!this.vars || this.vars.length === 0) {
+      return this.name;
     }
-    return `${this._variant.name}(${this._variant.args.join(', ')})`;
+    return `${this.name}(${this.vars.join(', ')})`;
   }
 
   /**
@@ -204,30 +229,32 @@ export abstract class Enum {
    * })
    * ```
    */
-  match<U>(patterns: Partial<EnumMatch<U>>, defaultPatterns?: EnumMatch<U>): U {
-    const variantName = this._variant.name;
-    const handler =
-      patterns[variantName] === undefined ? defaultPatterns?.[variantName] : patterns[variantName];
+  match<U>(patterns: Partial<EnumMatch<C, U>>, def?: (() => U) | U): U {
+    const variantName = this.name;
+    const handler = (patterns as any)[variantName] ?? def;
+    if (typeof handler === 'undefined') {
+      throw new Error('No handler found.');
+    }
     if (typeof handler !== 'function') {
-      return handler!;
+      return handler;
     }
     const fn = handler as Function;
-    if (!this._variant.args || this._variant.args.length === 0) {
+    if (!this.vars || this.vars.length === 0) {
       return fn();
     }
-    return fn(...this._variant.args);
+    return fn(...this.vars);
   }
 
   /**
    * Checks if this enum instance equals another enum instance
    * Compares both variant names and their arguments
    */
-  eq(other: Enum): boolean {
-    if (!(other instanceof Enum)) {
+  eq(other: Enum<C>): boolean {
+    if (!(other instanceof this.constructor)) {
       return false;
     }
-    const { name: thisName, args: thisArgs } = this._variant;
-    const { name: otherName, args: otherArgs } = other._variant;
+    const { name: thisName, vars: thisArgs } = this;
+    const { name: otherName, vars: otherArgs } = other;
     // Compare variant names
     if (thisName !== otherName) {
       return false;
@@ -260,12 +287,12 @@ export abstract class Enum {
    * @returns A new instance of the enum with the same variant and cloned arguments
    */
   clone(hash = new WeakMap<object, any>()): this {
-    if (!this._variant.args || this._variant.args.length === 0) {
+    if (!this.vars || this.vars.length === 0) {
       return this;
     }
     const Constructor = this.constructor as new (name: string, ...args: any[]) => this;
-    const clonedArgs = this._variant.args.map((v) => deepClone(v, hash));
-    return new Constructor(this._variant.name, ...clonedArgs);
+    const clonedArgs = this.vars.map((v) => deepClone(v, hash));
+    return new Constructor(this.name, ...clonedArgs);
   }
 
   /**
@@ -274,14 +301,14 @@ export abstract class Enum {
    * @throws Error if no matching pattern is found for the current variant
    */
   modify(patterns: EnumModify): void {
-    const variantName = this._variant.name;
+    const variantName = this.name;
     const modifier = patterns[variantName];
     if (!modifier) {
       return;
     }
-    if (!this._variant.args || this._variant.args.length === 0) {
+    if (!this.vars || this.vars.length === 0) {
       return;
     }
-    this._variant.args = modifier(...this._variant.args);
+    this.vars = modifier(...this.vars);
   }
 }

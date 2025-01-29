@@ -229,14 +229,6 @@ describe('Result Type', () => {
       });
       expect(result).toBe('test');
     });
-
-    test('enum with no handlers uses defaults', () => {
-      const ok = Ok(42);
-      const err = Err(new Error('test'));
-
-      expect(ok.match({})).toBe(42);
-      expect((err.match({}) as Error).message).toBe('test');
-    });
   });
 
   describe('Additional edge cases', () => {

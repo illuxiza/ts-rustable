@@ -40,15 +40,6 @@ interface MatchResult<T, E, U> {
 }
 
 /**
- * Default enum patterns that preserve the original value
- * @internal
- */
-const defMatch: MatchResult<any, any, any> = {
-  Ok: (val) => val,
-  Err: (val) => val,
-};
-
-/**
  * Result type representing either success (Ok) or failure (Err)
  * A type-safe way to handle operations that can fail without throwing exceptions
  *
@@ -187,10 +178,7 @@ export class Result<T, E> extends Enum {
    * @returns Result of matching the Result
    */
   match<U>(fn: Partial<MatchResult<T, E, U>>): U {
-    return super.match(fn, {
-      Ok: defMatch.Ok,
-      Err: defMatch.Err,
-    });
+    return super.match(fn);
   }
 
   /**

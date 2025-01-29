@@ -126,18 +126,16 @@ describe('Entry API', () => {
       // Only Occupied pattern
       const result1 = entry.match({
         Occupied: (entry) => entry.get() * 2,
+        Vacant: () => 0,
       });
       expect(result1).toBe(2);
 
       // Only Vacant pattern
       const result2 = entry.match({
         Vacant: () => 0,
+        Occupied: () => undefined,
       });
       expect(result2).toBeUndefined();
-
-      // Empty pattern object
-      const result3 = entry.match({});
-      expect(result3).toBeUndefined();
     });
 
     test('chaining entry methods', () => {

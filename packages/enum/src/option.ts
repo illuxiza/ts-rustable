@@ -22,16 +22,6 @@ interface MatchOption<T, U> {
 }
 
 /**
- * Default enum patterns that preserve the original value
- * Used when partial enum patterns are provided
- * @internal
- */
-const defMatch: MatchOption<any, any> = {
-  Some: (val) => val,
-  None: undefined,
-};
-
-/**
  * Option<T> type representing an optional value.
  * A type-safe alternative to handle optional values with explicit control flow.
  *
@@ -105,11 +95,8 @@ export class Option<T> extends Enum {
    * }); // result = 10
    * ```
    */
-  match<U>(patterns: Partial<MatchOption<T, U>>): U {
-    return super.match(patterns, {
-      Some: defMatch.Some,
-      None: defMatch.None,
-    });
+  match<U>(patterns: MatchOption<T, U>): U {
+    return super.match(patterns);
   }
 
   /**
