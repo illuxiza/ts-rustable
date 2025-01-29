@@ -1,6 +1,6 @@
 # @rustable/utils
 
-This is the utilities package of the Rustable project, providing fundamental utilities and type management functionalities. The package implements essential features like type identification, object cloning, hashing, string manipulation, and mutable references.
+Essential utilities for object cloning, string manipulation, and value comparison in TypeScript, inspired by Rust's standard library.
 
 ## Installation
 
@@ -13,76 +13,6 @@ pnpm add @rustable/utils
 ```
 
 ## Key Components
-
-### Type System (`type.ts`)
-
-- Generic type constructor factory
-- Efficient caching using WeakMap
-- Preserves static properties and prototype chain
-- Support for named generic types
-
-```typescript
-import { Type, typeId } from '@rustable/utils';
-
-// Generic type construction
-class Container<T> {
-  constructor(public value: T) {}
-  toString() {
-    return stringify(this.value);
-  }
-}
-
-// Create specific type with generics
-const StringContainer = Type(Container, [String]);
-const container = new StringContainer("hello");
-console.log(container.toString());  // '"hello"'
-
-// Type identification
-const id = typeId(StringContainer);  // Unique ID for Container<string>
-```
-
-### Derive System (`derive.ts`)
-
-- Provides decorators for applying traits and other functionality to classes
-- Supports both single and multiple derive functions
-- Includes type-safe derive functionality with `applyMacros`
-- Preserves TypeScript type information
-
-```typescript
-import { derive, applyMacros } from '@rustable/utils';
-
-// Basic usage
-@derive([Clone, Debug])
-class MyClass {}
-
-// Type-safe usage
-const MyDerive = applyMacros([Resource, Serialize]);
-
-@MyDerive
-class TypeSafeClass {
-  value: string;
-}
-```
-
-### Factory Creation (`factory.ts`)
-
-- Creates class factories that work both with and without 'new' keyword
-- Preserves static methods and properties
-- Supports custom factory functions
-- Type-safe implementation
-
-```typescript
-import { createFactory } from '@rustable/utils';
-
-class MyClass {
-  static helper() { return 'help'; }
-}
-
-const Factory = createFactory(MyClass);
-const instance1 = Factory();      // Works without 'new'
-const instance2 = new Factory();  // Works with 'new'
-Factory.helper();                 // Static methods preserved
-```
 
 ### String Manipulation (`stringify.ts`)
 
@@ -315,4 +245,4 @@ console.log(ref.equals({ data: [1, 2, 3, 4] }));  // true
 
 ## License
 
-MIT  illuxiza
+MIT © illuxiza

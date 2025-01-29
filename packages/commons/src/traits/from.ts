@@ -1,6 +1,5 @@
-import { Trait, TraitStaticMethods } from '@rustable/trait';
-import { Constructor, createFactory, named, type, Type } from '@rustable/utils';
-import { NotImplementedError } from 'packages/trait/src';
+import { NotImplementedError, Trait, TraitStaticMethods } from '@rustable/trait';
+import { Constructor, createFactory, named, type, Type } from '@rustable/type';
 
 /**
  * From trait for type conversion.

@@ -1,5 +1,6 @@
 import { macroTrait, Trait } from '@rustable/trait';
-import { equals, named } from '@rustable/utils';
+import { named } from '@rustable/type';
+import { equals } from '@rustable/utils';
 
 /**
  * Eq trait for equality comparison.

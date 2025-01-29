@@ -116,7 +116,7 @@ function getGenericName(genericParams: any[]): string {
     .join(',');
 }
 
-export interface MaybeGenericConstructor extends Constructor {
+interface MaybeGenericConstructor extends Constructor {
   [genericType]?: true;
 }
 

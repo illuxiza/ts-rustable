@@ -65,16 +65,25 @@ pnpm add rustable
 - Default implementations with overrides
 - Trait composition and inheritance
 
+### [@rustable/type](https://github.com/illuxiza/ts-rustable/tree/main/packages/type#readme)
+
+🎨 Rust-like type system
+
+- Generic type construction and management
+- Runtime type identification (TypeId)
+- Type-safe factory creation
+- Type reflection and utilities
+- Named type decorators
+
 ### [@rustable/utils](https://github.com/illuxiza/ts-rustable/tree/main/packages/utils#readme)
 
 🛠️ Core utilities
 
-- Type system utilities with generic support
+- Deep cloning of objects and values
+- String manipulation and serialization
+- Value comparison and equality checks
 - Pointer management (Ptr) for mutable references
 - Value management (Val) for immutable references
-- Efficient hashing and equality comparison
-- String manipulation and serialization
-- Derive system for automatic trait implementation
 
 ## Contributing
 

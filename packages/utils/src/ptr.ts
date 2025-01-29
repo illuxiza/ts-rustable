@@ -1,4 +1,4 @@
-export interface PtrAccessors<T> {
+interface PtrAccessors<T> {
   get: () => T;
   set: (value: T) => void;
 }

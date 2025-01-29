@@ -1,5 +1,6 @@
 import { macroTrait, Trait } from '@rustable/trait';
-import { deepClone, named } from '@rustable/utils';
+import { named } from '@rustable/type';
+import { deepClone } from '@rustable/utils';
 
 /**
  * Clone trait that provides deep cloning functionality for objects.

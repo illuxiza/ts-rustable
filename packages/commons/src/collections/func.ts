@@ -1,5 +1,6 @@
 import { Option } from '@rustable/enum';
-import { Constructor, equals } from '@rustable/utils';
+import { Constructor } from '@rustable/type';
+import { equals } from '@rustable/utils';
 
 /**
  * Interface for a collection-like object that supports array-like access to elements.

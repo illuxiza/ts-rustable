@@ -1,5 +1,5 @@
 import { macroTrait, Trait } from '@rustable/trait';
-import { Constructor, named } from '@rustable/utils';
+import { Constructor, named } from '@rustable/type';
 
 /**
  * Default trait for default value initialization.

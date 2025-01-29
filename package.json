@@ -31,6 +31,7 @@
     "@rustable/enum": "workspace:*",
     "@rustable/iter": "workspace:*",
     "@rustable/trait": "workspace:*",
+    "@rustable/type": "workspace:*",
     "@rustable/utils": "workspace:*"
   },
   "files": [

@@ -12,7 +12,7 @@
  *
  * @module @rustable/trait
  */
-import { Constructor, createFactory, isGenericType, type, Type, typeName } from '@rustable/utils';
+import { Constructor, createFactory, isGenericType, type, Type, typeName } from '@rustable/type';
 import {
   MethodNotImplementedError,
   MultipleImplementationError,

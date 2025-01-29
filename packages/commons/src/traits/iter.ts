@@ -1,6 +1,6 @@
 import { iter, RustIter } from '@rustable/iter';
 import { macroTrait, Trait } from '@rustable/trait';
-import { named } from '@rustable/utils';
+import { named } from '@rustable/type';
 import { HashMap, HashSet, Vec } from '../collections';
 
 @named('Iter')
