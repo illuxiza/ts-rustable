@@ -299,6 +299,26 @@ export class Enum<C extends Constructor = Constructor> {
   }
 
   /**
+   * Replaces the current variant with a new one, returning the old variant
+   * @param newVariant The new variant to replace with
+   * @param ...args Arguments for the new variant
+   * @throws Error if the new variant is not a valid variant of this enum
+   * @returns The old variant instance
+   */
+  replace(newInstance: Enum): this {
+    if (!(newInstance instanceof this.constructor)) {
+      throw new Error('Invalid instance type');
+    }
+    const oldVariant = new (this.constructor as new (...args: any[]) => this)(
+      this.name,
+      ...(this.vars || []),
+    );
+    this.vars = [...newInstance.vars];
+    this.name = newInstance.name;
+    return oldVariant;
+  }
+
+  /**
    * Modifies the arguments of the current variant based on the variant name
    * @param patterns Object mapping variant names to modifier functions
    * @throws Error if no matching pattern is found for the current variant

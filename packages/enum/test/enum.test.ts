@@ -235,6 +235,23 @@ describe('Enum System', () => {
   });
 });
 
+describe('Enum.replace', () => {
+  it('should replace the current variant and return the old one', () => {
+    const a = TestEnum.A();
+    const b = TestEnum.B(42, 24);
+    const oldVariant = a.replace(b);
+
+    expect(a.is('B')).toBe(true);
+    expect(oldVariant.is('A')).toBe(true);
+    expect(a.unwrap()).toBe(42);
+  });
+
+  it('should throw an error if replacing with an invalid instance', () => {
+    const a = TestEnum.A();
+    expect(() => a.replace({} as any)).toThrow('Invalid instance type');
+  });
+});
+
 describe('Enum.modify', () => {
   it('should modify the arguments of the current variant', () => {
     const b = TestEnum.B(10, 5);

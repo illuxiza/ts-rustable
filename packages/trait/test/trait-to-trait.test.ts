@@ -409,4 +409,33 @@ describe('Trait to Trait Implementation', () => {
     expect(strDisplayTrait.display('hello')).toBe('hello');
     expect(strToStringTrait.toString('hello')).toBe('hello');
   });
+
+  test('trait implementing another trait with static methods should work correctly', () => {
+    class FromStr extends Trait {
+      static fromStr(str: string): any {
+        return str;
+      }
+    }
+    class Parse extends Trait {
+      static parse(str: string): any {
+        return str;
+      }
+    }
+
+    // Implement FromStr for Parse trait with custom static implementation
+    FromStr.implFor(Parse, {
+      static: {
+        fromStr(str: string) {
+          return `Parsed(${str})`;
+        },
+      },
+    });
+
+    expect(FromStr.isImplFor(Parse)).toBe(true);
+
+    const FromStrWrapped = FromStr.staticWrap(Parse);
+
+    const instance2 = FromStrWrapped.fromStr('world');
+    expect(instance2).toBe('Parsed(world)');
+  });
 });
