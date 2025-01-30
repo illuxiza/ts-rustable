@@ -1,20 +1,19 @@
 # @rustable/commons
 
-A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.
+🧩 A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.
 
-## Features
+## ✨ Features
 
-- 🧰 Decorator-based trait system
-- 🔒 Type-safe implementations
-- 🦀 Rust-like APIs
-- 🔄 Option-based value handling
-- ⚡ Efficient hash-based collections
-- 🎨 Default trait implementations
-- 🏷️ Trait metadata
-- 📦 Zero dependencies
-- 🔍 Type-safe entry API for maps
+- 🗃️ **HashMap** - Efficient key-value storage with hash-based lookup
+- 🔍 **Entry** - Safe map manipulation with Entry API
+- 📦 **HashSet** - Unique value storage with O(1) lookup
+- 📚 **Vec** - Dynamic array with Rust-like operations
+- 📇 **IdxVec** - Array-like collection with index access
+- 🔄 **Clone** - Deep cloning support via Clone trait
+- 🎯 **Eq** - Value equality comparison via Eq trait
+- 🔄 **From** - Type conversion via From trait
 
-## Installation
+## 📦 Installation
 
 ```bash
 npm install @rustable/commons
@@ -24,7 +23,7 @@ yarn add @rustable/commons
 pnpm add @rustable/commons
 ```
 
-## Collections
+## 📚 Collections
 
 ### HashMap<K, V>
 
@@ -41,9 +40,10 @@ map.insert('key', 1);
 const value = map.get('key').unwrapOr(0);
 
 // Entry API for safe insertion
-map.entry('key')
-   .and_modify(v => v + 1)
-   .or_insert(0);
+map
+  .entry('key')
+  .and_modify((v) => v + 1)
+  .or_insert(0);
 
 // Iterate over entries
 for (const [k, v] of map) {
@@ -85,7 +85,7 @@ for (const item of set) {
 
 ### Vec\<T>
 
-A growable array implementation similar to Rust's Vec<T>.
+A growable array implementation similar to Rust's Vec<T>. Provides efficient array operations with dynamic size management.
 
 ```typescript
 import { Vec } from '@rustable/commons';
@@ -100,23 +100,51 @@ vec.push(4);
 vec.extend([5, 6, 7]);
 const last = vec.pop(); // Some(7)
 
+// Vector operations
+vec.insert(1, 8);
+vec.remove(0);
+vec.clear();
+
 // Access elements
-const first = vec.first(); // Option<T>
-const item = vec.get(1); // Option<T>
-vec.insert(0, 0);
+const first = vec.get(0); // Option<T>
+const firstRef = vec.getMut(0); // Option<Ptr<T>>
 
 // Advanced operations
-vec.splice(1, 2); // Remove elements
-vec.drain(0, 2); // Remove and get elements
-vec.retain(x => x % 2 === 0); // Keep even numbers
-
-// Iterator methods
-vec
-  .iter()
-  .map(x => x * 2)
-  .filter(x => x > 2)
-  .collect(); // Create new Vec
+vec.retain((x) => x > 3); // Keep only elements > 3
+vec.dedup(); // Remove consecutive duplicates
+vec.sort(); // Sort in ascending order
 ```
+
+### IdxVec\<T>
+
+An extension of Vec<T> that provides array-like index access. Useful when you need direct index access to elements.
+
+```typescript
+import { IdxVec } from '@rustable/commons';
+
+// Create a new indexed vector
+const vec = IdxVec.new<number>();
+vec.extend([1, 2, 3, 4, 5]);
+
+// Array-like index access
+console.log(vec[0]); // 1
+vec[1] = 10; // Direct assignment
+console.log(vec[1]); // 10
+
+// Still has all Vec<T> operations
+vec.push(6);
+vec.sort((a, b) => b - a); // Sort in descending order
+vec.retain((x) => x % 2 === 0); // Keep only even numbers
+
+// Efficient slicing
+const slice = vec.slice(1, 3); // Get elements from index 1 to 3
+
+// Advanced operations
+const [left, right] = vec.splitAtUnchecked(2); // Split vector at index
+vec.splice(1, 2, [10, 20]); // Replace elements
+```
+
+> 💡 Note: Use `Vec` when you need efficient array operations and don't require index access. Use `IdxVec` when you need array-like index access or are working with code that expects array-like behavior.
 
 ## Traits
 
@@ -240,13 +268,13 @@ interface NumberRange extends Iter<number> {}
 
 const range = new NumberRange(1, 5);
 const doubledEvenSum = range
-  .filter(n => n % 2 === 0)
-  .map(n => n * 2)
+  .filter((n) => n % 2 === 0)
+  .map((n) => n * 2)
   .sum();
 
 console.log(doubledEvenSum); // 12 (2*2 + 4*2)
 ```
 
-## License
+## 📄 License
 
 MIT © illuxiza

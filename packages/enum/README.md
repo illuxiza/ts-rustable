@@ -2,7 +2,20 @@
 
 A TypeScript implementation of Rust-style pattern matching, Option, and Result types. This package provides type-safe alternatives to null/undefined and error handling patterns in TypeScript.
 
-## Installation
+## ✨ Features
+
+- 🔒 **Type-safe Enums**: Full TypeScript support with proper type inference
+- 🎭 **Pattern Matching**: Exhaustive pattern matching with compile-time checks
+- 🔄 **Option Type**: Safe handling of optional values without null/undefined
+- ✅ **Result Type**: Elegant error handling with Ok/Err variants
+- 🎯 **Let Pattern**: Type-safe conditional execution with proper inference
+- 🔗 **Method Chaining**: Rich set of combinators for value transformation
+- 🛡️ **Null Safety**: Complete elimination of null/undefined related bugs
+- 🏭 **Factory API**: Easy creation of custom enums with type checking
+- 🔄 **Async Support**: First-class support for async operations with Result type
+- 📦 **Zero Dependencies**: No external runtime dependencies
+
+## 📦 Installation
 
 ```bash
 npm install @rustable/enum
@@ -12,7 +25,7 @@ yarn add @rustable/enum
 pnpm add @rustable/enum
 ```
 
-## Core Components
+## 📚 Core Components
 
 ### Pattern Matching (`enum.ts`)
 
@@ -44,7 +57,6 @@ value.let('Variant1', {
   if: (str) => console.log(`Found Variant1: ${str}`),
   else: () => console.log('Not Variant1'),
 });
-
 ```
 
 ### Custom Enums (`Enums.create`)
@@ -61,7 +73,7 @@ const UserState = Enums.create('UserState', {
   Suspended: (reason: string) => {},
 });
 
-// Or 
+// Or
 const UserState = Enums.create({
   LoggedOut: () => {},
   LoggedIn: (userId: string, role: string) => {},
@@ -78,6 +90,11 @@ state2.match({
   LoggedIn: (userId, role) => console.log(`User ${userId} is ${role}`),
   Suspended: (reason) => console.log(`Account suspended: ${reason}`),
   LoggedOut: () => console.log('Please log in'),
+});
+// or
+state2.match({
+  LoggedIn: (userId, role) => console.log(`User ${userId} is ${role}`),
+  _: () => console.log('Not logged in'),
 });
 
 // Conditional execution with let pattern matching
@@ -150,6 +167,7 @@ Represents either success (Ok) or failure (Err). A type-safe way to handle opera
 ```typescript
 import { Result } from '@rustable/enum';
 
+// Basic usage
 function validateAge(age: number): Result<number, Error> {
   return age >= 0 && age <= 120 ? Result.Ok(age) : Result.Err(new Error('Invalid age'));
 }
@@ -157,19 +175,35 @@ function validateAge(age: number): Result<number, Error> {
 const result = validateAge(25)
   .map((age) => age + 1) // Transform if Ok
   .unwrapOr(0); // Default if Err
+
+// Async operation handling
+const asyncResult = await Result.fromAsync<string, Error>(
+  fetch('https://api.example.com/data').then((res) => res.text()),
+);
+
+if (asyncResult.isOk()) {
+  console.log('Got data:', asyncResult.unwrap());
+} else {
+  console.error('Failed:', asyncResult.unwrapErr().message);
+}
+
+// Function error wrapping
+const parseJSON = Result.fromFn<any, Error, [string]>(JSON.parse);
+
+// Success case
+const parseResult = parseJSON('{"key": "value"}');
+if (parseResult.isOk()) {
+  console.log('Parsed:', parseResult.unwrap());
+}
+
+// Error case
+const errorResult = parseJSON('invalid json');
+if (errorResult.isErr()) {
+  console.error('Parse failed:', errorResult.unwrapErr().message);
+}
 ```
 
-## Key Features
-
-- **Type Safety**: Full TypeScript support with proper type inference and constructor type parameters
-- **Pattern Matching**: Rust-style exhaustive pattern matching with compile-time checks
-- **Let Pattern**: Type-safe conditional execution with proper type inference
-- **Option Type**: Safe handling of optional values
-- **Result Type**: Elegant error handling
-- **Method Chaining**: Rich set of combinators for value transformation
-- **Null Safety**: Eliminates null/undefined related bugs
-
-## Usage Examples
+## 📖 Usage
 
 ### Pattern Matching
 
@@ -220,7 +254,7 @@ result.match({
 result.mapErr((err) => new Error(`Wrapped: ${err.message}`)).unwrapOr(0);
 ```
 
-## Best Practices
+## 📝 Best Practices
 
 1. Use `Option` instead of null/undefined for optional values
 2. Use `Result` for operations that may fail
@@ -228,13 +262,13 @@ result.mapErr((err) => new Error(`Wrapped: ${err.message}`)).unwrapOr(0);
 4. Chain methods to transform values safely
 5. Always handle both success and failure cases explicitly
 
-## Notes
+## 📝 Notes
 
 - All types are immutable and side-effect free
 - Pattern matching is exhaustive by default
 - Methods follow Rust's naming conventions
 - Full TypeScript type inference support
 
-## License
+## 📄 License
 
 MIT © illuxiza

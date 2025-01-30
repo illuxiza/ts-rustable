@@ -177,7 +177,7 @@ export class Result<T, E> extends Enum {
    * @param fn Match handlers for Ok and Err values
    * @returns Result of matching the Result
    */
-  match<U>(fn: Partial<MatchResult<T, E, U>>): U {
+  match<U>(fn: MatchResult<T, E, U>): U {
     return super.match(fn);
   }
 

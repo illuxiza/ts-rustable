@@ -2,17 +2,30 @@
 
 Essential utilities for object cloning, string manipulation, and value comparison in TypeScript, inspired by Rust's standard library.
 
-## Installation
+## 📦 Installation
 
 ```bash
 npm install @rustable/utils
-# or
+# or with yarn
 yarn add @rustable/utils
-# or
+# or with pnpm
 pnpm add @rustable/utils
 ```
 
-## Key Components
+## ✨ Features
+
+- 🔤 **String Utils** - Robust string conversion and manipulation
+- 🔗 **Hash System** - Consistent hash values for all types
+- 📦 **Deep Clone** - Comprehensive object cloning system
+- 🔍 **Deep Equal** - Type-safe deep equality comparison
+- 📈 **Value Management** - Safe value manipulation utilities
+- 🔗 **Pointer System** - Mutable reference functionality
+- 🛡️ **Type Safety** - Full TypeScript type system support
+- ⚡ **Performance** - Optimized implementations
+- 🔄 **Circular Refs** - Handles circular references
+- 📦 **Zero Dependencies** - No external runtime dependencies
+
+## 📚 Key Components
 
 ### String Manipulation (`stringify.ts`)
 
@@ -199,58 +212,6 @@ console.log(counter.count); // 1
 ptr[Ptr.ptr] = new Counter();
 ```
 
-## Advanced Usage
-
-### Combining Features
-
-```typescript
-import { Ptr, Val, stringify, equals } from '@rustable/utils';
-
-// Safe reference with immutable copies
-class SafeReference<T> {
-  private ptr: Ptr<T>;
-
-  constructor(value: T) {
-    let current = Val(value); // Immutable copy
-    this.ptr = Ptr({
-      get: () => current,
-      set: (v) => (current = Val(v)), // New immutable copy on set
-    });
-  }
-
-  get value(): T {
-    return this.ptr[Ptr.ptr];
-  }
-
-  modify(fn: (value: T) => T) {
-    Ptr.replace(this.ptr, fn(this.value));
-  }
-
-  toString() {
-    return stringify(this.value);
-  }
-
-  equals(other: T) {
-    return equals(this.value, other);
-  }
-}
-
-// Usage example combining multiple features
-const ref = new SafeReference({ data: [1, 2, 3] });
-ref.modify((val) => ({ data: [...val.data, 4] }));
-console.log(ref.toString()); // '{data:[1,2,3,4]}'
-console.log(ref.equals({ data: [1, 2, 3, 4] })); // true
-```
-
-## Notes
-
-- All utilities are designed with TypeScript's type system in mind
-- The package uses WeakMap for efficient memory management
-- The `Ptr` type provides a proxy-based mutable reference
-- The `Val` type provides an immutable reference with deep cloning
-- All string conversions handle circular references and special types
-- Hash values are consistent across different runs
-
-## License
+## 📄 License
 
 MIT © illuxiza

@@ -2,6 +2,14 @@
 
 A TypeScript library that implements Rust-like traits with compile-time type checking and runtime verification.
 
+## ✨ Features
+
+- 🔒 **Type Safety** - Type-safe trait definitions and implementations
+- 🎯 **Generics** - Support for generic traits and implementations
+- 🔄 **Methods** - Instance and static method implementations
+- 🔗 **Composition** - Trait-to-trait implementations
+- 💾 **Memory** - Memory-efficient using WeakMap for GC
+
 ## 📦 Installation
 
 ```bash
@@ -12,18 +20,9 @@ yarn add @rustable/trait
 pnpm add @rustable/trait
 ```
 
-## ✨ Features
-
-- 🔒 Type-safe trait definitions and implementations
-- 🎯 Support for generic traits
-- 🔄 Instance and static method implementations
-- 🔗 Trait-to-trait implementations
-- 💾 Memory-efficient using WeakMap for garbage collection
-- ⚡ Performance optimized with parent trait caching
-
 ## 📖 Usage
 
-### 🎨 Defining a Trait
+### Defining a Trait
 
 ```typescript
 import { Trait, macroTrait } from '@rustable/trait';
@@ -39,7 +38,7 @@ class DisplayTrait extends Trait {
 const Display = macroTrait(DisplayTrait);
 ```
 
-### 🔧 Implementing a Trait
+### Implementing a Trait
 
 There are several ways to implement a trait:
 
@@ -74,7 +73,7 @@ DisplayTrait.implFor(Point, {
 });
 ```
 
-### 🚀 Using Traits
+### Using Traits
 
 Once a trait is implemented, you can use it in several ways:
 
@@ -92,7 +91,7 @@ if (DisplayTrait.isImplFor(point)) {
 }
 ```
 
-### ⚙️ Static Trait Methods
+### Static Trait Methods
 
 Traits can also include static methods:
 
@@ -128,7 +127,7 @@ const point = FromStrTrait.staticWrap(Point).fromStr('1,2');
 
 ## 📚 API Reference
 
-### 🛠️ Core Functions
+### Core Functions
 
 #### macroTrait
 
@@ -163,7 +162,7 @@ FromStrTrait.implFor(Point, {
 });
 ```
 
-### 🔍 Trait Class Methods
+### Trait Class Methods
 
 The `Trait` class provides several static methods for trait operations:
 
@@ -236,10 +235,6 @@ DisplayTrait.tryImplFor(Point, {
   },
 });
 ```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 

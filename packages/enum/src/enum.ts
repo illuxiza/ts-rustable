@@ -23,7 +23,13 @@ export function variant(target: any, name: string, descriptor: PropertyDescripto
   return descriptor;
 }
 
-export type EnumMatch<E extends Constructor, U> = {
+export interface DefaultMatch<U> {
+  _: (() => U) | U;
+}
+
+export type EnumMatchPattern<U, C> = C | (Partial<C> & DefaultMatch<U>);
+
+type EnumMatch<E extends Constructor, U> = {
   [K in keyof Omit<E, 'prototype'>]: E[K] extends (...args: infer P) => InstanceType<E>
     ? ((...args: P) => U) | U
     : never;
@@ -40,11 +46,11 @@ export interface EnumLetPattern<T extends (...args: any[]) => any, R> {
 
 export type EnumParam = Record<any, (...args: any[]) => any>;
 
-export type VariantMatchFunctions<T, U extends EnumParam> = {
+type CustomMatch<T, U extends EnumParam> = {
   [K in keyof U]: ((...args: Parameters<U[K]>) => T) | T;
 };
 
-export type VariantModifyFunctions<U extends EnumParam> = {
+export type CustomModify<U extends EnumParam> = {
   [K in keyof U]: (...args: Parameters<U[K]>) => Parameters<U[K]>;
 };
 
@@ -52,11 +58,8 @@ export type EnumInstance<U extends EnumParam> = Omit<
   Enum,
   'match' | 'modify' | 'clone' | 'eq' | 'is' | 'let'
 > & {
-  match<T>(
-    patterns: Partial<VariantMatchFunctions<T, U>>,
-    defaultPatterns?: VariantMatchFunctions<T, U>,
-  ): T;
-  modify(patterns: Partial<VariantModifyFunctions<U>>): void;
+  match<T>(patterns: EnumMatchPattern<U, CustomMatch<T, U>>): T;
+  modify(patterns: Partial<CustomModify<U>>): void;
   clone(): EnumInstance<U>;
   eq(other: EnumInstance<U>): boolean;
 } & {
@@ -229,9 +232,9 @@ export class Enum<C extends Constructor = Constructor> {
    * })
    * ```
    */
-  match<U>(patterns: Partial<EnumMatch<C, U>>, def?: (() => U) | U): U {
+  match<U>(patterns: EnumMatchPattern<U, EnumMatch<C, U>>): U {
     const variantName = this.name;
-    const handler = (patterns as any)[variantName] ?? def;
+    const handler = (patterns as any)[variantName] ?? (patterns as any)['_'];
     if (typeof handler === 'undefined') {
       throw new Error('No handler found.');
     }

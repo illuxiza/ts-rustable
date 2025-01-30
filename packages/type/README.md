@@ -2,7 +2,15 @@
 
 A TypeScript implementation of Rust-like type system with generic support and runtime type information.
 
-## Installation
+## ✨ Features
+
+- 🔒 **Factory** - Type-safe factory creation
+- 🎯 **Generics** - Generic type support
+- 🔄 **Runtime** - Runtime type information
+- ⚡ **Cache** - Efficient caching mechanisms
+- 🛡️ **Guards** - Type guard utilities
+
+## 📦 Installation
 
 ```bash
 npm install @rustable/type
@@ -12,7 +20,7 @@ yarn add @rustable/type
 pnpm add @rustable/type
 ```
 
-## Key Components
+## 📚 Key Components
 
 ### Type System (`type.ts`)
 
@@ -49,22 +57,25 @@ const numberContainerId = typeId(Container, [Number]);
 import { typeName, type } from '@rustable/type';
 
 class Point {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
 }
 
 // Get type name
-console.log(typeName(Point));           // "Point"
+console.log(typeName(Point)); // "Point"
 console.log(typeName(new Point(1, 2))); // "Point"
 
 // Get constructor
-const constructor1 = type(Point);           // Point constructor
+const constructor1 = type(Point); // Point constructor
 const constructor2 = type(new Point(1, 2)); // Also Point constructor
-console.log(constructor1 === constructor2);  // true
+console.log(constructor1 === constructor2); // true
 
 // Works with built-in types too
-console.log(typeName("hello"));     // "String"
-console.log(typeName(123));         // "Number"
-console.log(type("hello") === String); // true
+console.log(typeName('hello')); // "String"
+console.log(typeName(123)); // "Number"
+console.log(type('hello') === String); // true
 ```
 
 #### Generic Type Construction
@@ -87,9 +98,9 @@ const StringContainer = Type(Container, [String]);
 const NumberContainer = Type(Container, [Number]);
 
 // Type-safe instantiation
-const strContainer = new StringContainer("hello"); // OK
-const numContainer = new NumberContainer(42);      // OK
-const error = new StringContainer(123);           // Type Error
+const strContainer = new StringContainer('hello'); // OK
+const numContainer = new NumberContainer(42); // OK
+const error = new StringContainer(123); // Type Error
 
 // Advanced usage with constructor type parameters
 class TypedMap<K, V> {
@@ -111,36 +122,92 @@ import { isGenericType, named } from '@rustable/type';
 // Generic type checking
 class Container<T> {}
 const StringContainer = Type(Container, [String]);
-console.log(isGenericType(Container));        // false
-console.log(isGenericType(StringContainer));  // true
+console.log(isGenericType(Container)); // false
+console.log(isGenericType(StringContainer)); // true
 
 // Custom type naming
 @named('CustomPoint')
 class Point {
-  constructor(public x: number, public y: number) {}
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
 }
 console.log(typeName(Point)); // "CustomPoint"
 ```
 
 ### Factory Creation (`factory.ts`)
 
-- Creates class factories that work both with and without 'new' keyword
-- Preserves static methods and properties
-- Supports custom factory functions
-- Type-safe implementation
+Provides optimized factory functions for class instantiation with the following features:
+
+- Efficient caching using WeakMap
+- Preserves prototype chain and static properties
+- Supports both constructor and factory function patterns
+- Type-safe instantiation with proper TypeScript inference
 
 ```typescript
-import { createFactory } from '@rustable/type';
+import { createFactory, createFactoryProxy } from '@rustable/type';
 
-class MyClass {
-  static helper() { return 'help'; }
+// Basic factory creation
+class Point {
+  constructor(
+    public x: number,
+    public y: number,
+  ) {}
+  static origin() {
+    return new Point(0, 0);
+  }
 }
 
-const Factory = createFactory(MyClass);
-const instance1 = Factory();      // Works without 'new'
-const instance2 = new Factory();  // Works with 'new'
-Factory.helper();                 // Static methods preserved
+// Using createFactory - optimized for performance
+const PointFactory = createFactory(Point);
+const point1 = PointFactory(1, 2); // new instance
+const point2 = new PointFactory(1, 2); // also works
+
+// Using createFactoryProxy - more flexible but slightly slower
+const PointFactoryProxy = createFactoryProxy(Point);
+const point3 = PointFactoryProxy(1, 2); // same usage
+const point4 = new PointFactoryProxy(1, 2); // same usage
+
+// Custom factory function
+const PointWithFactory = createFactory(Point, (x: number, y: number) => {
+  // Custom initialization logic
+  return new Point(Math.abs(x), Math.abs(y));
+});
+
+const point5 = PointWithFactory(-1, -2); // Point { x: 1, y: 2 }
+
+// Factory with type parameters
+class Container<T> {
+  constructor(public value: T) {}
+}
+
+const StringContainer = createFactory(Container<string>);
+const NumberContainer = createFactory(Container<number>);
+
+const strContainer = StringContainer('hello'); // Container<string>
+const numContainer = NumberContainer(42); // Container<number>
+
+// Efficient caching
+const factory1 = createFactory(Point);
+const factory2 = createFactory(Point);
+console.log(factory1 === factory2); // true - same factory reused
+
+// Proxy factory caching
+const proxy1 = createFactoryProxy(Point);
+const proxy2 = createFactoryProxy(Point);
+console.log(proxy1 === proxy2); // true - same proxy factory reused
 ```
+
+Key Features:
+- Two implementation options:
+  - `createFactory`: Optimized for performance, creates a new function
+  - `createFactoryProxy`: More flexible, uses Proxy but slightly slower
+- Automatic caching of factory instances
+- Preserves class inheritance and static methods
+- Full TypeScript type inference
+- Support for both function call and new operator
+- Custom factory function support
 
 ### Common Types (`common.ts`)
 
@@ -164,6 +231,6 @@ class Factory<T> {
 }
 ```
 
-## License
+## 📄 License
 
 MIT © illuxiza

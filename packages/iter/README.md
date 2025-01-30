@@ -2,11 +2,11 @@
 
 A TypeScript library providing Rust-style iterator adapters with a rich set of functional operations for collection manipulation.
 
-## Overview
+## 📖 Overview
 
 @rustable/iter brings Rust's powerful iterator patterns to TypeScript, enabling functional, lazy, and composable operations on collections. It provides a rich set of iterator adapters that can be chained together to create complex data transformations with minimal overhead.
 
-## Features
+## ✨ Features
 
 - 🚀 **Lazy Evaluation** - Computations are performed only when needed
 - 🔗 **Chainable API** - Fluent interface for composing operations
@@ -15,7 +15,7 @@ A TypeScript library providing Rust-style iterator adapters with a rich set of f
 - 🦀 **Rust-Inspired** - Familiar API for Rust developers
 - 🎯 **Tree-Shakeable** - Only import what you need
 
-## Installation
+## 📦 Installation
 
 ```bash
 npm install @rustable/iter
@@ -27,7 +27,7 @@ yarn add @rustable/iter
 pnpm add @rustable/iter
 ```
 
-## Usage
+## 📖 Usage
 
 ```typescript
 import { iter, range } from '@rustable/iter';
@@ -47,7 +47,7 @@ range(0, 5)
   .collect(); // [0, 1, 4, 9, 16]
 ```
 
-## API
+## 📗 API
 
 ### Creation
 
@@ -87,7 +87,7 @@ range(0, 5)
 - `forEach(fn)` - Execute for each element
 - `find(predicate)` - Find first matching element
 
-## Advanced Features
+## 🔥 Advanced Features
 
 For more advanced iterator operations, you can import them from `@rustable/iter/advanced`:
 
@@ -126,7 +126,7 @@ iter([1, 1, 2, 3, 3])
 
 These advanced features are separated to keep the core package lightweight. Import them only when needed.
 
-## Examples
+## 📚 Examples
 
 ### Lazy Evaluation
 
@@ -184,10 +184,6 @@ function* fibonacci() {
 iter(fibonacci()).take(10).collect(); // [0, 1, 1, 2, 3, 5, 8, 13, 21, 34]
 ```
 
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
+## 📄 License
 
 MIT © Illuxiza

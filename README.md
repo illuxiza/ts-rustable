@@ -1,8 +1,17 @@
 # Rustable
 
-A TypeScript library that brings Rust's powerful features and patterns to TypeScript development. Rustable provides type-safe implementations of Rust's most valuable patterns while maintaining TypeScript's ease of use.
+🦀 A TypeScript library that brings Rust's powerful features and patterns to TypeScript development. Rustable provides type-safe implementations of Rust's most valuable patterns while maintaining TypeScript's ease of use.
 
-## Installation
+## ✨ Features
+
+- 🎯 **Trait System** - Complete Rust-like trait system
+- 🔒 **Type Safety** - Comprehensive type-safe implementations
+- 🎭 **Error Handling** - Pattern matching and error handling
+- 🧩 **Collections** - Efficient collections and traits
+- 🔁 **Iterators** - Rich iterator utilities and adapters
+- 📦 **Zero Deps** - No external runtime dependencies
+
+## 📦 Installation
 
 ```bash
 npm install rustable
@@ -12,28 +21,20 @@ yarn add rustable
 pnpm add rustable
 ```
 
-## Features
-
-- 🎯 Complete Rust-like trait system
-- 🔒 Type-safe implementations
-- 🎭 Pattern matching and error handling
-- 🧩 Efficient collections and traits
-- 🔁 Iterator utilities
-- 📦 Zero dependencies
-
-## Packages
+## 📚 Packages
 
 ### [@rustable/commons](https://github.com/illuxiza/ts-rustable/tree/main/packages/commons#readme)
 
 🧩 Type-safe collections and common traits
 
 - HashMap with efficient key-value storage
+- Entry API for safe map manipulation
 - HashSet for unique value storage
 - Vec with Rust-like operations
+- IdxVec with array-like index access
 - Clone trait for deep cloning
 - Eq trait for equality comparison
 - From trait for type conversion
-- Entry API for safe map manipulation
 
 ### [@rustable/enum](https://github.com/illuxiza/ts-rustable/tree/main/packages/enum#readme)
 
@@ -85,10 +86,10 @@ pnpm add rustable
 - Pointer management (Ptr) for mutable references
 - Value management (Val) for immutable references
 
-## Contributing
+## 🤝 Contributing
 
 We welcome contributions! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
 
-## License
+## 📄 License
 
 MIT © illuxiza

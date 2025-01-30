@@ -63,15 +63,13 @@ describe('Enum System', () => {
       const enumA = TestEnum.A();
       const enumB = TestEnum.B(1, 2);
 
-      const matchA = enumA.match(
-        {
-          A: () => 'custom A',
-        },
-        'default',
-      );
+      const matchA = enumA.match({
+        A: () => 'custom A',
+        _: 'default',
+      });
       expect(matchA).toBe('custom A');
 
-      const matchB = enumB.match({}, 'default');
+      const matchB = enumB.match({ _: 'default' });
       expect(matchB).toBe('default');
     });
 
@@ -113,13 +111,13 @@ describe('Enum System', () => {
 
       const matchRed = red.match({
         red: () => 'pure red',
-        rgb: (r: number, g: number, b: number) => `rgb(${r}, ${g}, ${b})`,
+        rgb: (r, g, b) => `rgb(${r}, ${g}, ${b})`,
       });
       expect(matchRed).toBe('pure red');
 
       const matchRgb = rgb.match({
         red: () => 'pure red',
-        rgb: (r: number, g: number, b: number) => `rgb(${r}, ${g}, ${b})`,
+        rgb: (r, g, b) => `rgb(${r}, ${g}, ${b})`,
       });
       expect(matchRgb).toBe('rgb(255, 128, 0)');
     });
