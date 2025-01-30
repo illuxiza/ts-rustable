@@ -163,54 +163,6 @@ describe('Trait Error Cases', () => {
     });
   });
 
-  describe('Proxy Behavior', () => {
-    it('should throw when accessing non-string property in trait proxy', () => {
-      interface ITestTrait {
-        testMethod(): string;
-      }
-
-      class TestTrait extends Trait implements ITestTrait {
-        testMethod(): string {
-          return 'test';
-        }
-      }
-
-      class TestClass {}
-      TestTrait.implFor(TestClass);
-
-      const instance = new TestClass();
-      const traitImpl = TestTrait.wrap(instance);
-
-      const sym = Symbol('test');
-      expect(() => (traitImpl as any)[sym]).toThrow();
-    });
-
-    it('should throw when accessing non-existent method in trait proxy', () => {
-      interface ITestTrait {
-        testMethod(): string;
-      }
-
-      class TestTrait extends Trait implements ITestTrait {
-        testMethod(): string {
-          return 'test';
-        }
-      }
-
-      class TestClass {}
-      TestTrait.implFor(TestClass);
-
-      const instance = new TestClass();
-      const traitImpl = TestTrait.wrap(instance);
-
-      if (traitImpl) {
-        // Access non-existent method
-        expect(() => (traitImpl as any).nonExistentMethod).toThrow(
-          'Method nonExistentMethod not defined in trait TestTrait',
-        );
-      }
-    });
-  });
-
   describe('Type Safety', () => {
     it('should maintain this binding in trait methods', () => {
       interface TypedClass extends Printable {

@@ -254,6 +254,76 @@ export class Result<T, E> extends Enum {
   orElse<F>(fn: (err: E) => Result<T, F>): Result<T, F> {
     return this.isOk() ? Result.Ok(super.unwrap()) : fn(super.unwrap());
   }
+
+  /**
+   * Wraps a Promise into a Result, converting successful resolution to Ok and rejection to Err
+   * @template T Type of the success value
+   * @template E Type of the error value, must extend Error
+   * @param promise Promise to wrap
+   * @returns Promise<Result<T, E>> A promise that resolves to a Result
+   *
+   * @example
+   * ```typescript
+   * // Wrap a promise that might fail
+   * const result = await Result.fromPromise<string, Error>(
+   *   fetch('https://api.example.com/data')
+   *     .then(res => res.text())
+   * );
+   *
+   * // Handle the result
+   * if (result.isOk()) {
+   *   console.log('Got data:', result.unwrap());
+   * } else {
+   *   console.error('Failed:', result.unwrapErr().message);
+   * }
+   * ```
+   */
+  static async fromAsync<T, E>(promise: Promise<T>): Promise<Result<T, E>> {
+    try {
+      const value = await promise;
+      return Result.Ok<T, E>(value);
+    } catch (error) {
+      return Result.Err<T, E>(error as E);
+    }
+  }
+
+  /**
+   * Wraps a function in a Result, converting successful execution to Ok and thrown errors to Err
+   * @template T Type of the return value
+   * @template E Type of the error value, must extend Error
+   * @template Args Type of the function arguments
+   * @param fn Function to wrap
+   * @returns A function that returns Result<T, E>
+   *
+   * @example
+   * ```typescript
+   * const parseJSON = Result.fromFn<any, Error, [string]>(JSON.parse);
+   *
+   * // Success case
+   * const result1 = parseJSON('{"key": "value"}');
+   * if (result1.isOk()) {
+   *   console.log('Parsed:', result1.unwrap());
+   * }
+   *
+   * // Error case
+   * const result2 = parseJSON('invalid json');
+   * if (result2.isErr()) {
+   *   console.error('Parse failed:', result2.unwrapErr().message);
+   * }
+   * ```
+   */
+  static fromFn<T, E, Args extends any[] = any[]>(
+    fn: (...args: Args) => T,
+  ): (...args: Args) => Result<T, E> {
+    return (...args: Args) => {
+      try {
+        const value = fn(...args);
+        return Result.Ok<T, E>(value);
+      } catch (error) {
+        return Result.Err<T, E>(error as E);
+      }
+    };
+  }
 }
 
 /**

@@ -1,6 +1,6 @@
 import { Val } from '../src/val';
 
-describe('Ref', () => {
+describe('Val', () => {
   it('should allow reading values', () => {
     const obj = { name: 'Alice', age: 30 };
     const ref = Val(obj);

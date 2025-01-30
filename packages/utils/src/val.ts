@@ -16,23 +16,13 @@ const symbol = Symbol('val.ptr');
  */
 export function Val<T>(value: T): Val<T> {
   const cloned: Val<T> = deepClone(value) as any;
-  return new Proxy(cloned, {
-    get(target: any, prop: any) {
-      if (prop === symbol) {
-        return value;
-      }
-      return typeof target[prop] === 'function'
-        ? (target[prop] as Function).bind(target)
-        : target[prop];
-    },
-    set(target: any, prop: any, value: any) {
-      if (prop === symbol) {
-        return true;
-      }
-      (target as any)[prop] = value;
-      return true;
-    },
+  Object.defineProperty(cloned, symbol, {
+    value,
+    enumerable: false,
+    configurable: false,
+    writable: false,
   });
+  return cloned;
 }
 
 /**

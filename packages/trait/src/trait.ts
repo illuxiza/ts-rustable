@@ -649,29 +649,24 @@ function createUseProxy<C extends Constructor, T extends TraitConstructor>(
   if (!impl) {
     throw new TraitNotImplementedError(targetType.name, trait.name);
   }
-  return new Proxy(
-    {},
-    {
-      get(_, prop) {
-        if (typeof prop === 'string' && impl.has(prop)) {
-          if (!strict) {
-            return function (...args: any[]) {
-              try {
-                return (target as any)[prop](...args);
-              } catch (error) {
-                if (error instanceof MultipleImplementationError) {
-                  return impl.get(prop).apply(target, args);
-                }
-                throw error;
-              }
-            };
+  const proxy: any = {};
+  for (const [name, fn] of impl) {
+    if (!strict) {
+      proxy[name] = function (...args: any[]) {
+        try {
+          return (target as any)[name](...args);
+        } catch (error) {
+          if (error instanceof MultipleImplementationError) {
+            return fn.apply(target, args);
           }
-          return impl.get(prop).bind(target);
+          throw error;
         }
-        throw new MethodNotImplementedError(trait.name, String(prop));
-      },
-    },
-  );
+      };
+    } else {
+      proxy[name] = fn.bind(target);
+    }
+  }
+  return proxy;
 }
 
 /**

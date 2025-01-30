@@ -250,3 +250,47 @@ describe('Result Type', () => {
     });
   });
 });
+
+describe('Result Function Wrapping Tests', () => {
+  describe('fromFn - Synchronous Function Tests', () => {
+    test('wraps successful function execution', () => {
+      const divide = Result.fromFn<number, Error, [number, number]>((a, b) => {
+        if (b === 0) throw new Error('Division by zero');
+        return a / b;
+      });
+
+      const result = divide(10, 2);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe(5);
+    });
+
+    test('wraps function that throws Error', () => {
+      const parseJSON = Result.fromFn<any, Error, [string]>(JSON.parse);
+
+      const result = parseJSON('invalid json');
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBeInstanceOf(Error);
+      expect(result.unwrapErr().message).toContain('JSON');
+    });
+
+    test('wraps function that throws non-Error', () => {
+      const throwString = Result.fromFn<void, Error>(() => {
+        throw 'string error';
+      });
+
+      const result = throwString();
+      expect(result.isErr()).toBe(true);
+      expect(result.unwrapErr()).toBe('string error');
+    });
+
+    test('handles multiple arguments', () => {
+      const concat = Result.fromFn<string, Error, [string, string, number]>((a, b, times) =>
+        (a + b).repeat(times),
+      );
+
+      const result = concat('hello', 'world', 2);
+      expect(result.isOk()).toBe(true);
+      expect(result.unwrap()).toBe('helloworldhelloworld');
+    });
+  });
+});

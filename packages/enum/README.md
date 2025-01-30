@@ -21,7 +21,8 @@ Implements Rust-style pattern matching for TypeScript through the `Enum` base cl
 ```typescript
 import { Enum } from '@rustable/enum';
 
-class MyEnum extends Enum {
+// Define an enum with proper type parameter
+class MyEnum extends Enum<typeof MyEnum> {
   static Variant1(value: string) {
     return new MyEnum('Variant1', value);
   }
@@ -31,10 +32,19 @@ class MyEnum extends Enum {
 }
 
 const value = MyEnum.Variant1('test');
+
+// Type-safe pattern matching requires all variants to be handled
 value.match({
   Variant1: (str) => console.log(str),
   Variant2: (num) => console.log(num),
 });
+
+// Conditional execution with let pattern matching
+value.let('Variant1', {
+  if: (str) => console.log(`Found Variant1: ${str}`),
+  else: () => console.log('Not Variant1'),
+});
+
 ```
 
 ### Custom Enums (`Enums.create`)
@@ -63,11 +73,17 @@ const state1 = UserState.LoggedOut();
 const state2 = UserState.LoggedIn('user123', 'admin');
 const state3 = UserState.Suspended('violation');
 
-// Type-safe pattern matching
+// Type-safe pattern matching (must handle all variants)
 state2.match({
   LoggedIn: (userId, role) => console.log(`User ${userId} is ${role}`),
   Suspended: (reason) => console.log(`Account suspended: ${reason}`),
   LoggedOut: () => console.log('Please log in'),
+});
+
+// Conditional execution with let pattern matching
+state2.letLoggedIn({
+  if: (userId, role) => console.log(`User ${userId} is ${role}`),
+  else: () => console.log('Not logged in'),
 });
 
 // Type-safe variant checking
@@ -145,8 +161,9 @@ const result = validateAge(25)
 
 ## Key Features
 
-- **Type Safety**: Full TypeScript support with proper type inference
-- **Pattern Matching**: Rust-style exhaustive pattern matching
+- **Type Safety**: Full TypeScript support with proper type inference and constructor type parameters
+- **Pattern Matching**: Rust-style exhaustive pattern matching with compile-time checks
+- **Let Pattern**: Type-safe conditional execution with proper type inference
 - **Option Type**: Safe handling of optional values
 - **Result Type**: Elegant error handling
 - **Method Chaining**: Rich set of combinators for value transformation
@@ -157,10 +174,16 @@ const result = validateAge(25)
 ### Pattern Matching
 
 ```typescript
+// All variants must be handled
 enum.match({
   Variant1: (value) => handleVariant1(value),
   Variant2: (value) => handleVariant2(value),
-  _: () => handleDefault()  // Default case
+});
+
+// Conditional execution with let pattern
+enum.letVariant1({
+  if: (value) => handleVariant1(value),
+  else: () => handleOtherCases(),
 });
 ```
 

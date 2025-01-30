@@ -2,7 +2,7 @@ import { None, Option, Some } from '@rustable/enum';
 import { named } from '@rustable/type';
 import { deepClone, Ptr } from '@rustable/utils';
 import { Iter } from '../traits';
-import { indexColl, keysEqual } from './func';
+import { keysEqual } from './func';
 
 const defaultCmp = <T>(a: T, b: T) => (a < b ? -1 : a > b ? 1 : 0);
 
@@ -13,11 +13,8 @@ const OUT_OF_BOUNDS = 'Index out of bounds';
  * Provides efficient array operations with dynamic size management.
  * @template T The type of elements stored in the Vec
  */
-@indexColl
 @named('Vec')
 export class Vec<T> implements Iterable<T> {
-  [index: number]: T;
-
   private readonly _buffer: T[];
   private _len: number;
 
