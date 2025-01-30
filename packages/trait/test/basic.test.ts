@@ -67,6 +67,8 @@ describe('Basic Trait Features', () => {
 
       expect(printTrait).toBeDefined();
       expect(debugTrait).toBeDefined();
+      expect(printTrait instanceof BasicClass).toBeTruthy();
+      expect(debugTrait instanceof BasicClass).toBeTruthy();
       expect(printTrait.print()).toBe('default print');
       expect(debugTrait.debug()).toBe('custom debug for: test');
     });

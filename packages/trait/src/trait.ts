@@ -656,6 +656,7 @@ function createUseProxy<C extends Constructor, T extends TraitConstructor>(
     addProxyMethod(proxy, target, parentImpl!, strict);
   }
   addProxyMethod(proxy, target, impl, strict);
+  Object.setPrototypeOf(proxy, targetType.prototype);
   return proxy;
 }
 

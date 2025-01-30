@@ -1,6 +1,6 @@
 {
   "name": "@rustable/trait",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A TypeScript library that implements Rust-like traits with compile-time type checking and runtime verification.",
   "keywords": [
     "typescript",

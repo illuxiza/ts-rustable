@@ -79,7 +79,7 @@ export function typeId(target: any, genericParams?: any[]): TypeId {
   }
 
   // Create and store new ID
-  const id = `${++i}:${type.name}` as TypeId;
+  const id = `${++i}:${constructor.name}` as TypeId;
   typeIdMap.set(constructor, id);
   return id;
 }

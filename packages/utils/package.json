@@ -1,6 +1,6 @@
 {
   "name": "@rustable/utils",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Essential utilities for object cloning, string manipulation, and value comparison in TypeScript, inspired by Rust's standard library.",
   "keywords": [
     "typescript",
