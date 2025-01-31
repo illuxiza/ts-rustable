@@ -32,7 +32,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@rustable/utils": "workspace:*"
+    "@rustable/utils": "0.4.2"
   },
   "author": "illuxiza",
   "repository": {

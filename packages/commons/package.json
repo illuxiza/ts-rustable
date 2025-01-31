@@ -1,6 +1,6 @@
 {
   "name": "@rustable/commons",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A TypeScript implementation of Rust-like traits and collections, providing efficient and type-safe implementations along with common trait patterns.",
   "keywords": [
     "typescript",
@@ -43,11 +43,11 @@
   "homepage": "https://github.com/illuxiza/ts-rustable#readme",
   "license": "MIT",
   "dependencies": {
-    "@rustable/enum": "workspace:*",
-    "@rustable/iter": "workspace:*",
-    "@rustable/trait": "workspace:*",
-    "@rustable/type": "workspace:*",
-    "@rustable/utils": "workspace:*"
+    "@rustable/enum": "0.4.2",
+    "@rustable/iter": "0.4.2",
+    "@rustable/trait": "0.4.3",
+    "@rustable/type": "0.4.2",
+    "@rustable/utils": "0.4.2"
   },
   "publishConfig": {
     "access": "public"

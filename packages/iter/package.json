@@ -37,8 +37,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@rustable/enum": "workspace:*",
-    "@rustable/utils": "workspace:*"
+    "@rustable/enum": "0.4.2",
+    "@rustable/utils": "0.4.2"
   },
   "author": "illuxiza",
   "repository": {

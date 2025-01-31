@@ -1,6 +1,6 @@
 {
   "name": "rustable",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "workspaces": [
     "packages/*"
   ],
@@ -23,16 +23,16 @@
     "lint": "eslint packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
     "format": "prettier --write packages/*/src/**/*.ts packages/*/test/**/*.ts src/**/*.ts",
     "prepub": "yarn format && yarn lint && yarn clean && yarn build && yarn test",
-    "publish": "yarn workspaces foreach -R npm publish",
+    "publish": "monoup publish",
     "ver": "monoup version"
   },
   "dependencies": {
-    "@rustable/commons": "workspace:*",
-    "@rustable/enum": "workspace:*",
-    "@rustable/iter": "workspace:*",
-    "@rustable/trait": "workspace:*",
-    "@rustable/type": "workspace:*",
-    "@rustable/utils": "workspace:*"
+    "@rustable/commons": "0.4.3",
+    "@rustable/enum": "0.4.2",
+    "@rustable/iter": "0.4.2",
+    "@rustable/trait": "0.4.3",
+    "@rustable/type": "0.4.2",
+    "@rustable/utils": "0.4.2"
   },
   "files": [
     "lib",
@@ -65,7 +65,7 @@
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.22.0",
     "eslint": "^9.19.0",
-    "monoup": "^0.3.0",
+    "monoup": "^0.3.1",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.7.3",
