@@ -20,12 +20,12 @@
     "useDefineForClassFields": false,
     "types": ["vitest", "vitest/globals"],
     "paths": {
-      "@rustable/utils": ["packages/utils"],
-      "@rustable/enum": ["packages/enum"],
-      "@rustable/iter": ["packages/iter"],
-      "@rustable/trait": ["packages/trait"],
-      "@rustable/type": ["packages/type"],
-      "@rustable/commons": ["packages/commons"]
+      "@rustable/utils": ["packages/utils/src"],
+      "@rustable/enum": ["packages/enum/src"],
+      "@rustable/iter": ["packages/iter/src"],
+      "@rustable/trait": ["packages/trait/src"],
+      "@rustable/type": ["packages/type/src"],
+      "@rustable/commons": ["packages/commons/src"]
     }
   }
 }
