@@ -13,7 +13,7 @@ export class TraitError extends Error {
 export class MultipleImplementationError extends TraitError {
   constructor(targetName: string, methodName: string) {
     super(
-      `Multiple implementations of method ${methodName} for ${targetName}, please use useTrait`,
+      `Multiple implementations of method ${methodName} for ${targetName}, please use Type<Trait>.wrap`,
     );
   }
 }

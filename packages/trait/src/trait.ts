@@ -382,15 +382,10 @@ function implTrait<C extends Constructor, T extends TraitConstructor>(
   // Get or create implementation map for target
   const staticImplMap = staticTraitRegistry.get(target) || new WeakMap();
   staticTraitRegistry.set(target, staticImplMap);
-  handleGenericType(
-    trait,
-    (trait) => {
-      if (staticImplMap.has(trait)) {
-        throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
-      }
-    },
-    () => false,
-  );
+
+  if (staticImplMap.has(trait)) {
+    throw new Error(`Trait ${trait.name} already implemented for ${target.name}`);
+  }
   // Check parent commons
   const parents = collectParentTraits(trait);
   parents.forEach((parent) => {
@@ -402,7 +397,12 @@ function implTrait<C extends Constructor, T extends TraitConstructor>(
   // Add static trait methods to target class
   const staticImpl = createBound(trait, isGenericType(trait) ? 2 : 1, implementation?.static);
   // Store static implementation
-  staticImplMap.set(trait, staticImpl);
+
+  handleGenericType(
+    trait,
+    (trait) => cacheTraitBound(target, trait, staticImplMap, staticImpl),
+    () => false,
+  );
 
   // Check if target is a trait
   const isTraitTarget = traitSymbol in target;
@@ -433,7 +433,11 @@ function implTrait<C extends Constructor, T extends TraitConstructor>(
   const boundImpl = createBound(trait.prototype, isGenericType(trait) ? 2 : 1, implementation);
 
   // Store the implementation
-  implMap.set(trait, boundImpl);
+  handleGenericType(
+    trait,
+    (trait) => cacheTraitBound(target, trait, implMap, boundImpl),
+    () => false,
+  );
 
   // Add trait methods to target prototype
   addMethod(target.prototype, boundImpl, getSelfBound(target));
@@ -479,6 +483,26 @@ function addMethod<C extends object | Constructor>(
       });
     }
   });
+}
+
+function cacheTraitBound<C extends Constructor, T extends TraitConstructor>(
+  target: C,
+  trait: T,
+  implMap: WeakMap<T, Map<string, any>>,
+  boundImpl: Map<string, any>,
+) {
+  const old = implMap.get(trait);
+  if (old !== undefined) {
+    const conflict = new Map<string, any>();
+    for (const [key] of boundImpl) {
+      conflict.set(key, function () {
+        throw new MultipleImplementationError(typeName(target), key);
+      });
+    }
+    implMap.set(trait, conflict);
+  } else {
+    implMap.set(trait, boundImpl);
+  }
 }
 
 function traitToTraitImpl<C extends Constructor, T extends TraitConstructor>(

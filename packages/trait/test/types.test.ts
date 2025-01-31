@@ -202,11 +202,25 @@ describe('Trait Type System', () => {
 
       class Target {}
 
+      const StringNumberParam = Type(MultiParamTrait<string, number>, [String, Number]);
+      const NumberStringParam = Type(MultiParamTrait<number, string>, [Number, String]);
       // Test multi-parameter implementation
-      Type(MultiParamTrait, [String, Number]).implFor(Target);
+      StringNumberParam.implFor(Target, {
+        test(t: string, u: number): string {
+          return `string:${t},number:${u}`;
+        },
+      });
+      NumberStringParam.implFor(Target, {
+        test(t: number, u: string): string {
+          return `number:${t},string:${u}`;
+        },
+      });
       const multiTarget = new Target();
-      const multiImpl = Type(MultiParamTrait, [String, Number]).wrap(multiTarget);
-      expect(multiImpl.test('hello', 42)).toBe('hello,42');
+      const multiImpl1 = StringNumberParam.wrap(multiTarget);
+      expect(multiImpl1.test('hello', 42)).toBe('string:hello,number:42');
+      const multiImpl2 = NumberStringParam.wrap(multiTarget);
+      expect(multiImpl2.test(42, 'hello')).toBe('number:42,string:hello');
+      expect(() => MultiParamTrait.wrap(multiTarget).test(42, 'hello')).toThrow();
 
       // Test single-parameter implementation
       Type(SingleParamTrait, [Number]).implFor(Target);
