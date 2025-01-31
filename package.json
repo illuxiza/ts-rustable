@@ -54,7 +54,7 @@
   "author": "illuxiza",
   "repository": {
     "type": "git",
-    "url": "https://github.com/illuxiza/ts-rustable"
+    "url": "git+https://github.com/illuxiza/ts-rustable.git"
   },
   "bugs": {
     "url": "https://github.com/illuxiza/ts-rustable/issues"
@@ -65,7 +65,7 @@
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.22.0",
     "eslint": "^9.19.0",
-    "monoup": "^0.3.1",
+    "monoup": "^0.3.4",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.7.3",
