@@ -1,6 +1,6 @@
 {
   "name": "@rustable/iter",
-  "version": "0.4.2",
+  "version": "0.4.4",
   "description": "Rust-style iterator adapters for TypeScript, providing a rich set of functional operations for iterating over collections",
   "keywords": [
     "iterator",
@@ -37,8 +37,8 @@
     "README.md"
   ],
   "dependencies": {
-    "@rustable/enum": "0.4.2",
-    "@rustable/utils": "0.4.2"
+    "@rustable/enum": "0.4.4",
+    "@rustable/utils": "0.4.4"
   },
   "author": "illuxiza",
   "repository": {

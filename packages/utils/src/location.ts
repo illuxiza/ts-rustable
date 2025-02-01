@@ -39,8 +39,9 @@ export class Location {
       path = stackLine.replace('at', '').trim();
     }
 
-    // Parse file information
-    const fileInfo = path.substring(path.lastIndexOf('/') + 1).split(':');
+    // Parse file information - handle both Windows and Unix paths
+    const lastSlashIndex = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+    const fileInfo = path.substring(lastSlashIndex + 1).split(':');
     const file = fileInfo[0];
     const line = parseInt(fileInfo[1]);
     const column = parseInt(fileInfo[2]);
@@ -51,7 +52,13 @@ export class Location {
       name = file;
     }
 
-    return { name, path, file, line, column };
+    return {
+      name,
+      path,
+      file,
+      line,
+      column,
+    };
   }
 
   /**
