@@ -27,13 +27,15 @@ export interface DefaultMatch<U> {
   _: (() => U) | U;
 }
 
-export type EnumMatchPattern<U, C> = C | (Partial<C> & DefaultMatch<U>);
+type EnumMatchPatternBase<U, C> = C | (Partial<C> & DefaultMatch<U>);
 
 type EnumMatch<E extends Constructor, U> = {
   [K in keyof Omit<E, 'prototype'>]: E[K] extends (...args: infer P) => InstanceType<E>
     ? ((...args: P) => U) | U
     : never;
 };
+
+export type EnumMatchPattern<U, C extends Constructor> = EnumMatchPatternBase<U, EnumMatch<C, U>>;
 
 export interface EnumModify {
   [key: string]: (...args: any[]) => any[];
@@ -58,7 +60,7 @@ export type EnumInstance<U extends EnumParam> = Omit<
   Enum,
   'match' | 'modify' | 'clone' | 'eq' | 'is' | 'let'
 > & {
-  match<T>(patterns: EnumMatchPattern<U, CustomMatch<T, U>>): T;
+  match<T>(patterns: EnumMatchPatternBase<U, CustomMatch<T, U>>): T;
   modify(patterns: Partial<CustomModify<U>>): void;
   clone(): EnumInstance<U>;
   eq(other: EnumInstance<U>): boolean;
@@ -232,7 +234,7 @@ export class Enum<C extends Constructor = Constructor> {
    * })
    * ```
    */
-  match<U>(patterns: EnumMatchPattern<U, EnumMatch<C, U>>): U {
+  match<U>(patterns: EnumMatchPatternBase<U, EnumMatch<C, U>>): U {
     const variantName = this.name;
     const handler = (patterns as any)[variantName] ?? (patterns as any)['_'];
     if (typeof handler === 'undefined') {
