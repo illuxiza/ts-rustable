@@ -1,6 +1,6 @@
 {
   "name": "rustable",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "workspaces": [
     "packages/*"
   ],
@@ -27,11 +27,11 @@
     "ver": "monoup version"
   },
   "dependencies": {
-    "@rustable/commons": "0.4.4",
+    "@rustable/commons": "0.4.5",
     "@rustable/enum": "0.4.4",
     "@rustable/iter": "0.4.4",
-    "@rustable/trait": "0.4.4",
-    "@rustable/type": "0.4.4",
+    "@rustable/trait": "0.4.5",
+    "@rustable/type": "0.4.5",
     "@rustable/utils": "0.4.4"
   },
   "files": [

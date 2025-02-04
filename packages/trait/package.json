@@ -1,6 +1,6 @@
 {
   "name": "@rustable/trait",
-  "version": "0.4.4",
+  "version": "0.4.5",
   "description": "A TypeScript library that implements Rust-like traits with compile-time type checking and runtime verification.",
   "keywords": [
     "typescript",
@@ -33,7 +33,7 @@
     "README.md"
   ],
   "dependencies": {
-    "@rustable/type": "0.4.4"
+    "@rustable/type": "0.4.5"
   },
   "author": "illuxiza",
   "repository": {

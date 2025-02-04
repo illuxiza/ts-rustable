@@ -202,19 +202,24 @@ export function Type<T extends MaybeGenericConstructor>(
         );
       }
     });
-
-    Object.defineProperty(customType, 'name', {
-      value: `${targetConstructor.name}<${getGenericName(genericParams)}>`,
+    const config = {
       writable: false,
       enumerable: false,
-      configurable: true,
-    });
-
-    Object.defineProperty(customType, genericType, {
-      value: true,
-      writable: false,
-      enumerable: false,
-      configurable: true,
+      configurable: false,
+    };
+    Object.defineProperties(customType, {
+      name: {
+        value: `${targetConstructor.name}<${getGenericName(genericParams)}>`,
+        ...config,
+      },
+      [genericType]: {
+        value: true,
+        ...config,
+      },
+      generics: {
+        value: genericParams,
+        ...config,
+      },
     });
 
     targetTypes.set(genericKey, customType);
@@ -242,6 +247,28 @@ export function Type<T extends MaybeGenericConstructor>(
 export function isGenericType(target: any): boolean {
   validNull(target);
   return target[genericType];
+}
+
+/**
+ * Gets the generic parameters of a generic type.
+ *
+ * @param target - The target to get the generics from. Can be a constructor function or an instance
+ * @returns The generic parameters of the type
+ * @throws {Error} If target is null or undefined
+ *
+ * @example
+ * ```typescript
+ * class Container<T> {}
+ * const StringContainer = Type(Container, [String]);
+ *
+ * console.log(getGenerics(StringContainer)); // [String]
+ * ```
+ */
+export function getGenerics(target: any): any[] {
+  if (!isGenericType(target)) {
+    return [];
+  }
+  return target.generics;
 }
 
 /**
