@@ -104,6 +104,7 @@ function getGenericName(genericParams: any[]): string {
 
 interface MaybeGenericConstructor extends Constructor {
   [genericType]?: true;
+  generics?: Constructor[];
 }
 
 /**
@@ -264,11 +265,11 @@ export function isGenericType(target: any): boolean {
  * console.log(getGenerics(StringContainer)); // [String]
  * ```
  */
-export function getGenerics(target: any): any[] {
+export function getGenerics(target: MaybeGenericConstructor): Constructor[] {
   if (!isGenericType(target)) {
     return [];
   }
-  return target.generics;
+  return target.generics || [];
 }
 
 /**
