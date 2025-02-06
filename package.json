@@ -1,6 +1,6 @@
 {
   "name": "rustable",
-  "version": "0.4.5",
+  "version": "0.4.6",
   "workspaces": [
     "packages/*"
   ],
@@ -27,11 +27,11 @@
     "ver": "monoup version"
   },
   "dependencies": {
-    "@rustable/commons": "0.4.5",
+    "@rustable/commons": "0.4.6",
     "@rustable/enum": "0.4.4",
     "@rustable/iter": "0.4.4",
-    "@rustable/trait": "0.4.5",
-    "@rustable/type": "0.4.5",
+    "@rustable/trait": "0.4.6",
+    "@rustable/type": "0.4.6",
     "@rustable/utils": "0.4.4"
   },
   "files": [
@@ -65,7 +65,7 @@
     "@typescript-eslint/eslint-plugin": "^8.22.0",
     "@typescript-eslint/parser": "^8.22.0",
     "eslint": "^9.19.0",
-    "monoup": "^0.3.7",
+    "monoup": "^0.4.0",
     "prettier": "^3.4.2",
     "rimraf": "^6.0.1",
     "typescript": "^5.7.3",
