@@ -13,6 +13,9 @@ export function equals(a: any, b: any): boolean {
   if (typeof a !== typeof b) {
     return false;
   }
+  if (typeof a === 'function') {
+    return a === b;
+  }
   if (a?.constructor !== b?.constructor) {
     return false;
   }
