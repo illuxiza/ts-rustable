@@ -198,3 +198,63 @@ describe('stringify special types', () => {
     expect(stringify(big)).toBe('9007199254740991');
   });
 });
+
+describe('stringify objects with constructor names', () => {
+  test('should include constructor name for custom classes', () => {
+    class Person {
+      constructor(public name: string, public age: number) {}
+    }
+    
+    const person = new Person('John', 30);
+    expect(stringify(person)).toBe('Person{age:30,name:"John"}');
+  });
+
+  test('should handle nested objects with constructor names', () => {
+    class Address {
+      constructor(public city: string, public country: string) {}
+    }
+    
+    class User {
+      constructor(public name: string, public address: Address) {}
+    }
+    
+    const user = new User('Alice', new Address('New York', 'USA'));
+    expect(stringify(user)).toBe('User{address:Address{city:"New York",country:"USA"},name:"Alice"}');
+  });
+
+  test('should handle arrays containing objects with constructor names', () => {
+    class Product {
+      constructor(public id: number, public name: string) {}
+    }
+    
+    const products = [new Product(1, 'Laptop'), new Product(2, 'Phone')];
+    expect(stringify(products)).toBe('[Product{id:1,name:"Laptop"},Product{id:2,name:"Phone"}]');
+  });
+
+  test('should not include constructor name for regular objects', () => {
+    const regularObj = { x: 1, y: 2 };
+    expect(stringify(regularObj)).toBe('{x:1,y:2}');
+  });
+
+  test('should handle null values in objects with constructor names', () => {
+    class DataContainer {
+      constructor(public id: number, public data: any) {}
+    }
+    
+    const container = new DataContainer(1, null);
+    expect(stringify(container)).toBe('DataContainer{data:,id:1}');
+  });
+
+  test('should handle objects with null values in nested properties', () => {
+    class NestedData {
+      constructor(public value: any) {}
+    }
+    
+    class Container {
+      constructor(public name: string, public nested: NestedData) {}
+    }
+    
+    const container = new Container('test', new NestedData(null));
+    expect(stringify(container)).toBe('Container{name:"test",nested:NestedData{value:}}');
+  });
+});

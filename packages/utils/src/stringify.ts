@@ -58,7 +58,7 @@ function stringifyObject(obj: any): string {
   let nextRefId = 0;
 
   function scanObject(value: any) {
-    if (!(typeof value === 'object')) {
+    if (typeof value !== 'object' || value === null) {
       return;
     }
     const existing = objectRefs.get(value);
@@ -125,7 +125,17 @@ function stringifyObject(obj: any): string {
         .sort()
         .map((key) => `${key}:${stringifyValue(value[key])}`)
         .join(',');
-      result = '{' + pairs + '}';
+      
+      // Check if the object has a constructor with a name that's not 'Object'
+      const constructorName = value.constructor && value.constructor.name !== 'Object' 
+        ? value.constructor.name 
+        : null;
+      
+      if (constructorName) {
+        result = `${constructorName}{${pairs}}`;
+      } else {
+        result = '{' + pairs + '}';
+      }
     }
 
     if (ref?.id !== undefined) {
