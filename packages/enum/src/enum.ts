@@ -292,10 +292,10 @@ export class Enum<C extends Constructor = Constructor> {
    * @returns A new instance of the enum with the same variant and cloned arguments
    */
   clone(hash = new WeakMap<object, any>()): this {
-    if (!this.vars || this.vars.length === 0) {
-      return this;
-    }
     const Constructor = this.constructor as new (name: string, ...args: any[]) => this;
+    if (!this.vars || this.vars.length === 0) {
+      return new Constructor(this.name);
+    }
     const clonedArgs = this.vars.map((v) => deepClone(v, hash));
     return new Constructor(this.name, ...clonedArgs);
   }
