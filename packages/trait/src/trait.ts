@@ -418,7 +418,7 @@ function implTrait<C extends Constructor, T extends TraitConstructor>(
     for (const implementer of implementers) {
       // The class has implemented the source trait, so it should also implement the target trait
       // Use the same generics as the class used to implement the source trait
-      implTrait(implementer as C, trait, implementation);
+      tryImplTrait(implementer as C, trait, implementation);
     }
     return;
   }
