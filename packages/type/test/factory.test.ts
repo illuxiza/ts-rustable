@@ -1,5 +1,5 @@
 import { createFactory, createGenericType } from '../src/factory';
-import { Type, getGenerics, isGenericType } from '../src/type';
+import { getGenerics, isGenericType } from '../src/type';
 
 describe('createFactory', () => {
   class TestClass {
