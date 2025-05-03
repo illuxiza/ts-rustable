@@ -1,4 +1,5 @@
-import { createFactory } from '../src/factory';
+import { createFactory, createGenericType } from '../src/factory';
+import { Type, getGenerics, isGenericType } from '../src/type';
 
 describe('createFactory', () => {
   class TestClass {
@@ -321,5 +322,126 @@ describe('createFactory with inheritance', () => {
   it('should allow using base class methods', () => {
     const derived = new DerivedClass('Tom', 'Developer');
     expect(derived.getName()).toBe('Tom');
+  });
+});
+
+describe('createGenericType', () => {
+  // Define a generic container class
+  class Container<T> {
+    constructor(public value: T) {}
+
+    static containerType = 'generic';
+
+    getValue(): T {
+      return this.value;
+    }
+
+    getTypeName(): string {
+      return this.value?.constructor?.name || typeof this.value;
+    }
+  }
+
+  it('should create a factory for generic types', () => {
+    // Create a factory for the generic Container class
+    const GenericContainer = createGenericType(Container);
+    
+    // Use the factory to create parameterized types
+    const StringContainer = GenericContainer(String);
+    const NumberContainer = GenericContainer(Number);
+    
+    // Verify the created types are different
+    expect(StringContainer).not.toBe(NumberContainer);
+    expect(StringContainer).not.toBe(Container);
+    
+    // Verify they are generic types
+    expect(isGenericType(StringContainer)).toBe(true);
+    expect(isGenericType(NumberContainer)).toBe(true);
+    expect(isGenericType(Container)).toBe(false);
+  });
+
+  it('should preserve static properties on parameterized types', () => {
+    const GenericContainer = createGenericType(Container);
+    const StringContainer = GenericContainer(String);
+    
+    // Use type assertion to access the static property
+    expect(StringContainer.containerType).toBe('generic');
+  });
+
+  it('should store generic type parameters correctly', () => {
+    const GenericContainer = createGenericType(Container);
+    const StringContainer = GenericContainer(String);
+    const NumberContainer = GenericContainer(Number);
+    
+    // Check that the generic parameters are stored correctly
+    expect(getGenerics(StringContainer)).toEqual([String]);
+    expect(getGenerics(NumberContainer)).toEqual([Number]);
+  });
+
+  it('should create instances with correct type behavior', () => {
+    const GenericContainer = createGenericType(Container);
+    const StringContainer = GenericContainer(String);
+    const NumberContainer = GenericContainer(Number);
+    
+    // Create instances
+    const strContainer = new StringContainer('hello');
+    const numContainer = new NumberContainer(42);
+    
+    // Check instance types
+    expect(strContainer).toBeInstanceOf(Container);
+    expect(numContainer).toBeInstanceOf(Container);
+    
+    // Check values
+    expect(strContainer.getValue()).toBe('hello');
+    expect(numContainer.getValue()).toBe(42);
+    
+    // Check type names
+    expect(strContainer.getTypeName()).toBe('String');
+    expect(numContainer.getTypeName()).toBe('Number');
+  });
+
+  it('should support multiple generic parameters', () => {
+    // Define a class with multiple generic parameters
+    class KeyValuePair<K, V> {
+      constructor(public key: K, public value: V) {}
+      
+      getKey(): K { return this.key; }
+      getValue(): V { return this.value; }
+    }
+    
+    const GenericPair = createGenericType(KeyValuePair);
+    const StringNumberPair = GenericPair(String, Number);
+    
+    // Check generic parameters
+    expect(getGenerics(StringNumberPair)).toEqual([String, Number]);
+    
+    // Create an instance
+    const pair = new StringNumberPair('id', 123);
+    
+    // Check instance behavior
+    expect(pair.getKey()).toBe('id');
+    expect(pair.getValue()).toBe(123);
+  });
+
+  it('should create different types for different generic parameters', () => {
+    const GenericContainer = createGenericType(Container);
+    
+    // Create multiple parameterized types
+    const StringContainer = GenericContainer(String);
+    const NumberContainer = GenericContainer(Number);
+    const BooleanContainer = GenericContainer(Boolean);
+    
+    // Each should be a unique type
+    expect(StringContainer).not.toBe(NumberContainer);
+    expect(StringContainer).not.toBe(BooleanContainer);
+    expect(NumberContainer).not.toBe(BooleanContainer);
+    
+    // But all should be instances of the base Container
+    const strContainer = new StringContainer('test');
+    const numContainer = new NumberContainer(42);
+    const boolContainer = new BooleanContainer(true);
+    
+    expect(strContainer).toBeInstanceOf(Container);
+    expect(numContainer).toBeInstanceOf(Container);
+    expect(boolContainer).toBeInstanceOf(Container);
   });
 });

@@ -1,3 +1,4 @@
+import { Constructor } from './common';
 import { Type } from './type';
 
 const factoryCache = new WeakMap<any, WeakMap<any, any>>();
@@ -94,3 +95,24 @@ export function createFactoryProxy<
   cache.set(key, Factory);
   return Factory;
 }
+
+/**
+ * Creates a factory for a type that can accept generic type parameters.
+ * This allows for creating parameterized types similar to generics in other languages.
+ *
+ * @param baseType The base constructor type to be parameterized
+ * @returns A factory function that accepts generic type parameters and returns a parameterized type
+ * @example
+ * // Create a generic container type
+ * class Container {}
+ * const GenericContainer = createGenericType(Container);
+ *
+ * // Use the factory to create a specific parameterized type
+ * const StringContainer = GenericContainer(String);
+ * const NumberContainer = GenericContainer(Number);
+ */
+export const createGenericType = <T extends Constructor>(baseType: T) => {
+  return createFactory(baseType, (...generics: Constructor[]) => {
+    return Type(baseType, generics);
+  }) as T & ((...generics: Constructor[]) => T);
+};

@@ -247,7 +247,7 @@ export function Type<T extends MaybeGenericConstructor>(
  */
 export function isGenericType(target: any): boolean {
   validNull(target);
-  return target[genericType];
+  return target[genericType] === true;
 }
 
 /**
